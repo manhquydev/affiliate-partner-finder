@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Affiliate/Partner Finder</title>
+    <title>Trình dò Affiliate/Partner</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <main id="app">
       <header>
-        <h1>Affiliate/Partner Finder</h1>
-        <span class="ver">v1.0.0</span>
+        <h1>Trình dò Affiliate/Partner</h1>
+        <span class="ver">v1.0.0 · Trustpilot</span>
       </header>
 
       <form id="run-form" class="controls">
@@ -23,18 +23,18 @@
           <input id="limit" type="number" min="1" max="200" value="20" />
         </label>
         <label class="narrow">
-          <span>Delay (ms)</span>
+          <span>Độ trễ (ms)</span>
           <input id="delay" type="number" min="0" max="10000" step="500" value="2000" />
         </label>
         <label class="check">
           <input id="resolve-exact" type="checkbox" />
-          <span>Resolve URL chính xác</span>
+          <span>Lấy URL chính xác</span>
         </label>
         <div class="buttons">
-          <button id="start" type="submit">Start</button>
-          <button id="pause" type="button" disabled>Pause</button>
-          <button id="resume" type="button" disabled>Resume</button>
-          <button id="clear" type="button" class="ghost">Clear</button>
+          <button id="start" type="submit">Bắt đầu</button>
+          <button id="pause" type="button" disabled>Tạm dừng</button>
+          <button id="resume" type="button" disabled>Tiếp tục</button>
+          <button id="clear" type="button" class="ghost">Xoá</button>
         </div>
       </form>
 
@@ -44,12 +44,12 @@
         <table id="results">
           <thead>
             <tr>
-              <th>Domain</th>
-              <th>Verdict</th>
-              <th>Conf.</th>
-              <th>Load</th>
-              <th>Evidence</th>
-              <th class="num">Score</th>
+              <th>Tên miền</th>
+              <th>Kết quả</th>
+              <th>Độ tin</th>
+              <th>Tải</th>
+              <th>Bằng chứng</th>
+              <th class="num">Điểm</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -57,10 +57,32 @@
       </div>
 
       <footer class="exports">
-        <button id="export-csv" type="button" disabled>Export CSV</button>
-        <button id="export-json" type="button" disabled>Export JSON</button>
+        <button id="export-csv" type="button" disabled>Xuất CSV</button>
+        <button id="export-json" type="button" disabled>Xuất JSON</button>
         <span id="count" class="muted"></span>
       </footer>
+
+      <!-- Chú giải trạng thái + hướng dẫn (cố định, mở bằng thẻ details native) -->
+      <details class="help">
+        <summary>❓ Hướng dẫn &amp; ý nghĩa kết quả</summary>
+
+        <h2>Các bước dùng</h2>
+        <ol id="usage-steps"></ol>
+
+        <h2>Ý nghĩa "Kết quả"</h2>
+        <table class="legend">
+          <thead>
+            <tr><th>Nhãn</th><th>Nghĩa</th><th>Nên làm gì</th></tr>
+          </thead>
+          <tbody id="legend-rows"></tbody>
+        </table>
+
+        <p class="note" id="confidence-note"></p>
+        <p class="note warn">
+          ⚠ Nguyên tắc chống nhầm: <strong>"Bị chặn" (Chưa rõ) KHÔNG đồng nghĩa với "Không có"</strong>.
+          Site chặn bot chỉ nghĩa là ta chưa quét được — hãy tự kiểm tra thủ công.
+        </p>
+      </details>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

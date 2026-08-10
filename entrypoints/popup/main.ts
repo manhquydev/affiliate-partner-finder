@@ -4,8 +4,17 @@
 
 import { strongestEvidence, toCSV, toJSON } from '../../lib/export';
 import { DEFAULT_RUN_CONFIG } from '../../lib/config';
+import {
+  verdictLabel,
+  loadStatusLabel,
+  METHOD_LABEL,
+  VERDICT_LEGEND,
+  VERDICT_LABEL,
+  CONFIDENCE_NOTE,
+  USAGE_STEPS,
+} from '../../lib/labels';
 import type { PopupToBg, ProgressEvent, StateReply } from '../../lib/messages';
-import type { Progress, ScanResult, RunConfig } from '../../lib/types';
+import type { Progress, ScanResult, RunConfig, Verdict } from '../../lib/types';
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -35,10 +44,6 @@ function send(msg: PopupToBg) {
   chrome.runtime.sendMessage(msg).catch(() => {});
 }
 
-function verdictLabel(v: ScanResult['verdict']): string {
-  return { affiliate: 'affiliate', partner_trade: 'partner/trade', none: 'none', unknown: 'unknown' }[v];
-}
-
 function renderRow(r: ScanResult) {
   const id = `row-${r.domain}`;
   let tr = document.getElementById(id) as HTMLTableRowElement | null;
@@ -52,7 +57,8 @@ function renderRow(r: ScanResult) {
 
   const tdDomain = document.createElement('td');
   tdDomain.textContent = r.domain;
-  tdDomain.title = r.finalUrl;
+  // Provenance: URL cuối + thời điểm quét + phiên bản detector (nguồn gốc/độ cũ).
+  tdDomain.title = `${r.finalUrl}\nQuét: ${r.scannedAt}\nDetector: v${r.detectorVersion}`;
 
   const tdVerdict = document.createElement('td');
   const badge = document.createElement('span');
@@ -64,14 +70,14 @@ function renderRow(r: ScanResult) {
   tdConf.textContent = r.confidence;
 
   const tdLoad = document.createElement('td');
-  tdLoad.textContent = r.loadStatus;
+  tdLoad.textContent = loadStatusLabel(r.loadStatus);
 
   const tdEvidence = document.createElement('td');
   if (ev.url) {
     const a = document.createElement('a');
     a.href = '#';
     a.className = 'evidence';
-    a.textContent = `${ev.method}: ${ev.text || ev.url}`.slice(0, 60);
+    a.textContent = `${METHOD_LABEL[ev.method]}: ${ev.text || ev.url}`.slice(0, 60);
     a.title = ev.url;
     a.addEventListener('click', (e) => {
       e.preventDefault();
@@ -184,6 +190,38 @@ chrome.runtime.onMessage.addListener((msg: ProgressEvent) => {
   }
   applyProgress(msg.progress);
 });
+
+// --- populate the static guide/legend once ---
+function populateHelp() {
+  const steps = document.getElementById('usage-steps');
+  if (steps) {
+    for (const s of USAGE_STEPS) {
+      const li = document.createElement('li');
+      li.textContent = s;
+      steps.appendChild(li);
+    }
+  }
+  const legend = document.getElementById('legend-rows');
+  if (legend) {
+    for (const v of Object.keys(VERDICT_LEGEND) as Verdict[]) {
+      const tr = document.createElement('tr');
+      const tdN = document.createElement('td');
+      const b = document.createElement('span');
+      b.className = `badge ${v}`;
+      b.textContent = VERDICT_LABEL[v];
+      tdN.appendChild(b);
+      const tdM = document.createElement('td');
+      tdM.textContent = VERDICT_LEGEND[v].meaning;
+      const tdA = document.createElement('td');
+      tdA.textContent = VERDICT_LEGEND[v].action;
+      tr.append(tdN, tdM, tdA);
+      legend.appendChild(tr);
+    }
+  }
+  const note = document.getElementById('confidence-note');
+  if (note) note.textContent = CONFIDENCE_NOTE;
+}
+populateHelp();
 
 // --- rehydrate on open ---
 chrome.runtime.sendMessage({ type: 'GET_STATE' } satisfies PopupToBg).then((reply: StateReply) => {
