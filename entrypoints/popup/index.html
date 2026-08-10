@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Affiliate/Partner Finder</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <header>
+        <h1>Affiliate/Partner Finder</h1>
+        <span class="ver">v1.0.0</span>
+      </header>
+
+      <form id="run-form" class="controls">
+        <label>
+          <span>Từ khoá (Trustpilot)</span>
+          <input id="query" type="text" value="design" autocomplete="off" required />
+        </label>
+        <label class="narrow">
+          <span>Số công ty</span>
+          <input id="limit" type="number" min="1" max="200" value="20" />
+        </label>
+        <label class="narrow">
+          <span>Delay (ms)</span>
+          <input id="delay" type="number" min="0" max="10000" step="500" value="2000" />
+        </label>
+        <label class="check">
+          <input id="resolve-exact" type="checkbox" />
+          <span>Resolve URL chính xác</span>
+        </label>
+        <div class="buttons">
+          <button id="start" type="submit">Start</button>
+          <button id="pause" type="button" disabled>Pause</button>
+          <button id="resume" type="button" disabled>Resume</button>
+          <button id="clear" type="button" class="ghost">Clear</button>
+        </div>
+      </form>
+
+      <div id="status" class="status" role="status"></div>
+
+      <div class="table-wrap">
+        <table id="results">
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Verdict</th>
+              <th>Conf.</th>
+              <th>Load</th>
+              <th>Evidence</th>
+              <th class="num">Score</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <footer class="exports">
+        <button id="export-csv" type="button" disabled>Export CSV</button>
+        <button id="export-json" type="button" disabled>Export JSON</button>
+        <span id="count" class="muted"></span>
+      </footer>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

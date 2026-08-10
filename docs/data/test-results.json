@@ -1,0 +1,254 @@
+{
+  "meta": {
+    "generatedAt": "2026-08-10T05:21:30.847Z",
+    "source": "Trustpilot search 'design' + 13 real target sites",
+    "note": "Tat ca thu bang cach chay that tren trinh duyet, khong suy doan."
+  },
+  "trustpilot": {
+    "robots": {
+      "disallow": [
+        "/search",
+        "/api/*"
+      ],
+      "blockedBots": [
+        "CCBot",
+        "Yandex",
+        "anthropic-ai",
+        "sentibot"
+      ]
+    },
+    "nextData": {
+      "searchPath": "props.pageProps.businessUnits[] {displayName, identifyingName, trustScore, numberOfReviews}",
+      "reviewPath": "props.pageProps.businessUnit.websiteUrl (clean URL)",
+      "searchFetchStatus": 200,
+      "note": "fetch /search?page=N tra HTML kem __NEXT_DATA__"
+    },
+    "corsTest": {
+      "targets": [
+        "namly.dk",
+        "kossdesign.com",
+        "thorvalddesign.com"
+      ],
+      "result": "3/3 Failed to fetch (CORS)"
+    }
+  },
+  "softNotFoundTest": [
+    {
+      "domain": "namly.dk",
+      "junkPathStatus": 404,
+      "junkBodyBytes": 695713,
+      "note": "404 dung nhung body van lon -> khong dung body length"
+    },
+    {
+      "domain": "madeindesign.com",
+      "junkHtmlStatus": 404,
+      "realPath": "/partenaires.html",
+      "realStatus": 200
+    }
+  ],
+  "targets": [
+    {
+      "domain": "vecteezy.com",
+      "load": "OK",
+      "linkHits": [
+        {
+          "text": "Affiliate Program",
+          "href": "https://www.vecteezy.com/affiliates",
+          "strong": true
+        }
+      ],
+      "pathHits": [
+        {
+          "path": "/affiliates",
+          "status": 200
+        }
+      ],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "affiliate",
+      "confidence": "high"
+    },
+    {
+      "domain": "nordicnest.se",
+      "load": "OK",
+      "linkHits": [
+        {
+          "href": "https://www.nordicnest.se/om-oss/affiliate/",
+          "strong": true
+        }
+      ],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "affiliate",
+      "confidence": "high"
+    },
+    {
+      "domain": "designbyamor.com",
+      "load": "OK",
+      "linkHits": [
+        {
+          "text": "Bli en affiliatepartner",
+          "href": "https://af.uppromote.com/7b7fdd-2a/register",
+          "strong": true
+        }
+      ],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": "uppromote",
+      "verdict": "affiliate",
+      "confidence": "high"
+    },
+    {
+      "domain": "design-bestseller.de",
+      "load": "OK",
+      "linkHits": [
+        {
+          "text": "Partnerprogramm",
+          "href": "https://ui.awin.com/merchant-profile/14674",
+          "strong": true
+        }
+      ],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": "awin",
+      "verdict": "affiliate",
+      "confidence": "high"
+    },
+    {
+      "domain": "madeindesign.com",
+      "load": "challenge_passed",
+      "linkHits": [
+        {
+          "text": "Espace professionnel",
+          "href": "https://www.madeindesign.com/service-pro.html",
+          "strong": false
+        }
+      ],
+      "pathHits": [
+        {
+          "path": "/partenaires.html",
+          "status": 200
+        }
+      ],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "partner_b2b",
+      "confidence": "medium"
+    },
+    {
+      "domain": "williamwoodmirrors.co.uk",
+      "load": "OK",
+      "linkHits": [
+        {
+          "text": "Trade",
+          "href": "https://www.williamwoodmirrors.co.uk/pages/trade",
+          "strong": false
+        },
+        {
+          "text": "Partner With Us",
+          "href": "https://www.williamwoodmirrors.co.uk/pages/partner-with-us",
+          "strong": false
+        }
+      ],
+      "pathHits": [
+        {
+          "path": "/pages/trade",
+          "status": 200
+        }
+      ],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "partner_trade",
+      "confidence": "medium"
+    },
+    {
+      "domain": "ozdesignfurniture.com.au",
+      "load": "OK",
+      "linkHits": [
+        {
+          "text": "STYLISTS & COMMERCIAL",
+          "href": "https://ozdesignfurniture.com.au/trade-commercial/",
+          "strong": false
+        }
+      ],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "partner_trade",
+      "confidence": "low"
+    },
+    {
+      "domain": "namly.dk",
+      "load": "OK",
+      "linkHits": [],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "none",
+      "confidence": "negative"
+    },
+    {
+      "domain": "finnishdesignshop.com",
+      "load": "OK",
+      "linkHits": [],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "none",
+      "confidence": "negative"
+    },
+    {
+      "domain": "thorvalddesign.com",
+      "load": "OK",
+      "finalUrl": "https://thorvalddesign.co.uk/",
+      "linkHits": [],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "none",
+      "confidence": "negative"
+    },
+    {
+      "domain": "mohd.it",
+      "load": "OK",
+      "finalUrl": "https://www.mohd.it/en/",
+      "linkHits": [],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "none",
+      "confidence": "medium_negative",
+      "note": "redirect /en/ - locale limitation"
+    },
+    {
+      "domain": "pazzodesign.it",
+      "load": "OK",
+      "linkHits": [],
+      "pathHits": [],
+      "junkBaseline": 404,
+      "platform": null,
+      "verdict": "none",
+      "confidence": "negative"
+    },
+    {
+      "domain": "flinders.nl",
+      "load": "BLOCKED_CLOUDFLARE",
+      "linkHits": null,
+      "pathHits": null,
+      "platform": null,
+      "verdict": "unknown",
+      "confidence": "blocked"
+    }
+  ],
+  "stats": {
+    "tested": 13,
+    "loadedOK": 12,
+    "blocked": 1,
+    "affiliate": 4,
+    "partnerOrTrade": 3,
+    "none": 5,
+    "unknown": 1,
+    "platformDetected": 2
+  }
+}
