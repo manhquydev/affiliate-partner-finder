@@ -17,10 +17,13 @@ import type { Company } from './types';
 const SEARCH_BASE = 'https://www.trustpilot.com/search';
 const REVIEW_BASE = 'https://www.trustpilot.com/review';
 
-/** Minimal, serializable shape returned by the injected reader. */
+/** Minimal, serializable shape returned by the injected reader.
+ * NOTE: Trustpilot's pageProps.hasMore is unreliable (returns false on page 1
+ * even though pagination.totalPages is 1000) — we page by `pagination` instead. */
 interface SearchReadResult {
   challenged: boolean;
-  hasMore: boolean | null;
+  currentPage: number | null;
+  totalPages: number | null;
   units: Array<{ name: string; domain: string; trustScore: number | null; reviews: number | null }>;
 }
 
@@ -34,13 +37,16 @@ function readTrustpilotSearch(): SearchReadResult {
     (s) => title.includes(s),
   );
   const el = document.getElementById('__NEXT_DATA__');
-  if (!el || !el.textContent) return { challenged, hasMore: null, units: [] };
+  if (!el || !el.textContent) return { challenged, currentPage: null, totalPages: null, units: [] };
   try {
     const data = JSON.parse(el.textContent) as any;
     const pp = data?.props?.pageProps;
+    const pag = pp?.pagination;
+    const currentPage = typeof pag?.currentPage === 'number' ? pag.currentPage : null;
+    const totalPages = typeof pag?.totalPages === 'number' ? pag.totalPages : null;
     let units = pp?.businessUnits;
     if (units && !Array.isArray(units) && Array.isArray(units.businessUnits)) units = units.businessUnits;
-    if (!Array.isArray(units)) return { challenged, hasMore: pp?.hasMore ?? null, units: [] };
+    if (!Array.isArray(units)) return { challenged, currentPage, totalPages, units: [] };
     const mapped = units.map((u: any) => ({
       name: u?.displayName || u?.identifyingName || '',
       domain: u?.identifyingName || '',
@@ -53,9 +59,9 @@ function readTrustpilotSearch(): SearchReadResult {
             ? u.numberOfReviews.total
             : null,
     }));
-    return { challenged, hasMore: pp?.hasMore ?? null, units: mapped };
+    return { challenged, currentPage, totalPages, units: mapped };
   } catch {
-    return { challenged, hasMore: null, units: [] };
+    return { challenged, currentPage: null, totalPages: null, units: [] };
   }
 }
 
@@ -128,7 +134,9 @@ export async function collect(
         if (out.length >= limit) break;
       }
 
-      if (res.hasMore === false) break;
+      // Stop when we've reached the last page (Trustpilot's hasMore is unreliable
+      // — use pagination.currentPage/totalPages). Empty pages already break above.
+      if (res.currentPage != null && res.totalPages != null && res.currentPage >= res.totalPages) break;
       if (out.length < limit) await sleep(delayMs);
     }
   } finally {
