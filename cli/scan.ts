@@ -1,6 +1,6 @@
 // Site scan via Playwright — mirrors lib/scan.ts semantics (probe isolation + classify).
 
-import type { Browser } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import { classify } from '../lib/classify';
 import { runDetector } from '../lib/detector';
 import { pathProbe } from '../lib/path-probe';
@@ -16,6 +16,9 @@ import type {
   DetectorResult,
   PathProbeResult,
 } from '../lib/types';
+
+/** Hard wall for one company (goto + settle + detector + path-probe). */
+export const DEFAULT_SCAN_BUDGET_MS = 120_000;
 
 function baseResult(company: Company, websiteUrl: string, detectorVersion: string): ScanResult {
   return {
@@ -41,7 +44,109 @@ function baseResult(company: Company, websiteUrl: string, detectorVersion: strin
 
 export type ScanCliOptions = {
   earlyExit?: boolean;
+  /** Overall per-company wall clock (default 120s). */
+  scanBudgetMs?: number;
+  /** Per path-probe fetch abort inside page (default 8s). */
+  probeFetchTimeoutMs?: number;
 };
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`${label} exceeded ${ms}ms`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
+async function scanOnPage(
+  page: Page,
+  company: Company,
+  websiteUrl: string,
+  run: RunConfig,
+  cfg: DetectorConfig,
+  opts: ScanCliOptions,
+): Promise<ScanResult> {
+  const result = baseResult(company, websiteUrl, cfg.detectorVersion);
+  const probeFetchTimeoutMs = opts.probeFetchTimeoutMs ?? 8000;
+
+  try {
+    await page.goto(websiteUrl, { waitUntil: 'load', timeout: run.tabTimeoutMs });
+  } catch {
+    result.loadStatus = 'timeout';
+    Object.assign(result, classify({ loadStatus: 'timeout' }));
+    return result;
+  }
+
+  await settle(page, 1200);
+
+  let det: DetectorResult | undefined;
+  try {
+    det = await evaluateInjectable(page, runDetector as (...args: never[]) => DetectorResult, cfg);
+  } catch {
+    det = undefined;
+  }
+  if (!det) {
+    result.loadStatus = 'error';
+    Object.assign(result, classify({ loadStatus: 'error' }));
+    return result;
+  }
+
+  const finalUrl = page.url() || websiteUrl;
+  let probe: PathProbeResult | undefined;
+
+  if (det.loadStatus === 'ok') {
+    const skipProbe = Boolean(opts.earlyExit) && shouldSkipPathProbe(det);
+    if (!skipProbe) {
+      try {
+        const origin = new URL(finalUrl).origin;
+        const probeBudget = Math.min(cfg.paths.length * probeFetchTimeoutMs + probeFetchTimeoutMs, 90_000);
+        probe = await withTimeout(
+          evaluateInjectable(
+            page,
+            pathProbe as (...args: never[]) => Promise<PathProbeResult>,
+            origin,
+            cfg.paths,
+            probeFetchTimeoutMs,
+          ),
+          probeBudget,
+          'pathProbe',
+        );
+      } catch {
+        probe = undefined;
+      }
+    }
+  }
+
+  const evidence: Evidence = {
+    linkHits: det.linkHits ?? [],
+    platformHits: det.platformHits ?? [],
+    pathHits: probe?.pathHits ?? [],
+    junkBaselineStatus: probe?.junkBaselineStatus ?? null,
+    totalLinks: det.totalLinks,
+  };
+  const cls = classify({
+    loadStatus: det.loadStatus,
+    linkHits: evidence.linkHits,
+    platformHits: evidence.platformHits,
+    pathHits: evidence.pathHits,
+  });
+
+  result.finalUrl = finalUrl;
+  result.loadStatus = det.loadStatus;
+  result.verdict = cls.verdict;
+  result.confidence = cls.confidence;
+  result.evidence = evidence;
+  result.scannedAt = new Date().toISOString();
+  return result;
+}
 
 export async function scanOneCli(
   browser: Browser,
@@ -51,81 +156,21 @@ export async function scanOneCli(
   cfg: DetectorConfig,
   opts: ScanCliOptions = {},
 ): Promise<ScanResult> {
-  const result = baseResult(company, websiteUrl, cfg.detectorVersion);
-  const context = await newScanContext(browser);
-  const page = await context.newPage();
-
+  const budget = opts.scanBudgetMs ?? DEFAULT_SCAN_BUDGET_MS;
+  let context: BrowserContext | undefined;
+  let page: Page | undefined;
   try {
-    try {
-      await page.goto(websiteUrl, { waitUntil: 'load', timeout: run.tabTimeoutMs });
-    } catch {
-      result.loadStatus = 'timeout';
-      Object.assign(result, classify({ loadStatus: 'timeout' }));
-      return result;
-    }
-
-    await settle(page, 1200);
-
-    let det: DetectorResult | undefined;
-    try {
-      det = await evaluateInjectable(page, runDetector as (...args: never[]) => DetectorResult, cfg);
-    } catch {
-      det = undefined;
-    }
-    if (!det) {
-      result.loadStatus = 'error';
-      Object.assign(result, classify({ loadStatus: 'error' }));
-      return result;
-    }
-
-    const finalUrl = page.url() || websiteUrl;
-    let probe: PathProbeResult | undefined;
-
-    if (det.loadStatus === 'ok') {
-      const skipProbe = Boolean(opts.earlyExit) && shouldSkipPathProbe(det);
-      if (!skipProbe) {
-        try {
-          const origin = new URL(finalUrl).origin;
-          probe = await evaluateInjectable(
-            page,
-            pathProbe as (...args: never[]) => Promise<PathProbeResult>,
-            origin,
-            cfg.paths,
-          );
-        } catch {
-          probe = undefined;
-        }
-      }
-    }
-
-    const evidence: Evidence = {
-      linkHits: det.linkHits ?? [],
-      platformHits: det.platformHits ?? [],
-      pathHits: probe?.pathHits ?? [],
-      junkBaselineStatus: probe?.junkBaselineStatus ?? null,
-      totalLinks: det.totalLinks,
-    };
-    const cls = classify({
-      loadStatus: det.loadStatus,
-      linkHits: evidence.linkHits,
-      platformHits: evidence.platformHits,
-      pathHits: evidence.pathHits,
-    });
-
-    result.finalUrl = finalUrl;
-    result.loadStatus = det.loadStatus;
-    result.verdict = cls.verdict;
-    result.confidence = cls.confidence;
-    result.evidence = evidence;
-    result.scannedAt = new Date().toISOString();
-    return result;
+    context = await newScanContext(browser);
+    page = await context.newPage();
+    return await withTimeout(scanOnPage(page, company, websiteUrl, run, cfg, opts), budget, `scanOne(${company.domain})`);
   } catch {
-    result.loadStatus = 'error';
-    Object.assign(result, classify({ loadStatus: 'error' }));
+    const result = baseResult(company, websiteUrl, cfg.detectorVersion);
+    result.loadStatus = 'timeout';
+    Object.assign(result, classify({ loadStatus: 'timeout' }));
     return result;
   } finally {
-    await page.close().catch(() => undefined);
-    await context.close().catch(() => undefined);
+    await page?.close().catch(() => undefined);
+    await context?.close().catch(() => undefined);
   }
 }
 

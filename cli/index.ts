@@ -22,6 +22,7 @@ type Args = {
   profile: string;
   headedScan: boolean;
   earlyExit: boolean;
+  acceptFailures: boolean;
   help: boolean;
 };
 
@@ -42,6 +43,7 @@ Options:
   --profile <dir>     Chrome persistent profile (default ~/.cache/affiliate-partner-finder/chrome-profile)
   --headed-scan       Headed browser for site scans
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
+  --accept-failures   Treat timeout/error rows as terminal on --resume (do not requeue)
   --help              Show help
 
 Ethics: concurrency ≤3, delay ≥1000 recommended. No CAPTCHA bypass.
@@ -61,6 +63,7 @@ function parseArgs(argv: string[]): Args {
     profile: DEFAULT_PROFILE_DIR,
     headedScan: false,
     earlyExit: false,
+    acceptFailures: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -77,6 +80,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--profile') args.profile = next();
     else if (a === '--headed-scan') args.headedScan = true;
     else if (a === '--early-exit') args.earlyExit = true;
+    else if (a === '--accept-failures') args.acceptFailures = true;
   }
   return args;
 }
@@ -121,9 +125,10 @@ function loadResultsMap(jsonlPath: string): Map<string, ScanResult> {
   return map;
 }
 
-function isTerminal(r: ScanResult): boolean {
-  // timeout/error remain retryable on --resume (mirror extension maxRetries intent across runs).
-  return r.loadStatus === 'ok' || r.loadStatus === 'blocked';
+function isTerminal(r: ScanResult, acceptFailures: boolean): boolean {
+  if (r.loadStatus === 'ok' || r.loadStatus === 'blocked') return true;
+  // timeout/error: retry on resume unless operator opted into accept-failures.
+  return acceptFailures;
 }
 
 async function main(): Promise<number> {
@@ -214,9 +219,11 @@ async function main(): Promise<number> {
 
   const pending = companies.filter((c) => {
     const prev = resultsMap.get(c.domain);
-    return !prev || !isTerminal(prev);
+    return !prev || !isTerminal(prev, args.acceptFailures);
   });
-  console.log(`[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit}`);
+  console.log(
+    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} acceptFailures=${args.acceptFailures}`,
+  );
 
   const browser = await launchScanBrowser(args.headedScan);
   let shuttingDown = false;

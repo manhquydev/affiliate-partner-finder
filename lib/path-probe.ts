@@ -11,15 +11,28 @@
 
 import type { PathProbeResult, PathHit } from './types';
 
+/**
+ * @param fetchTimeoutMs per-request abort (default 8s). Prevents hung fetches from
+ * stalling CLI workers forever; Chrome inject can rely on the same default.
+ */
 export async function pathProbe(
   origin: string,
   paths: string[],
+  fetchTimeoutMs = 8000,
 ): Promise<PathProbeResult> {
+  async function timedFetch(url: string): Promise<Response> {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), fetchTimeoutMs);
+    try {
+      return await fetch(url, { redirect: 'follow', signal: ac.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   let junk: number | 'err';
   try {
-    const r = await fetch(`${origin}/zzq-${Date.now()}-${Math.random().toString(36).slice(2)}`, {
-      redirect: 'follow',
-    });
+    const r = await timedFetch(`${origin}/zzq-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     junk = r.status;
   } catch {
     junk = 'err';
@@ -33,7 +46,7 @@ export async function pathProbe(
   const hits: PathHit[] = [];
   for (const p of paths) {
     try {
-      const r = await fetch(`${origin}${p}`, { redirect: 'follow' });
+      const r = await timedFetch(`${origin}${p}`);
       if (r.status !== junk && [200, 301, 302].includes(r.status)) {
         hits.push({
           path: p,
@@ -43,7 +56,7 @@ export async function pathProbe(
         });
       }
     } catch {
-      // network error on a single path — ignore, keep probing others.
+      // network/abort on a single path — ignore, keep probing others.
     }
   }
 
