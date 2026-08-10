@@ -16,6 +16,7 @@ import {
   CONFIDENCE_NOTE,
   USAGE_STEPS,
 } from '../../lib/labels';
+import { getEffectiveConfig, setConfigOverride, clearConfigOverride } from '../../lib/detector-config';
 import { PENDING_RUN_KEY, type ProgressEvent, type PendingRun } from '../../lib/messages';
 import type { Progress, ScanResult, RunConfig, Verdict } from '../../lib/types';
 
@@ -46,6 +47,13 @@ const sortEl = el<HTMLSelectElement>('sort');
 const countEl = el<HTMLSpanElement>('count');
 const exportCsvBtn = el<HTMLButtonElement>('export-csv');
 const exportJsonBtn = el<HTMLButtonElement>('export-json');
+const cfgStrong = el<HTMLTextAreaElement>('cfg-strong');
+const cfgWeak = el<HTMLTextAreaElement>('cfg-weak');
+const cfgPlatforms = el<HTMLTextAreaElement>('cfg-platforms');
+const cfgPaths = el<HTMLTextAreaElement>('cfg-paths');
+const cfgSaveBtn = el<HTMLButtonElement>('cfg-save');
+const cfgResetBtn = el<HTMLButtonElement>('cfg-reset');
+const cfgStatus = el<HTMLSpanElement>('cfg-status');
 
 const results = new Map<string, ScanResult>();
 const expanded = new Set<string>();
@@ -388,8 +396,46 @@ chrome.runtime.onMessage.addListener((msg: ProgressEvent) => {
   applyProgress(msg.progress);
 });
 
+// ---------- config editor (Đợt 3 / NFR-05) ----------
+/** Parse a textarea into a clean, deduped, lowercased list. */
+function parseList(text: string): string[] {
+  const items = text
+    .split(/[\n,]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
+  return [...new Set(items)];
+}
+
+async function loadConfigEditor() {
+  const eff = await getEffectiveConfig();
+  cfgStrong.value = eff.strong.join('\n');
+  cfgWeak.value = eff.weak.join('\n');
+  cfgPlatforms.value = eff.platforms.join('\n');
+  cfgPaths.value = eff.paths.join('\n');
+}
+
+cfgSaveBtn.addEventListener('click', async () => {
+  await setConfigOverride({
+    strong: parseList(cfgStrong.value),
+    weak: parseList(cfgWeak.value),
+    platforms: parseList(cfgPlatforms.value),
+    paths: parseList(cfgPaths.value),
+  });
+  await loadConfigEditor(); // re-normalize the textareas from the merged result
+  cfgStatus.textContent = 'Đã lưu. Áp dụng cho các lần quét sau.';
+  setTimeout(() => (cfgStatus.textContent = ''), 4000);
+});
+
+cfgResetBtn.addEventListener('click', async () => {
+  await clearConfigOverride();
+  await loadConfigEditor();
+  cfgStatus.textContent = 'Đã khôi phục mặc định.';
+  setTimeout(() => (cfgStatus.textContent = ''), 4000);
+});
+
 // ---------- init ----------
 async function init() {
+  void loadConfigEditor();
   populateHelp();
   for (const r of await getResults()) results.set(r.domain, r);
   const progress = await getProgress();

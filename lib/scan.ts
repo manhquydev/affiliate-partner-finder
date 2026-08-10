@@ -5,61 +5,18 @@
 import { classify } from './classify';
 import { runDetector } from './detector';
 import { pathProbe } from './path-probe';
-import { CONFIG, DETECTOR_VERSION } from './config';
+import { sleep, waitForComplete, closeTab } from './tab-utils';
 import type {
   Company,
   ScanResult,
   RunConfig,
   Evidence,
+  DetectorConfig,
   DetectorResult,
   PathProbeResult,
 } from './types';
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/** Resolve 'ok' when the tab finishes loading, or 'timeout' after timeoutMs. */
-function waitForComplete(
-  tabId: number,
-  timeoutMs: number,
-): Promise<'ok' | 'timeout'> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (v: 'ok' | 'timeout') => {
-      if (settled) return;
-      settled = true;
-      chrome.tabs.onUpdated.removeListener(listener);
-      clearTimeout(timer);
-      resolve(v);
-    };
-    const timer = setTimeout(() => finish('timeout'), timeoutMs);
-    function listener(id: number, info: chrome.tabs.TabChangeInfo) {
-      if (id === tabId && info.status === 'complete') finish('ok');
-    }
-    chrome.tabs.onUpdated.addListener(listener);
-    // The tab may already be 'complete' before the listener attached (cached /
-    // instant-error / same-origin redirect) — catch that so we don't spuriously
-    // time out.
-    chrome.tabs
-      .get(tabId)
-      .then((t) => {
-        if (t.status === 'complete') finish('ok');
-      })
-      .catch(() => {});
-  });
-}
-
-async function closeTab(tabId?: number) {
-  if (tabId === undefined) return;
-  try {
-    await chrome.tabs.remove(tabId);
-  } catch {
-    /* tab already gone */
-  }
-}
-
-function baseResult(company: Company, websiteUrl: string): ScanResult {
+function baseResult(company: Company, websiteUrl: string, detectorVersion: string): ScanResult {
   return {
     domain: company.domain,
     websiteUrl,
@@ -74,20 +31,22 @@ function baseResult(company: Company, websiteUrl: string): ScanResult {
       junkBaselineStatus: null,
     },
     scannedAt: new Date().toISOString(),
-    detectorVersion: DETECTOR_VERSION,
+    detectorVersion,
     name: company.name,
     trustScore: company.trustScore,
     reviews: company.reviews,
   };
 }
 
-/** Scan a single company's website and return a fully classified ScanResult. */
+/** Scan a single company's website and return a fully classified ScanResult.
+ * `cfg` is the effective detector config (default + any user override). */
 export async function scanOne(
   company: Company,
   websiteUrl: string,
   run: RunConfig,
+  cfg: DetectorConfig,
 ): Promise<ScanResult> {
-  const result = baseResult(company, websiteUrl);
+  const result = baseResult(company, websiteUrl, cfg.detectorVersion);
   let tabId: number | undefined;
 
   try {
@@ -113,7 +72,7 @@ export async function scanOne(
     const [detWrap] = await chrome.scripting.executeScript({
       target: { tabId },
       func: runDetector,
-      args: [CONFIG],
+      args: [cfg],
     });
     const det = detWrap?.result as DetectorResult | undefined;
     if (!det) {
@@ -142,7 +101,7 @@ export async function scanOne(
         const [probeWrap] = await chrome.scripting.executeScript({
           target: { tabId },
           func: pathProbe,
-          args: [origin, CONFIG.paths],
+          args: [origin, cfg.paths],
         });
         probe = probeWrap?.result as PathProbeResult | undefined;
       } catch {

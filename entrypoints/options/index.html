@@ -107,6 +107,25 @@
           ⚠ <strong>"Bị chặn" (Chưa rõ) KHÔNG đồng nghĩa "Không có"</strong> — site chặn bot nghĩa là ta chưa quét được; hãy tự kiểm tra thủ công.
         </p>
       </details>
+
+      <details class="help">
+        <summary>⚙ Cấu hình bộ dò (nâng cao)</summary>
+        <p class="note">
+          Mỗi mục 1 dòng (hoặc phân tách bằng dấu phẩy). Để TRỐNG một ô = dùng mặc định.
+          Lưu xong sẽ áp dụng cho các lần quét sau. Nền tảng khớp theo <em>tên miền</em> (vd <code>awin</code>, <code>uppromote</code>).
+        </p>
+        <div class="config-grid">
+          <label>strong ⇒ Có affiliate<textarea id="cfg-strong" rows="5" spellcheck="false"></textarea></label>
+          <label>weak ⇒ Partner/Trade<textarea id="cfg-weak" rows="5" spellcheck="false"></textarea></label>
+          <label>Nền tảng affiliate (host)<textarea id="cfg-platforms" rows="5" spellcheck="false"></textarea></label>
+          <label>Đường dẫn probe<textarea id="cfg-paths" rows="5" spellcheck="false"></textarea></label>
+        </div>
+        <div class="buttons cfg-buttons">
+          <button id="cfg-save" type="button">Lưu cấu hình</button>
+          <button id="cfg-reset" type="button" class="ghost">Khôi phục mặc định</button>
+          <span id="cfg-status" class="muted"></span>
+        </div>
+      </details>
     </div>
     <script type="module" src="./main.ts"></script>
   </body>

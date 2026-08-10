@@ -15,6 +15,7 @@ import { collect } from './collect';
 import { resolve } from './resolve';
 import { scanOne } from './scan';
 import { DEFAULT_RUN_CONFIG } from './config';
+import { getEffectiveConfig } from './detector-config';
 import {
   saveCompanies,
   getCompanies,
@@ -26,7 +27,7 @@ import {
   getRunConfig,
   clearRun,
 } from './storage';
-import type { Company, ScanResult, Progress, RunConfig, RunMode } from './types';
+import type { Company, ScanResult, Progress, RunConfig, RunMode, DetectorConfig } from './types';
 
 export type { RunMode } from './types';
 
@@ -139,7 +140,12 @@ async function patch(p: Partial<Progress>): Promise<Progress | null> {
 // ---------- the loop ----------
 
 /** Scan a list of companies serially with throttle + retry. Returns count done. */
-async function scanList(companies: Company[], run: RunConfig, hooks: RunHooks): Promise<number> {
+async function scanList(
+  companies: Company[],
+  run: RunConfig,
+  cfg: DetectorConfig,
+  hooks: RunHooks,
+): Promise<number> {
   let completed = 0;
   for (const company of companies) {
     const p = await getProgress();
@@ -148,7 +154,7 @@ async function scanList(companies: Company[], run: RunConfig, hooks: RunHooks): 
     await patch({ currentDomain: company.domain });
 
     const url = await resolve(company.domain, run.resolveViaReviewPage);
-    let result = await scanOne(company, url, run);
+    let result = await scanOne(company, url, run, cfg);
 
     let attempts = 0;
     while ((result.loadStatus === 'timeout' || result.loadStatus === 'error') && attempts < run.maxRetries) {
@@ -156,7 +162,7 @@ async function scanList(companies: Company[], run: RunConfig, hooks: RunHooks): 
       if (!pp || !pp.running || pp.paused) break;
       attempts++;
       await sleep(run.delayMs);
-      result = await scanOne(company, url, run);
+      result = await scanOne(company, url, run, cfg);
     }
 
     await saveResult(result);
@@ -198,6 +204,7 @@ export async function runScan(
   hooks.onProgress((await getProgress())!);
 
   try {
+    const cfg = await getEffectiveConfig();
     const byDomain = new Map((await getResults()).map((r) => [r.domain, r]));
     let toScan: Company[];
     if (mode === 'refreshStale') {
@@ -213,7 +220,7 @@ export async function runScan(
     const started = await patch({ total: toScan.length });
     if (started) hooks.onProgress(started);
 
-    const completed = await scanList(toScan, run, hooks);
+    const completed = await scanList(toScan, run, cfg, hooks);
 
     const cur = await getProgress();
     if (cur?.paused) return; // paused mid-run — stay resumable, do not mark finished
@@ -260,10 +267,11 @@ export async function resumeIfInterrupted(hooks: RunHooks): Promise<boolean> {
 
   startHeartbeat();
   try {
+    const cfg = await getEffectiveConfig();
     const reset = await patch({ total: remaining.length, completed: 0, error: null });
     if (reset) hooks.onProgress(reset);
 
-    const completed = await scanList(remaining, run, hooks);
+    const completed = await scanList(remaining, run, cfg, hooks);
 
     const cur = await getProgress();
     if (cur?.paused) return true; // paused again — stay resumable, don't finish (review H2)

@@ -1,113 +1,138 @@
-// Collect (docs/08 Bước 1): fetch Trustpilot /search?query=&page=N from the
-// background worker (host_permissions covers *.trustpilot.com), parse
-// __NEXT_DATA__, and map businessUnits[] to Company records.
+// Collect (docs/08 Bước 1) — via a REAL Trustpilot tab, not a raw fetch.
 //
-// Ethics: gentle delay between pages, retry a challenge once, never bypass.
+// Why a tab: a background/extension-page fetch to trustpilot.com gets a
+// Cloudflare 403 "verifying your connection" challenge after the first page
+// (confirmed: server-side fetch returns 403), which made collection stall at
+// ~10 companies. Loading /search in an actual tab uses the user's real browser
+// session (cookies + JS run) so Cloudflare passes — exactly the trick used for
+// scanning target sites. We read __NEXT_DATA__ from the loaded page, then page
+// forward by navigating the same tab (?page=N).
+//
+// De-dup by `skip` (domains already known) makes repeat runs page forward and
+// return only NEW companies.
 
+import { sleep, waitForComplete, closeTab } from './tab-utils';
 import type { Company } from './types';
-import { extractNextData, looksLikeChallenge } from './next-data';
 
 const SEARCH_BASE = 'https://www.trustpilot.com/search';
 const REVIEW_BASE = 'https://www.trustpilot.com/review';
 
-interface BusinessUnit {
-  displayName?: string;
-  identifyingName?: string; // = domain
-  trustScore?: number;
-  numberOfReviews?: number;
-}
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/** Pull businessUnits[] out of a parsed __NEXT_DATA__ object, defensively. */
-function readBusinessUnits(data: unknown): BusinessUnit[] {
-  const units = (data as any)?.props?.pageProps?.businessUnits;
-  return Array.isArray(units) ? (units as BusinessUnit[]) : [];
-}
-
-function readHasMore(data: unknown): boolean {
-  const hasMore = (data as any)?.props?.pageProps?.hasMore;
-  // If Trustpilot omits the flag, assume more pages may exist and let `limit` stop us.
-  return hasMore !== false;
-}
-
-function toCompany(bu: BusinessUnit): Company | null {
-  const domain = bu.identifyingName?.trim();
-  if (!domain) return null;
-  return {
-    name: bu.displayName?.trim() || domain,
-    domain,
-    trustScore: typeof bu.trustScore === 'number' ? bu.trustScore : null,
-    reviews: typeof bu.numberOfReviews === 'number' ? bu.numberOfReviews : null,
-    trustpilotUrl: `${REVIEW_BASE}/${domain}`,
-  };
-}
-
-/** Fetch one search page's HTML; retry once if a challenge page comes back. */
-async function fetchSearchPage(query: string, page: number): Promise<string> {
-  const url = `${SEARCH_BASE}?query=${encodeURIComponent(query)}&page=${page}`;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(url, { headers: { accept: 'text/html' } });
-    const html = await res.text();
-    if (looksLikeChallenge(html) && attempt === 0) {
-      await sleep(2500); // give the browser session a moment; do NOT bypass
-      continue;
-    }
-    return html;
-  }
-  return '';
+/** Minimal, serializable shape returned by the injected reader. */
+interface SearchReadResult {
+  challenged: boolean;
+  hasMore: boolean | null;
+  units: Array<{ name: string; domain: string; trustScore: number | null; reviews: number | null }>;
 }
 
 /**
- * Collect up to `limit` NEW companies for a query, paginating gently.
- *
- * `skip` holds domains already known/scanned from previous runs. Because seen
- * domains are skipped, repeat runs naturally page FORWARD (early pages are all
- * skipped → collection goes deeper) — this is why a second run finds new
- * companies instead of repeating the first ~20-30 (research Q2). No separate
- * pagination cursor is needed; domain de-dup IS the cursor.
- *
- * @returns deduped Company[] (by domain), none of which are in `skip`.
+ * Injected into the loaded Trustpilot search tab. Self-contained (no module
+ * refs) — reads __NEXT_DATA__ and maps businessUnits to minimal records.
+ */
+function readTrustpilotSearch(): SearchReadResult {
+  const title = (document.title || '').toLowerCase();
+  const challenged = ['just a moment', 'verifying', 'attention required', 'checking your browser', 'access denied'].some(
+    (s) => title.includes(s),
+  );
+  const el = document.getElementById('__NEXT_DATA__');
+  if (!el || !el.textContent) return { challenged, hasMore: null, units: [] };
+  try {
+    const data = JSON.parse(el.textContent) as any;
+    const pp = data?.props?.pageProps;
+    let units = pp?.businessUnits;
+    if (units && !Array.isArray(units) && Array.isArray(units.businessUnits)) units = units.businessUnits;
+    if (!Array.isArray(units)) return { challenged, hasMore: pp?.hasMore ?? null, units: [] };
+    const mapped = units.map((u: any) => ({
+      name: u?.displayName || u?.identifyingName || '',
+      domain: u?.identifyingName || '',
+      trustScore:
+        typeof u?.trustScore === 'number' ? u.trustScore : typeof u?.trustScore?.stars === 'number' ? u.trustScore.stars : null,
+      reviews:
+        typeof u?.numberOfReviews === 'number'
+          ? u.numberOfReviews
+          : typeof u?.numberOfReviews?.total === 'number'
+            ? u.numberOfReviews.total
+            : null,
+    }));
+    return { challenged, hasMore: pp?.hasMore ?? null, units: mapped };
+  } catch {
+    return { challenged, hasMore: null, units: [] };
+  }
+}
+
+/** Read the current tab's search results, retrying while Cloudflare verifies. */
+async function readPage(tabId: number): Promise<SearchReadResult | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await sleep(attempt === 0 ? 900 : 2500);
+    const [wrap] = await chrome.scripting.executeScript({ target: { tabId }, func: readTrustpilotSearch });
+    const res = wrap?.result as SearchReadResult | undefined;
+    if (!res) return null;
+    if (res.units.length > 0) return res;
+    if (res.challenged) continue; // still on the Cloudflare interstitial — wait more
+    return res; // loaded, genuinely empty
+  }
+  return null;
+}
+
+/**
+ * Collect up to `limit` NEW companies (not in `skip`) for a query, via a real
+ * Trustpilot tab, paging forward until enough new are found or pages run out.
  */
 export async function collect(
   query: string,
   limit: number,
   skip: Set<string> = new Set(),
   delayMs = 1500,
-  maxPages = 25,
+  maxPages = 40,
 ): Promise<Company[]> {
   const out: Company[] = [];
   const seen = new Set<string>();
+  let tabId: number | undefined;
 
-  for (let page = 1; page <= maxPages && out.length < limit; page++) {
-    const html = await fetchSearchPage(query, page);
-    if (!html) break;
-    const data = extractNextData(html);
-    if (!data) {
-      // A challenge on the FIRST page means we got nothing — surface it. On a
-      // later page, keep the companies already collected rather than discarding.
-      if (looksLikeChallenge(html)) {
-        if (out.length > 0) break;
-        throw new Error('Trustpilot bot-check active — try again shortly (not bypassed).');
+  try {
+    for (let page = 1; page <= maxPages && out.length < limit; page++) {
+      const url = `${SEARCH_BASE}?query=${encodeURIComponent(query)}&page=${page}`;
+      if (tabId === undefined) {
+        const tab = await chrome.tabs.create({ url, active: false });
+        tabId = tab.id;
+      } else {
+        await chrome.tabs.update(tabId, { url });
+        await sleep(500); // let the navigation flip status to 'loading' first
       }
-      break;
-    }
-    const units = readBusinessUnits(data);
-    if (units.length === 0) break;
+      if (tabId === undefined) break;
 
-    for (const bu of units) {
-      const c = toCompany(bu);
-      if (!c) continue;
-      if (skip.has(c.domain) || seen.has(c.domain)) continue; // already known → page past it
-      seen.add(c.domain);
-      out.push(c);
-      if (out.length >= limit) break;
-    }
+      await waitForComplete(tabId, 25000);
+      const res = await readPage(tabId);
 
-    if (!readHasMore(data)) break;
-    if (out.length < limit) await sleep(delayMs);
+      if (!res || res.units.length === 0) {
+        if (out.length > 0) break; // keep what we have
+        if (res?.challenged) {
+          throw new Error(
+            'Trustpilot đang kiểm tra trình duyệt (Cloudflare). Mở trustpilot.com/search một lần trong tab để qua kiểm tra, rồi thử lại — không bypass.',
+          );
+        }
+        break;
+      }
+
+      for (const u of res.units) {
+        const domain = (u.domain || '').trim();
+        if (!domain) continue;
+        if (skip.has(domain) || seen.has(domain)) continue; // already known → page past it
+        seen.add(domain);
+        out.push({
+          name: u.name || domain,
+          domain,
+          trustScore: typeof u.trustScore === 'number' ? u.trustScore : null,
+          reviews: typeof u.reviews === 'number' ? u.reviews : null,
+          trustpilotUrl: `${REVIEW_BASE}/${domain}`,
+        });
+        if (out.length >= limit) break;
+      }
+
+      if (res.hasMore === false) break;
+      if (out.length < limit) await sleep(delayMs);
+    }
+  } finally {
+    await closeTab(tabId);
   }
 
   return out.slice(0, limit);

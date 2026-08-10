@@ -74,6 +74,14 @@ docs/                 tài liệu thiết kế (nguồn sự thật)
   - **Quét lại từ đầu** — xoá sạch và quét lại.
 - **Thông báo** hệ thống khi quét xong.
 
+## Vì sao trước đây dừng ~10 & cách quét nhiều hơn
+- **Nguyên nhân:** thu thập danh sách bằng `fetch` tới Trustpilot bị **Cloudflare chặn (403)** sau trang 1 → dừng sớm. Đã đổi sang **mở một tab Trustpilot thật** để thu thập: trình duyệt dùng phiên/cookie của bạn vượt Cloudflare, đọc `__NEXT_DATA__`, rồi **tự chuyển trang** `?page=N` để lấy nhiều công ty.
+- **Để quét nhiều:** đặt **Số công ty** lớn (vd 100–200), giữ **tab bảng điều khiển mở**. Bộ thu thập sẽ lật nhiều trang cho tới khi đủ số lượng hoặc hết trang. Lần chạy trước đó đã quét domain nào thì lần này **tự bỏ qua** (lấy công ty MỚI) — muốn quét lại tất cả thì bấm **Quét lại từ đầu**.
+- Lưu ý: nếu Trustpilot hiện trang "verifying" liên tục, hãy **mở trustpilot.com/search một lần trong tab thường** để qua kiểm tra rồi chạy lại (không bypass).
+
+## Cấu hình bộ dò (nâng cao)
+Trong bảng điều khiển, mục **⚙ Cấu hình bộ dò**: sửa/bổ sung danh sách từ khoá `strong`/`weak`, **nền tảng affiliate** (khớp theo tên miền), và **đường dẫn probe**. Lưu vào `chrome.storage.local` (giữ qua "Quét lại từ đầu"). Để trống một ô = dùng mặc định. Áp dụng cho các lần quét sau — mở rộng đa ngôn ngữ/nền tảng không cần build lại.
+
 ## Giới hạn đã biết (v1)
 - Quét chỉ tiến khi **tab dashboard còn mở** (đánh đổi để chạy dài ổn định; không bị giới hạn service worker). Đóng tab giữa chừng → mở lại tự tiếp tục các mục chưa quét.
 - Tạm dừng rồi Tiếp tục ở chế độ "Làm mới mục cũ" có thể không quét lại đúng các mục đang dở (best-effort v1); chế độ "Quét công ty mới" thì tiếp tục chuẩn.
