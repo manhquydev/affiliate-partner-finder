@@ -65,7 +65,19 @@ test/                 Vitest specs + fixtures/golden.ts + verify-golden.mjs
 docs/                 tài liệu thiết kế (nguồn sự thật)
 ```
 
+## Cách chạy dài & tích luỹ (v1.1)
+- Vòng lặp quét chạy trong **trang bảng điều khiển** (options, mở trong tab) — không ở service worker → **chạy dài không bị đứng**, không phải bấm "Tiếp tục". **Lưu ý: giữ tab bảng điều khiển mở** khi đang quét (nền/minimize OK, đóng thì dừng — mở lại sẽ tự tiếp tục).
+- Popup "Bắt đầu & mở bảng" sẽ mở dashboard và quét luôn.
+- **Chống trùng + tích luỹ:** kết quả lưu bền ở IndexedDB. 3 chế độ ở dashboard:
+  - **Quét công ty mới** — giữ kết quả cũ, bỏ qua domain đã quét, lấy công ty MỚI (page sâu hơn).
+  - **Làm mới mục cũ** — quét lại các mục có kết quả cũ hơn "Làm mới sau (ngày)".
+  - **Quét lại từ đầu** — xoá sạch và quét lại.
+- **Thông báo** hệ thống khi quét xong.
+
 ## Giới hạn đã biết (v1)
+- Quét chỉ tiến khi **tab dashboard còn mở** (đánh đổi để chạy dài ổn định; không bị giới hạn service worker). Đóng tab giữa chừng → mở lại tự tiếp tục các mục chưa quét.
+- Tạm dừng rồi Tiếp tục ở chế độ "Làm mới mục cũ" có thể không quét lại đúng các mục đang dở (best-effort v1); chế độ "Quét công ty mới" thì tiếp tục chuẩn.
+- Thông báo dùng icon tối giản (data URI); một số bản Chrome có thể bỏ qua icon — trạng thái "Hoàn tất" vẫn hiển thị ở dashboard.
 - `mohd.it` redirect `/en/` có thể bỏ sót affiliate tiếng bản địa → `none/medium` (chấp nhận, v1.1 quét thêm trang gốc).
 - Site chặn bot (Cloudflare) → `unknown/blocked`, **không** kết luận `none` (user tự kiểm tra thủ công).
 - Trustpilot có bot-check gián đoạn → collect retry nhẹ, không bypass; nếu vẫn chặn sẽ báo lỗi.

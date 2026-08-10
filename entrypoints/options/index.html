@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Mở options như một tab đầy đủ (research Q1) thay vì cửa sổ nhỏ. -->
+    <meta name="manifest.open_in_tab" content="true" />
+    <title>Bảng điều khiển — Trình dò Affiliate/Partner</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Trình dò Affiliate/Partner — Bảng điều khiển</h1>
+        <span class="ver">v1.0.0 · Trustpilot</span>
+      </header>
+
+      <form id="run-form" class="controls">
+        <label>
+          <span>Từ khoá (Trustpilot)</span>
+          <input id="query" type="text" value="design" autocomplete="off" required />
+        </label>
+        <label class="narrow">
+          <span>Số công ty</span>
+          <input id="limit" type="number" min="1" max="200" value="20" />
+        </label>
+        <label class="narrow">
+          <span>Độ trễ (ms)</span>
+          <input id="delay" type="number" min="0" max="10000" step="500" value="2000" />
+        </label>
+        <label class="narrow">
+          <span>Làm mới sau (ngày)</span>
+          <input id="stale-days" type="number" min="1" max="365" value="30" />
+        </label>
+        <label class="check">
+          <input id="resolve-exact" type="checkbox" />
+          <span>Lấy URL chính xác</span>
+        </label>
+        <div class="buttons">
+          <button id="start" type="submit" title="Lấy & quét công ty MỚI, giữ kết quả cũ">Quét công ty mới</button>
+          <button id="refresh-stale" type="button" class="ghost" title="Quét lại các mục đã cũ hơn số ngày ở trên">Làm mới mục cũ</button>
+          <button id="restart" type="button" class="ghost" title="Xoá toàn bộ và quét lại từ đầu">Quét lại từ đầu</button>
+          <button id="pause" type="button" disabled>Tạm dừng</button>
+          <button id="resume" type="button" disabled>Tiếp tục</button>
+          <button id="clear" type="button" class="ghost">Xoá dữ liệu</button>
+        </div>
+      </form>
+
+      <div id="status" class="status" role="status"></div>
+
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Tìm tên miền…" />
+        <label>Lọc kết quả:
+          <select id="filter">
+            <option value="all">Tất cả</option>
+            <option value="affiliate">Có affiliate</option>
+            <option value="partner_trade">Partner/Trade</option>
+            <option value="none">Không có</option>
+            <option value="unknown">Chưa rõ (bị chặn)</option>
+          </select>
+        </label>
+        <label>Sắp xếp:
+          <select id="sort">
+            <option value="default">Mặc định</option>
+            <option value="trustScore">Điểm Trust ↓</option>
+            <option value="reviews">Số review ↓</option>
+            <option value="domain">Tên miền A→Z</option>
+            <option value="verdict">Nhóm kết quả</option>
+          </select>
+        </label>
+        <span id="count" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="export-csv" type="button" disabled>Xuất CSV</button>
+        <button id="export-json" type="button" disabled>Xuất JSON</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="results">
+          <thead>
+            <tr>
+              <th class="tiny"></th>
+              <th>Tên miền</th>
+              <th>Kết quả</th>
+              <th>Độ tin</th>
+              <th>Tải</th>
+              <th class="num">Điểm</th>
+              <th class="num">Review</th>
+              <th>Bằng chứng</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="empty muted">Chưa có kết quả. Nhập từ khoá và bấm "Bắt đầu".</p>
+      </div>
+
+      <details class="help" open>
+        <summary>❓ Hướng dẫn &amp; ý nghĩa kết quả</summary>
+        <h2>Các bước dùng</h2>
+        <ol id="usage-steps"></ol>
+        <h2>Ý nghĩa "Kết quả"</h2>
+        <table class="legend">
+          <thead><tr><th>Nhãn</th><th>Nghĩa</th><th>Nên làm gì</th></tr></thead>
+          <tbody id="legend-rows"></tbody>
+        </table>
+        <p class="note" id="confidence-note"></p>
+        <p class="note warn">
+          ⚠ <strong>"Bị chặn" (Chưa rõ) KHÔNG đồng nghĩa "Không có"</strong> — site chặn bot nghĩa là ta chưa quét được; hãy tự kiểm tra thủ công.
+        </p>
+      </details>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

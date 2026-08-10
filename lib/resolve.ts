@@ -27,16 +27,23 @@ export async function resolve(
   viaReviewPage = false,
 ): Promise<string> {
   if (viaReviewPage) {
+    // Bound the fetch: an untimed fetch can hang the run loop (and, in a service
+    // worker, a >30s response is a documented hard-kill). 12s is plenty.
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 12000);
     try {
       const res = await fetch(`${REVIEW_BASE}/${domain}`, {
         headers: { accept: 'text/html' },
+        signal: ac.signal,
       });
       const html = await res.text();
       const data = extractNextData(html);
       const url = data ? readWebsiteUrl(data) : null;
       if (url) return url;
     } catch {
-      // fall through to the cheap fallback
+      // timeout / network error → fall through to the cheap fallback
+    } finally {
+      clearTimeout(timer);
     }
   }
   return domainToUrl(domain);

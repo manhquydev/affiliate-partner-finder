@@ -1,23 +1,20 @@
-// Message contract between popup and background service worker.
+// Cross-context messaging. The scan loop runs in the dashboard page and
+// broadcasts progress so an open popup can show a live status glance. IndexedDB
+// is the source of truth; this is only a live nudge.
 
-import type { Progress, ScanResult, RunConfig } from './types';
+import type { Progress, ScanResult } from './types';
 
-export type PopupToBg =
-  | { type: 'START'; run: Partial<RunConfig> }
-  | { type: 'PAUSE' }
-  | { type: 'RESUME' }
-  | { type: 'CLEAR' }
-  | { type: 'GET_STATE' };
-
-/** Broadcast from background whenever progress or a new result lands. */
+/** Broadcast from the dashboard whenever progress or a new result lands. */
 export interface ProgressEvent {
   type: 'PROGRESS';
   progress: Progress;
   result?: ScanResult;
 }
 
-/** Reply to GET_STATE. */
-export interface StateReply {
-  progress: Progress | null;
-  results: ScanResult[];
+/** Popup → dashboard: a pending run request handed off via chrome.storage.session. */
+export interface PendingRun {
+  run: Partial<import('./types').RunConfig>;
+  mode: 'new' | 'refreshStale' | 'restart';
 }
+
+export const PENDING_RUN_KEY = 'pendingRun';

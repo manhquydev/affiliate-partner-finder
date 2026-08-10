@@ -61,14 +61,22 @@ async function fetchSearchPage(query: string, page: number): Promise<string> {
 }
 
 /**
- * Collect up to `limit` companies for a query, paginating gently.
- * @returns deduped Company[] (by domain).
+ * Collect up to `limit` NEW companies for a query, paginating gently.
+ *
+ * `skip` holds domains already known/scanned from previous runs. Because seen
+ * domains are skipped, repeat runs naturally page FORWARD (early pages are all
+ * skipped → collection goes deeper) — this is why a second run finds new
+ * companies instead of repeating the first ~20-30 (research Q2). No separate
+ * pagination cursor is needed; domain de-dup IS the cursor.
+ *
+ * @returns deduped Company[] (by domain), none of which are in `skip`.
  */
 export async function collect(
   query: string,
   limit: number,
+  skip: Set<string> = new Set(),
   delayMs = 1500,
-  maxPages = 10,
+  maxPages = 25,
 ): Promise<Company[]> {
   const out: Company[] = [];
   const seen = new Set<string>();
@@ -91,11 +99,11 @@ export async function collect(
 
     for (const bu of units) {
       const c = toCompany(bu);
-      if (c && !seen.has(c.domain)) {
-        seen.add(c.domain);
-        out.push(c);
-        if (out.length >= limit) break;
-      }
+      if (!c) continue;
+      if (skip.has(c.domain) || seen.has(c.domain)) continue; // already known → page past it
+      seen.add(c.domain);
+      out.push(c);
+      if (out.length >= limit) break;
     }
 
     if (!readHasMore(data)) break;

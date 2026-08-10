@@ -58,3 +58,15 @@ queued → resolving → scanning → done(confirmed|weak|none)
 - Service worker MV3 có thể bị kill → dùng queue bền trong IndexedDB + `chrome.alarms` để hồi phục.
 - Tab ẩn không thực sự "ẩn"; dùng cửa sổ riêng minimized hoặc tab background. Tránh làm phiền user.
 - Một số site chặn iframe → phải dùng tab thật, không iframe.
+
+## 8. Cập nhật v1.1 — vòng lặp quét chạy ở trang dashboard (không ở service worker)
+**Vấn đề thực tế:** chạy dài (>~10 site) bị đứng, phải bấm "Tiếp tục". Nguyên nhân: SW MV3 bị Chrome kill (idle 30s — `setTimeout` không giữ SW sống; trần 5 phút; `fetch` >30s bị kill). `chrome.alarms` resume chỉ là lưới an toàn, độ trễ cao → kiến trúc dễ vỡ.
+
+**Thay đổi:**
+- **Orchestrator (collect + hàng đợi quét) chuyển sang chạy trong TRANG DASHBOARD** (`entrypoints/options` + `lib/run-engine.ts`). Trang đang mở là extension page, **không dính giới hạn lifetime** của SW → chạy dài ổn định, bỏ `chrome.alarms`/resume thủ công. Ràng buộc: **tab dashboard phải mở** khi quét (nền/minimize OK).
+- **Service worker rỗng** (`entrypoints/background.ts`) — không còn điều phối.
+- **IndexedDB là nguồn sự thật chung**: popup + dashboard đọc trực tiếp. Popup chỉ là bộ khởi chạy (ghi `pendingRun` vào `chrome.storage.session` rồi mở dashboard) + xem lướt (nghe `PROGRESS`).
+- **Chống trùng chéo giữa các lần chạy**: không xoá kết quả cũ khi START; bỏ qua domain đã quét (dedup) → mỗi lần collect **page sâu hơn** lấy công ty MỚI (dedup thay cho con trỏ phân trang). 3 chế độ: `new` (quét công ty mới), `refreshStale` (quét lại mục cũ > `staleDays`), `restart` (xoá & quét lại).
+- **Khoá đa-tab** qua `chrome.storage.session` + guard trong-tab tránh chạy 2 vòng lặp song song.
+- **Thông báo** `chrome.notifications` khi quét xong (chạy dài không cần giám sát).
+- `resolve()` thêm timeout 12s cho fetch (tránh treo/kill).

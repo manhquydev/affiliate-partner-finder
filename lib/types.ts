@@ -10,6 +10,9 @@ export type Confidence = 'high' | 'medium' | 'low' | 'blocked';
 /** Whether the target page loaded well enough to trust a verdict. */
 export type LoadStatus = 'ok' | 'blocked' | 'timeout' | 'error';
 
+/** Scan run mode: collect new / re-scan stale / wipe and restart. */
+export type RunMode = 'new' | 'refreshStale' | 'restart';
+
 /** Lifecycle of a single company job (docs/04 §4). */
 export type JobState =
   | 'queued'
@@ -124,6 +127,8 @@ export interface RunConfig {
   tabTimeoutMs: number;
   /** if true, resolve exact websiteUrl via Trustpilot review page; else use domain. */
   resolveViaReviewPage: boolean;
+  /** re-scan a domain whose result is older than this many days (refreshStale mode). */
+  staleDays: number;
 }
 
 /** Persisted progress cursor so a run resumes after popup close / SW kill. */
@@ -137,4 +142,6 @@ export interface Progress {
   updatedAt: string;
   /** surfaced to the popup when a phase fails (e.g. Trustpilot bot-check). */
   error?: string | null;
+  /** which mode the active run uses — so resume re-derives the right work set. */
+  mode?: RunMode;
 }

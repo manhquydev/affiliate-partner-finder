@@ -124,4 +124,5 @@ export const DEFAULT_RUN_CONFIG: RunConfig = {
   maxRetries: 2,
   tabTimeoutMs: 20000,
   resolveViaReviewPage: false,
+  staleDays: 30,
 };
