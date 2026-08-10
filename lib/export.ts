@@ -95,3 +95,55 @@ export function toCSV(results: ScanResult[]): string {
 export function toJSON(results: ScanResult[]): string {
   return JSON.stringify(results, null, 2);
 }
+
+/** End-user triage: true if any affiliate OR partner signal; unknown if page unusable. */
+export type SimpleHit = 'true' | 'false' | 'unknown';
+
+export function simpleHit(r: ScanResult): SimpleHit {
+  if (r.loadStatus !== 'ok') return 'unknown';
+  const { linkHits, platformHits, pathHits } = r.evidence;
+  if ((linkHits?.length ?? 0) > 0 || (platformHits?.length ?? 0) > 0 || (pathHits?.length ?? 0) > 0) {
+    return 'true';
+  }
+  return 'false';
+}
+
+/** Short human hint — not technical diagnostics. */
+export function simpleHint(r: ScanResult): string {
+  const hit = simpleHit(r);
+  if (hit === 'unknown') {
+    return 'Không mở được trang — mở website thủ công để kiểm tra';
+  }
+  if (hit === 'false') {
+    return 'Không thấy dấu hiệu affiliate/partner trên trang đã quét';
+  }
+  const kws = new Set<string>();
+  for (const h of r.evidence.linkHits ?? []) {
+    for (const k of h.kw ?? []) kws.add(k);
+    for (const p of h.platform ?? []) kws.add(p);
+  }
+  for (const p of r.evidence.platformHits ?? []) kws.add(p);
+  for (const h of r.evidence.pathHits ?? []) {
+    if (h.path) kws.add(h.path);
+  }
+  const list = [...kws].slice(0, 8).join(', ');
+  return list ? `Có dấu hiệu — gợi ý: ${list}` : 'Có dấu hiệu affiliate/partner — cần người xác nhận';
+}
+
+/** CSV cho người dùng cuối: không kèm thông số kỹ thuật (confidence, loadStatus, method…). */
+const SIMPLE_CSV_COLUMNS = ['ten_cong_ty', 'website', 'ket_qua', 'huong_dan'] as const;
+
+export function toSimpleCSV(results: ScanResult[]): string {
+  const header = SIMPLE_CSV_COLUMNS.join(',');
+  const rows = results.map((r) => {
+    const record: Record<(typeof SIMPLE_CSV_COLUMNS)[number], unknown> = {
+      ten_cong_ty: r.name || r.domain,
+      website: r.websiteUrl || r.finalUrl || '',
+      ket_qua: simpleHit(r),
+      huong_dan: simpleHint(r),
+    };
+    return SIMPLE_CSV_COLUMNS.map((c) => csvCell(record[c])).join(',');
+  });
+  return [header, ...rows].join('\n');
+}
+

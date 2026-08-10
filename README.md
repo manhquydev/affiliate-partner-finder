@@ -55,8 +55,9 @@ npm run scan -- --resume --out ./out/run1
 
 - Collect Trustpilot: Chrome persistent profile mặc định `~/.cache/affiliate-partner-finder/chrome-profile` (headed). Nếu Cloudflare: vượt challenge một lần trong cửa sổ đó, rồi chạy lại — **không bypass CAPTCHA**.
 - Scan: concurrency mặc định 2 (max 3), `--delay-ms` start-stagger. Path-probe luôn chạy trừ khi bật `--early-exit`.
-- Artefacts: `companies.json`, `results.jsonl`, `results.csv`, `results.json`, `progress.json`.
-- Kiểm tra live export: `node test/verify-golden.mjs ./out/run1/results.json`
+- Artefacts: `companies.json`, `results.jsonl`, **`results.csv`** (end-user: `ten_cong_ty,website,ket_qua,huong_dan` với `true`/`false`/`unknown`), `results.full.csv` + `results.json` (kỹ thuật/audit).
+- `ket_qua=true` = có dấu hiệu affiliate **hoặc** partner → người vào xác nhận; `false` = đã mở trang, không thấy dấu hiệu; `unknown` = không mở được (không ghi false để tránh miss).
+- Kiểm tra live export kỹ thuật: `node test/verify-golden.mjs ./out/run1/results.json`
 
 Chi tiết kế hoạch: `plans/260810-1610-local-cli-batch-scanner-accuracy-floor/`.
 

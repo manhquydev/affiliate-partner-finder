@@ -5,7 +5,7 @@ import { join, resolve as pathResolve } from 'node:path';
 import pLimit from 'p-limit';
 import { CONFIG, DEFAULT_RUN_CONFIG } from '../lib/config';
 import { resolve as resolveWebsite } from '../lib/resolve';
-import { toCSV, toJSON } from '../lib/export';
+import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanBrowser } from './browser';
 import { collectCli } from './collect';
@@ -149,6 +149,7 @@ async function main(): Promise<number> {
   const jsonlPath = join(outDir, 'results.jsonl');
   const progressPath = join(outDir, 'progress.json');
   const csvPath = join(outDir, 'results.csv');
+  const csvFullPath = join(outDir, 'results.full.csv');
   const jsonPath = join(outDir, 'results.json');
 
   const resultsMap = loadResultsMap(jsonlPath);
@@ -294,15 +295,31 @@ async function main(): Promise<number> {
 
   const ordered = companies.map((c) => resultsMap.get(c.domain)).filter((r): r is ScanResult => Boolean(r));
   // last-wins already in map; export unique domains
-  const unique = [...resultsMap.values()];
-  writeFileSync(csvPath, toCSV(unique.length ? unique : ordered));
-  writeFileSync(jsonPath, toJSON(unique.length ? unique : ordered));
+  const unique = uniqueByDomain(companies, resultsMap, ordered);
+  // End-user CSV (true/false/unknown) — primary deliverable for human review.
+  writeFileSync(csvPath, toSimpleCSV(unique));
+  // Full technical CSV + JSON kept for audit / golden verify.
+  writeFileSync(csvFullPath, toCSV(unique));
+  writeFileSync(jsonPath, toJSON(unique));
   writeProgress();
 
-  console.log(`[cli] export ${csvPath}`);
+  const hits = unique.filter((r) => simpleHit(r) === 'true').length;
+  const misses = unique.filter((r) => simpleHit(r) === 'false').length;
+  const unknown = unique.filter((r) => simpleHit(r) === 'unknown').length;
+  console.log(`[cli] export ${csvPath} (end-user: true=${hits} false=${misses} unknown=${unknown})`);
+  console.log(`[cli] export ${csvFullPath}`);
   console.log(`[cli] export ${jsonPath}`);
   console.log(`[cli] completed ${resultsMap.size}/${total}`);
   return 0;
+}
+
+function uniqueByDomain(
+  companies: Company[],
+  resultsMap: Map<string, ScanResult>,
+  ordered: ScanResult[],
+): ScanResult[] {
+  const fromCompanies = companies.map((c) => resultsMap.get(c.domain)).filter((r): r is ScanResult => Boolean(r));
+  return fromCompanies.length ? fromCompanies : ordered.length ? ordered : [...resultsMap.values()];
 }
 
 main()
