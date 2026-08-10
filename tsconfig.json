@@ -6,5 +6,5 @@
     "types": ["chrome", "vitest/globals"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".wxt/**/*"],
-  "exclude": ["node_modules", ".output"]
+  "exclude": ["node_modules", ".output", "cli"]
 }

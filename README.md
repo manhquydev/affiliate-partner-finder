@@ -39,12 +39,34 @@ npm run build        # -> .output/chrome-mv3/
 
 ## Test
 ```bash
-npm test             # Vitest: classify (decision table + golden), detector (jsdom), path-probe (soft-404), export
-npm run compile      # tsc --noEmit (strict)
+npm test             # Vitest unit tests (detector/classify/export/golden)
 ```
 
+## Local CLI (batch)
+
+Batch scanner cho quét theo ngành trên máy local (Playwright), dùng chung detector/classify với extension. Output CSV/JSON + resume.
+
+```bash
+npx playwright install chromium   # lần đầu
+npm run scan -- --query design --limit 10 --out ./out/run1
+# resume sau khi dừng giữa chừng:
+npm run scan -- --resume --out ./out/run1
+```
+
+- Collect Trustpilot: Chrome persistent profile mặc định `~/.cache/affiliate-partner-finder/chrome-profile` (headed). Nếu Cloudflare: vượt challenge một lần trong cửa sổ đó, rồi chạy lại — **không bypass CAPTCHA**.
+- Scan: concurrency mặc định 2 (max 3), `--delay-ms` start-stagger. Path-probe luôn chạy trừ khi bật `--early-exit`.
+- Artefacts: `companies.json`, `results.jsonl`, `results.csv`, `results.json`, `progress.json`.
+- Kiểm tra live export: `node test/verify-golden.mjs ./out/run1/results.json`
+
+Chi tiết kế hoạch: `plans/260810-1610-local-cli-batch-scanner-accuracy-floor/`.
+
+## Ethics & giới hạn
+- 1–3 scan song song (CLI), delay cấu hình được; extension vẫn 1 tab.
+- Không login/submit form; không bypass CAPTCHA/Cloudflare.
+- Chỉ đọc trang / export local.
+
 ## Kiểm chứng golden set (acceptance)
-Sau khi chạy thật trên query `design` và **Export JSON** từ popup:
+Sau khi chạy thật trên query `design` và **Export JSON** (popup hoặc CLI `results.json`):
 ```bash
 node test/verify-golden.mjs path/to/exported.json            # so verdict với golden set (docs/07 §2)
 node test/verify-golden.mjs path/to/exported.json --check-urls  # + kiểm tra evidenceUrl reachable (<400)

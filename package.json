@@ -10,12 +10,18 @@
     "zip": "wxt zip",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
-    "test": "vitest run"
+    "test": "vitest run",
+    "scan": "tsx cli/index.ts",
+    "cli": "tsx cli/index.ts"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
+    "jsdom": "^25.0.0",
+    "p-limit": "^7.3.1",
+    "playwright": "^1.62.1",
+    "tsx": "^4.23.12",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0",
-    "jsdom": "^25.0.0",
     "wxt": "^0.19.0"
   },
   "dependencies": {
