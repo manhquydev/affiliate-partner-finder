@@ -29,6 +29,27 @@ async function readPage(page: Page): Promise<SearchReadResult | null> {
   return null;
 }
 
+async function gotoWithRetry(page: Page, url: string, attempts = 4): Promise<void> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      return;
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn(`[cli] collect goto retry ${i + 1}/${attempts}: ${msg.slice(0, 160)}`);
+      await sleep(1500 * (i + 1));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+export type CollectCliOptions = {
+  /** Called after each successful page with the cumulative company list (for checkpoint). */
+  onProgress?: (companies: Company[], pageNum: number, totalPagesHint: number | null) => void;
+};
+
 /**
  * Collect up to `limit` NEW companies (not in `skip`).
  * On Cloudflare after retries with zero companies collected → throws (never empty success).
@@ -40,18 +61,22 @@ export async function collectCli(
   skip: Set<string> = new Set(),
   delayMs = 1500,
   maxPages = 40,
+  opts: CollectCliOptions = {},
 ): Promise<Company[]> {
   const out: Company[] = [];
   const seen = new Set<string>();
   const page = await context.newPage();
   let lastChallenged = false;
+  let totalPagesHint: number | null = null;
 
   try {
     for (let pageNum = 1; pageNum <= maxPages && out.length < limit; pageNum++) {
       const url = `${SEARCH_BASE}?query=${encodeURIComponent(query)}&page=${pageNum}`;
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
+      console.log(`[cli] collect page ${pageNum}/${maxPages} collected=${out.length}/${limit}`);
+      await gotoWithRetry(page, url);
       const res = await readPage(page);
       lastChallenged = Boolean(res?.challenged);
+      if (res?.totalPages != null) totalPagesHint = res.totalPages;
 
       if (!res || res.units.length === 0) {
         if (out.length > 0) break;
@@ -77,6 +102,8 @@ export async function collectCli(
         });
         if (out.length >= limit) break;
       }
+
+      opts.onProgress?.(out.slice(), pageNum, totalPagesHint);
 
       if (res.currentPage != null && res.totalPages != null && res.currentPage >= res.totalPages) break;
       if (out.length < limit) await sleep(delayMs);

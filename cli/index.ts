@@ -16,6 +16,7 @@ type Args = {
   limit: number;
   concurrency: number;
   delayMs: number;
+  maxPages: number;
   out: string;
   resume: boolean;
   profile: string;
@@ -33,6 +34,7 @@ Usage:
 Options:
   --query <q>         Trustpilot search query (required)
   --limit <n>         Max companies to collect (default ${DEFAULT_RUN_CONFIG.limit})
+  --max-pages <n>     Max Trustpilot search pages to walk (default 40; design ≈1000)
   --concurrency <n>   Parallel site scans 1..3 (default 2)
   --delay-ms <n>      Start-stagger / retry delay (default 1500)
   --out <dir>         Job directory (default ./out/run)
@@ -53,6 +55,7 @@ function parseArgs(argv: string[]): Args {
     limit: DEFAULT_RUN_CONFIG.limit,
     concurrency: 2,
     delayMs: 1500,
+    maxPages: 40,
     out: './out/run',
     resume: false,
     profile: DEFAULT_PROFILE_DIR,
@@ -66,6 +69,7 @@ function parseArgs(argv: string[]): Args {
     if (a === '--help' || a === '-h') args.help = true;
     else if (a === '--query') args.query = next();
     else if (a === '--limit') args.limit = Math.max(1, Number(next()) || args.limit);
+    else if (a === '--max-pages') args.maxPages = Math.max(1, Number(next()) || args.maxPages);
     else if (a === '--concurrency') args.concurrency = Math.min(3, Math.max(1, Number(next()) || 2));
     else if (a === '--delay-ms') args.delayMs = Math.max(0, Number(next()) || args.delayMs);
     else if (a === '--out') args.out = next();
@@ -163,16 +167,41 @@ async function main(): Promise<number> {
       console.error('Missing --query');
       return 2;
     }
-    console.log(`[cli] collect query=${args.query} limit=${args.limit} profile=${args.profile}`);
+    console.log(`[cli] collect query=${args.query} limit=${args.limit} maxPages=${args.maxPages} profile=${args.profile}`);
     const collectHandle = await launchPersistentCollect(args.profile);
     try {
       const skip = new Set(resultsMap.keys());
-      companies = await collectCli(collectHandle.context, args.query, args.limit, skip, args.delayMs);
+      companies = await collectCli(
+        collectHandle.context,
+        args.query,
+        args.limit,
+        skip,
+        args.delayMs,
+        args.maxPages,
+        {
+          onProgress: (partial, pageNum, totalPagesHint) => {
+            atomicWriteJson(companiesPath, partial);
+            console.log(
+              `[cli] checkpoint companies=${partial.length} after page ${pageNum}` +
+                (totalPagesHint != null ? ` (tp totalPages≈${totalPagesHint})` : ''),
+            );
+          },
+        },
+      );
       atomicWriteJson(companiesPath, companies);
       console.log(`[cli] collected ${companies.length} companies → ${companiesPath}`);
     } catch (e) {
       console.error(`[cli] collect failed: ${e instanceof Error ? e.message : e}`);
-      return 1;
+      // Keep partial checkpoint if any — continue scanning what we have.
+      if (existsSync(companiesPath)) {
+        try {
+          companies = JSON.parse(readFileSync(companiesPath, 'utf8')) as Company[];
+        } catch {
+          companies = [];
+        }
+      }
+      if (companies.length === 0) return 1;
+      console.warn(`[cli] continuing with partial collect: ${companies.length} companies`);
     } finally {
       await closeHandle(collectHandle);
     }

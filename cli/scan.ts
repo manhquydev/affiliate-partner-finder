@@ -6,6 +6,7 @@ import { runDetector } from '../lib/detector';
 import { pathProbe } from '../lib/path-probe';
 import { shouldSkipPathProbe } from '../lib/early-exit';
 import { newScanContext, settle } from './browser';
+import { evaluateInjectable } from './injectable';
 import type {
   Company,
   ScanResult,
@@ -42,16 +43,6 @@ export type ScanCliOptions = {
   earlyExit?: boolean;
 };
 
-/** Playwright evaluate accepts one arg — invoke multi-arg injectables via toString. */
-async function evaluateInjectable<T>(
-  page: import('playwright').Page,
-  fn: (...args: never[]) => T,
-  ...args: unknown[]
-): Promise<T> {
-  const expr = `(${fn.toString()}).apply(null, ${JSON.stringify(args)})`;
-  return page.evaluate(expr) as Promise<T>;
-}
-
 export async function scanOneCli(
   browser: Browser,
   company: Company,
@@ -66,14 +57,14 @@ export async function scanOneCli(
 
   try {
     try {
-      await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: run.tabTimeoutMs });
+      await page.goto(websiteUrl, { waitUntil: 'load', timeout: run.tabTimeoutMs });
     } catch {
       result.loadStatus = 'timeout';
       Object.assign(result, classify({ loadStatus: 'timeout' }));
       return result;
     }
 
-    await settle(page, 700);
+    await settle(page, 1200);
 
     let det: DetectorResult | undefined;
     try {
@@ -97,7 +88,7 @@ export async function scanOneCli(
           const origin = new URL(finalUrl).origin;
           probe = await evaluateInjectable(
             page,
-            pathProbe as (...args: never[]) => PathProbeResult,
+            pathProbe as (...args: never[]) => Promise<PathProbeResult>,
             origin,
             cfg.paths,
           );
