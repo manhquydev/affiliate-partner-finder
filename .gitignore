@@ -7,6 +7,9 @@ node_modules/
 dist/
 stats.html
 
+# CLI batch job outputs
+out/
+
 # Env & local
 .env
 .env.*
