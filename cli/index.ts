@@ -7,7 +7,7 @@ import { CONFIG, DEFAULT_RUN_CONFIG } from '../lib/config';
 import { resolve as resolveWebsite } from '../lib/resolve';
 import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
-import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanBrowser } from './browser';
+import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
 import { collectCli } from './collect';
 import { scanWithRetry } from './scan';
 
@@ -21,6 +21,7 @@ type Args = {
   resume: boolean;
   profile: string;
   headedScan: boolean;
+  scanProfile: boolean;
   earlyExit: boolean;
   acceptFailures: boolean;
   help: boolean;
@@ -42,6 +43,7 @@ Options:
   --resume            Resume from --out (uses companies.json + results.jsonl)
   --profile <dir>     Chrome persistent profile (default ~/.cache/affiliate-partner-finder/chrome-profile)
   --headed-scan       Headed browser for site scans
+  --scan-profile      Site scans use the same persistent profile (CF cookies); implies headed
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
   --accept-failures   Treat timeout/error rows as terminal on --resume (do not requeue)
   --help              Show help
@@ -62,6 +64,7 @@ function parseArgs(argv: string[]): Args {
     resume: false,
     profile: DEFAULT_PROFILE_DIR,
     headedScan: false,
+    scanProfile: false,
     earlyExit: false,
     acceptFailures: false,
     help: false,
@@ -79,9 +82,11 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--resume') args.resume = true;
     else if (a === '--profile') args.profile = next();
     else if (a === '--headed-scan') args.headedScan = true;
+    else if (a === '--scan-profile') args.scanProfile = true;
     else if (a === '--early-exit') args.earlyExit = true;
     else if (a === '--accept-failures') args.acceptFailures = true;
   }
+  if (args.scanProfile) args.headedScan = true;
   return args;
 }
 
@@ -223,13 +228,16 @@ async function main(): Promise<number> {
     return !prev || !isTerminal(prev, args.acceptFailures);
   });
   console.log(
-    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} acceptFailures=${args.acceptFailures}`,
+    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} acceptFailures=${args.acceptFailures} scanProfile=${args.scanProfile}`,
   );
 
-  const browser = await launchScanBrowser(args.headedScan);
+  const session = await launchScanSession({
+    headed: args.headedScan,
+    profileDir: args.scanProfile ? args.profile : undefined,
+  });
   let shuttingDown = false;
   let disconnectFatal = false;
-  browser.on('disconnected', () => {
+  session.bindDisconnect(() => {
     if (shuttingDown) return;
     disconnectFatal = true;
     console.error('[cli] scan browser disconnected');
@@ -274,7 +282,7 @@ async function main(): Promise<number> {
           await sleep(i * Math.min(args.delayMs, 500));
           const websiteUrl = await resolveWebsite(company.domain, run.resolveViaReviewPage);
           console.log(`[cli] scan ${company.domain} → ${websiteUrl}`);
-          const result = await scanWithRetry(browser, company, websiteUrl, run, CONFIG, {
+          const result = await scanWithRetry(session, company, websiteUrl, run, CONFIG, {
             earlyExit: args.earlyExit,
           });
           await enqueueWrite(result);
@@ -285,7 +293,7 @@ async function main(): Promise<number> {
   } finally {
     await writeChain.catch(() => undefined);
     shuttingDown = true;
-    await browser.close().catch(() => undefined);
+    await session.close();
   }
 
   if (disconnectFatal) {

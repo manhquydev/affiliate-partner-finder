@@ -1,11 +1,11 @@
 // Site scan via Playwright — mirrors lib/scan.ts semantics (probe isolation + classify).
 
-import type { Browser, BrowserContext, Page } from 'playwright';
+import type { Page } from 'playwright';
 import { classify } from '../lib/classify';
 import { runDetector } from '../lib/detector';
 import { pathProbe } from '../lib/path-probe';
 import { shouldSkipPathProbe } from '../lib/early-exit';
-import { newScanContext, settle } from './browser';
+import { closeQuietly, DEFAULT_CLOSE_TIMEOUT_MS, settle, type ScanSession } from './browser';
 import { evaluateInjectable } from './injectable';
 import type {
   Company,
@@ -48,6 +48,8 @@ export type ScanCliOptions = {
   scanBudgetMs?: number;
   /** Per path-probe fetch abort inside page (default 8s). */
   probeFetchTimeoutMs?: number;
+  /** Max wait for page/context.close (default 3s). */
+  closeTimeoutMs?: number;
 };
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -160,7 +162,7 @@ async function scanOnPage(
 }
 
 export async function scanOneCli(
-  browser: Browser,
+  session: ScanSession,
   company: Company,
   websiteUrl: string,
   run: RunConfig,
@@ -168,11 +170,13 @@ export async function scanOneCli(
   opts: ScanCliOptions = {},
 ): Promise<ScanResult> {
   const budget = opts.scanBudgetMs ?? DEFAULT_SCAN_BUDGET_MS;
-  let context: BrowserContext | undefined;
+  const closeMs = opts.closeTimeoutMs ?? DEFAULT_CLOSE_TIMEOUT_MS;
   let page: Page | undefined;
+  let ownedContext: { close: () => Promise<unknown> } | undefined;
   try {
-    context = await newScanContext(browser);
-    page = await context.newPage();
+    const opened = await session.openPage();
+    page = opened.page;
+    ownedContext = opened.context;
     return await withTimeout(scanOnPage(page, company, websiteUrl, run, cfg, opts), budget, `scanOne(${company.domain})`);
   } catch {
     const result = baseResult(company, websiteUrl, cfg.detectorVersion);
@@ -180,25 +184,26 @@ export async function scanOneCli(
     Object.assign(result, classify({ loadStatus: 'timeout' }));
     return result;
   } finally {
-    await page?.close().catch(() => undefined);
-    await context?.close().catch(() => undefined);
+    // Bounded close — hung page.close must not stall the whole batch for hours.
+    await closeQuietly(page, closeMs);
+    await closeQuietly(ownedContext, closeMs);
   }
 }
 
 /** Retry timeout/error like lib/run-engine scanList. */
 export async function scanWithRetry(
-  browser: Browser,
+  session: ScanSession,
   company: Company,
   websiteUrl: string,
   run: RunConfig,
   cfg: DetectorConfig,
   opts: ScanCliOptions = {},
 ): Promise<ScanResult> {
-  let last = await scanOneCli(browser, company, websiteUrl, run, cfg, opts);
+  let last = await scanOneCli(session, company, websiteUrl, run, cfg, opts);
   for (let i = 0; i < run.maxRetries; i++) {
     if (last.loadStatus !== 'timeout' && last.loadStatus !== 'error') break;
     await new Promise((r) => setTimeout(r, run.delayMs));
-    last = await scanOneCli(browser, company, websiteUrl, run, cfg, opts);
+    last = await scanOneCli(session, company, websiteUrl, run, cfg, opts);
   }
   return last;
 }

@@ -27,3 +27,11 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Impeccable accidental project install
+.claude/skills/impeccable/
+.claude/settings.local.json
+.impeccable/
+
+# Local backups of skill trees (do not vendor into git)
+plans/backups/
