@@ -101,6 +101,8 @@ async function scanOnPage(
 
   const finalUrl = page.url() || websiteUrl;
   let probe: PathProbeResult | undefined;
+  /** true when path-probe was attempted but aborted — must not look like a clean empty probe. */
+  let probeIncomplete = false;
 
   if (det.loadStatus === 'ok') {
     const skipProbe = Boolean(opts.earlyExit) && shouldSkipPathProbe(det);
@@ -121,6 +123,7 @@ async function scanOnPage(
         );
       } catch {
         probe = undefined;
+        probeIncomplete = true;
       }
     }
   }
@@ -132,15 +135,23 @@ async function scanOnPage(
     junkBaselineStatus: probe?.junkBaselineStatus ?? null,
     totalLinks: det.totalLinks,
   };
+
+  // Incomplete probe + no homepage signals ⇒ unknown (not confident false).
+  // Otherwise path-only programs become ket_qua=false when the probe times out.
+  const hasHomepageSignal =
+    (evidence.linkHits?.length ?? 0) > 0 || (evidence.platformHits?.length ?? 0) > 0;
+  const loadStatus =
+    probeIncomplete && !hasHomepageSignal && det.loadStatus === 'ok' ? 'timeout' : det.loadStatus;
+
   const cls = classify({
-    loadStatus: det.loadStatus,
+    loadStatus,
     linkHits: evidence.linkHits,
     platformHits: evidence.platformHits,
     pathHits: evidence.pathHits,
   });
 
   result.finalUrl = finalUrl;
-  result.loadStatus = det.loadStatus;
+  result.loadStatus = loadStatus;
   result.verdict = cls.verdict;
   result.confidence = cls.confidence;
   result.evidence = evidence;

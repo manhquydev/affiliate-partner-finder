@@ -9,6 +9,14 @@
 
 import { readFileSync } from 'node:fs';
 
+/** Mirror of lib/export.simpleHit — keep in sync for live gates. */
+function simpleHit(r) {
+  if (r.loadStatus !== 'ok') return 'unknown';
+  const e = r.evidence || {};
+  if ((e.linkHits || []).length || (e.platformHits || []).length || (e.pathHits || []).length) return 'true';
+  return 'false';
+}
+
 // Expected verdict per golden domain (confidence may drift ±1 level — docs/07 §3).
 const GOLDEN = {
   'vecteezy.com': 'affiliate',
@@ -70,6 +78,12 @@ async function main() {
 
   const blockedAsNone = results.filter((r) => r.loadStatus !== 'ok' && r.verdict === 'none');
   if (blockedAsNone.length > 0) fails.push(`blocked→none: ${blockedAsNone.map((r) => r.domain).join(', ')}`);
+
+  // End-user CSV contract: non-ok load must never become ket_qua=false.
+  const nonOkAsFalse = results.filter((r) => r.loadStatus !== 'ok' && simpleHit(r) === 'false');
+  if (nonOkAsFalse.length > 0) {
+    fails.push(`non-ok→simple false: ${nonOkAsFalse.map((r) => r.domain).join(', ')}`);
+  }
 
   const falseAff = NONE_CASES.filter((d) => byDomain.get(domainKey(d))?.verdict === 'affiliate');
   if (falseAff.length > 0) fails.push(`false-affiliate on none-cases: ${falseAff.join(', ')}`);

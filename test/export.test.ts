@@ -75,12 +75,63 @@ describe('export', () => {
     expect(simpleHit(result({ loadStatus: 'blocked', verdict: 'unknown' }))).toBe('unknown');
   });
 
+  it('simpleHit: pathHits-only and platformHits-only are true', () => {
+    expect(
+      simpleHit(
+        result({
+          evidence: {
+            linkHits: [],
+            platformHits: [],
+            pathHits: [{ path: '/affiliates', status: 200, finalUrl: 'https://example.com/affiliates', isStrong: true }],
+            junkBaselineStatus: 404,
+          },
+        }),
+      ),
+    ).toBe('true');
+    expect(
+      simpleHit(
+        result({
+          evidence: {
+            linkHits: [],
+            platformHits: ['awin'],
+            pathHits: [],
+            junkBaselineStatus: 404,
+          },
+        }),
+      ),
+    ).toBe('true');
+  });
+
+  it('simpleHit: timeout/error ⇒ unknown (never confident false)', () => {
+    expect(simpleHit(result({ loadStatus: 'timeout', verdict: 'unknown' }))).toBe('unknown');
+    expect(simpleHit(result({ loadStatus: 'error', verdict: 'unknown' }))).toBe('unknown');
+  });
+
+  it('simpleHit invariant: affiliate|partner_trade ⇒ true when loadStatus ok', () => {
+    expect(simpleHit(result({ loadStatus: 'ok', verdict: 'affiliate', evidence: affiliate.evidence }))).toBe('true');
+    expect(
+      simpleHit(
+        result({
+          loadStatus: 'ok',
+          verdict: 'partner_trade',
+          evidence: {
+            linkHits: [{ text: 'Trade', href: '/trade', kw: ['trade'], platform: [], isStrong: false }],
+            platformHits: [],
+            pathHits: [],
+            junkBaselineStatus: 404,
+          },
+        }),
+      ),
+    ).toBe('true');
+  });
+
   it('toSimpleCSV is end-user columns only', () => {
     const header = toSimpleCSV([]).split('\n')[0];
     expect(header).toBe('ten_cong_ty,website,ket_qua,huong_dan');
     const line = toSimpleCSV([affiliate]).split('\n')[1]!;
-    expect(line).toContain('Design Bestseller');
-    expect(line).toContain('true');
+    const cols = line.split(',');
+    expect(cols[0]).toBe('Design Bestseller');
+    expect(cols[2]).toBe('true');
     expect(line).not.toContain('confidence');
     expect(line).not.toContain('loadStatus');
   });
