@@ -17,8 +17,9 @@ npm run desktop:dev
 
 ## Cách dùng
 
-1. Nhập **từ khoá Trustpilot** (bạn chọn, không cố định — bắt buộc khi **Bắt đầu**) + số công ty + thư mục lưu (mặc định trong Documents\AffiliatePartnerFinder\runs).
-2. **Bắt đầu** — thu thập + quét. Theo dõi tiến độ / true·false·unknown trên màn hình.
+1. Nhập **từ khoá Trustpilot** (bắt buộc khi **Bắt đầu**) + số công ty.
+2. **Thư mục lưu:** dùng **Chọn thư mục…** / **Job mới** hoặc chọn job cũ trong danh sách — không cần gõ đường dẫn tay.
+3. Theo dõi **bảng tiến độ** (% + thống kê true/false/unknown) khi job chạy.
 3. Nếu Chrome hiện Cloudflare: hoàn thành **một lần** trong cửa sổ Chrome của app → **Tiếp tục** nếu việc đã dừng.
 4. **Dừng** = dừng an toàn (SIGINT) + xuất CSV từ kết quả đã có; lần sau **Tiếp tục** cùng thư mục.
 5. **Mở CSV** → `results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`.

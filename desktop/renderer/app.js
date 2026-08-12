@@ -1,8 +1,15 @@
-/** Renderer — talks to preload bridge only. */
+/** Renderer — preload bridge + dashboard UX. */
 
 const STORAGE_KEY = 'apf-last-query';
 
 const api = window.affiliateDesktop;
+
+const STATE_LABELS = {
+  idle: 'Chờ',
+  running: 'Đang chạy',
+  stopping: 'Đang dừng…',
+  error: 'Lỗi',
+};
 
 function $(id) {
   return document.getElementById(id);
@@ -13,7 +20,7 @@ function saveLastQuery(q) {
     const trimmed = String(q || '').trim();
     if (trimmed) localStorage.setItem(STORAGE_KEY, trimmed);
   } catch {
-    /* private mode / quota */
+    /* ignore */
   }
 }
 
@@ -29,36 +36,101 @@ function setQueryInput(value, { readonly = false } = {}) {
   const el = $('query');
   el.value = value || '';
   el.readOnly = readonly;
-  el.disabled = false;
   el.setAttribute('aria-readonly', readonly ? 'true' : 'false');
+}
+
+function setOutPath(path) {
+  const el = $('out');
+  el.value = path || '';
+  el.title = path || '';
+}
+
+function pct(completed, total) {
+  if (!total || total <= 0) return 0;
+  return Math.min(100, Math.round((100 * completed) / total));
+}
+
+function formatRunOption(run) {
+  const q = run.query ? ` · ${run.query}` : '';
+  const prog = run.total > 0 ? ` · ${run.completed}/${run.total}` : '';
+  const tag = run.canResume ? ' [tiếp tục]' : '';
+  return `${run.name}${q}${prog}${tag}`;
+}
+
+async function refreshRunPicker(selectPath) {
+  if (!api?.listRuns) return;
+  const { runs } = await api.listRuns();
+  const sel = $('runPicker');
+  const current = selectPath || $('out').value.trim();
+  sel.innerHTML = '<option value="">— Chọn job để tiếp tục —</option>';
+  for (const run of runs) {
+    const opt = document.createElement('option');
+    opt.value = run.path;
+    opt.textContent = formatRunOption(run);
+    if (run.path === current) opt.selected = true;
+    sel.appendChild(opt);
+  }
 }
 
 function renderStatus(s) {
   if (!s) return;
   const running = s.state === 'running' || s.state === 'stopping';
-  $('state').textContent = `Trạng thái: ${s.state}`;
   const p = s.progress;
-  $('progress').textContent = p
-    ? `Tiến độ: ${p.completed} / ${p.total}`
-    : 'Tiến độ: —';
+  const completed = p?.completed ?? 0;
+  const total = p?.total ?? 0;
+  const percent = pct(completed, total);
+
+  const badge = $('stateBadge');
+  badge.textContent = STATE_LABELS[s.state] || s.state;
+  badge.dataset.state = s.state;
+  $('dashboard').dataset.running = running ? 'true' : 'false';
+
+  $('progressPct').textContent = `${percent}%`;
+  $('progressFraction').textContent =
+    total > 0 ? `${completed} / ${total} công ty` : '0 / 0 công ty';
+  $('progressFill').style.width = `${percent}%`;
+  const track = $('progressTrack');
+  track.setAttribute('aria-valuenow', String(percent));
+  track.setAttribute('aria-valuetext', `${completed} trên ${total} công ty`);
+
+  if (running && total > 0) {
+    $('progressHint').textContent =
+      percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét — còn ${total - completed} công ty`;
+  } else if (p && completed > 0) {
+    $('progressHint').textContent = `Đã xử lý ${completed} công ty — có thể Tiếp tục hoặc mở CSV.`;
+  } else {
+    $('progressHint').textContent = 'Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.';
+  }
+
   const jobQuery = p?.query?.trim();
-  $('jobQuery').textContent = jobQuery
-    ? `Từ khoá job: ${jobQuery}`
-    : 'Từ khoá job: —';
+  $('jobQuery').textContent = jobQuery ? `Từ khoá job: ${jobQuery}` : 'Từ khoá job: —';
+
   if (jobQuery && running) setQueryInput(jobQuery, { readonly: true });
   else if (!running) {
     setQueryInput($('query').value, { readonly: false });
     if (jobQuery && !$('query').value.trim()) $('query').value = jobQuery;
   }
-  $('current').textContent = s.currentDomains?.length
-    ? `Đang xử lý: ${s.currentDomains.join(', ')}`
-    : 'Đang xử lý: —';
+
   const c = s.counts || { true: 0, false: 0, unknown: 0 };
-  $('counts').textContent = `Kết quả: true ${c.true} · false ${c.false} · unknown ${c.unknown}`;
+  $('statTrue').textContent = String(c.true);
+  $('statFalse').textContent = String(c.false);
+  $('statUnknown').textContent = String(c.unknown);
+
+  const domains = s.currentDomains?.length ? s.currentDomains : [];
+  $('current').textContent = domains.length ? domains.join(', ') : '—';
+  $('current').classList.toggle('is-active', domains.length > 0);
+
   $('message').textContent = s.message || '';
   $('btnStart').disabled = running;
   $('btnResume').disabled = running;
   $('btnStop').disabled = !running;
+  $('btnPickOut').disabled = running;
+  $('btnNewOut').disabled = running;
+  $('runPicker').disabled = running;
+
+  if (s.outDir && !running) {
+    setOutPath(s.outDir);
+  }
 }
 
 async function syncFromOutDir({ force = false } = {}) {
@@ -71,8 +143,15 @@ async function syncFromOutDir({ force = false } = {}) {
       setQueryInput(info.query);
     }
   } catch {
-    /* out chưa tồn tại hoặc chưa có progress — giữ từ khoá người dùng nhập */
+    /* giữ từ khoá người dùng */
   }
+}
+
+async function applyOutPath(path) {
+  if (!path) return;
+  setOutPath(path);
+  await refreshRunPicker(path);
+  await syncFromOutDir({ force: true });
 }
 
 async function boot() {
@@ -80,17 +159,47 @@ async function boot() {
     $('message').textContent = 'Bridge Electron chưa sẵn sàng (mở qua npm run desktop:dev).';
     return;
   }
+
   setQueryInput(loadLastQuery());
   const defaults = await api.getDefaults();
   if (defaults?.out) {
-    $('out').value = defaults.out;
+    setOutPath(defaults.out);
     await syncFromOutDir({ force: true });
     if (!$('query').value.trim()) setQueryInput(loadLastQuery());
   }
-  api.onStatus(renderStatus);
+  await refreshRunPicker($('out').value.trim());
+
+  api.onStatus((s) => {
+    renderStatus(s);
+    if (s.state === 'idle') void refreshRunPicker(s.outDir || $('out').value.trim());
+  });
   renderStatus(await api.getStatus());
 
-  $('out').addEventListener('change', () => void syncFromOutDir());
+  $('btnPickOut').onclick = async () => {
+    try {
+      const picked = await api.pickOutDir();
+      if (picked?.canceled || !picked?.path) return;
+      await applyOutPath(picked.path);
+    } catch (e) {
+      $('message').textContent = e?.message || String(e);
+    }
+  };
+
+  $('btnNewOut').onclick = async () => {
+    try {
+      const created = await api.newOutDir();
+      if (created?.path) await applyOutPath(created.path);
+    } catch (e) {
+      $('message').textContent = e?.message || String(e);
+    }
+  };
+
+  $('runPicker').onchange = async () => {
+    const path = $('runPicker').value;
+    if (path) await applyOutPath(path);
+  };
+
+  $('btnOpenRunsRoot').onclick = () => api.openRunsRoot?.();
 
   $('btnStart').onclick = async () => {
     await syncFromOutDir();
@@ -112,6 +221,7 @@ async function boot() {
       $('message').textContent = e?.message || String(e);
     }
   };
+
   $('btnResume').onclick = async () => {
     try {
       await syncFromOutDir({ force: true });
@@ -120,6 +230,7 @@ async function boot() {
       $('message').textContent = e?.message || String(e);
     }
   };
+
   $('btnStop').onclick = () => api.stopJob();
   $('btnFolder').onclick = () => api.openOutDir();
   $('btnCsv').onclick = () => api.openCsv();

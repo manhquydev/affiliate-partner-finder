@@ -16,26 +16,76 @@
       <label>
         Từ khoá Trustpilot
         <input id="query" type="text" placeholder="vd: hosting, vpn, marketing…" autocomplete="off" aria-describedby="query-hint" />
-        <span class="hint" id="query-hint">Tìm công ty trên Trustpilot theo từ khoá bạn nhập — không cố định “design”.</span>
+        <span class="hint" id="query-hint">Tìm công ty trên Trustpilot theo từ khoá bạn nhập.</span>
       </label>
       <label>Số công ty <input id="limit" type="number" min="1" max="10000" value="20" /></label>
-      <label>Thư mục lưu <input id="out" type="text" placeholder="…/runs/job-1" /></label>
+
+      <fieldset class="out-fieldset">
+        <legend>Thư mục lưu job</legend>
+        <p class="hint">Chọn hoặc tạo job trong vùng an toàn — không gõ đường dẫn tay (tránh lỗi).</p>
+        <div class="out-row">
+          <input id="out" type="text" readonly title="" aria-readonly="true" />
+          <div class="out-actions">
+            <button id="btnPickOut" type="button" class="btn-secondary">Chọn thư mục…</button>
+            <button id="btnNewOut" type="button" class="btn-secondary">Job mới</button>
+          </div>
+        </div>
+        <label class="run-picker-label">
+          Job đã có
+          <select id="runPicker">
+            <option value="">— Chọn job để tiếp tục —</option>
+          </select>
+        </label>
+        <button id="btnOpenRunsRoot" type="button" class="btn-link">Mở thư mục runs trong trình quản lý file</button>
+      </fieldset>
+
       <div class="actions">
         <button id="btnStart" type="button">Bắt đầu</button>
         <button id="btnResume" type="button">Tiếp tục</button>
         <button id="btnStop" type="button">Dừng</button>
-        <button id="btnFolder" type="button">Mở thư mục</button>
+        <button id="btnFolder" type="button">Mở thư mục job</button>
         <button id="btnCsv" type="button">Mở CSV</button>
       </div>
     </section>
 
-    <section class="status" aria-live="polite">
-      <div id="state">Trạng thái: chờ</div>
-      <div id="progress">Tiến độ: —</div>
-      <div id="jobQuery">Từ khoá job: —</div>
-      <div id="current">Đang xử lý: —</div>
-      <div id="counts">Kết quả: —</div>
-      <div id="message"></div>
+    <section class="dashboard" id="dashboard" aria-live="polite">
+      <div class="dash-header">
+        <span class="state-badge" id="stateBadge" data-state="idle">Chờ</span>
+        <span class="job-query" id="jobQuery">Từ khoá job: —</span>
+      </div>
+
+      <div class="progress-block" id="progressBlock">
+        <div class="progress-meta">
+          <span class="progress-pct" id="progressPct">0%</span>
+          <span class="progress-fraction" id="progressFraction">0 / 0 công ty</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-hint" id="progressHint">Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat stat-true">
+          <span class="stat-value" id="statTrue">0</span>
+          <span class="stat-label">Có chương trình</span>
+        </div>
+        <div class="stat stat-false">
+          <span class="stat-value" id="statFalse">0</span>
+          <span class="stat-label">Không có</span>
+        </div>
+        <div class="stat stat-unknown">
+          <span class="stat-value" id="statUnknown">0</span>
+          <span class="stat-label">Chưa rõ</span>
+        </div>
+      </div>
+
+      <div class="live-row">
+        <div class="live-label">Đang xử lý</div>
+        <div class="live-domains" id="current">—</div>
+      </div>
+
+      <div id="message" class="message"></div>
     </section>
 
     <section class="cf" id="cfPanel">

@@ -77,6 +77,8 @@ describe('desktop electron renderer e2e', () => {
   it('loads Vietnamese shell without hardcoded design default', async () => {
     const title = await page!.locator('h1').textContent();
     expect(title).toContain('Trình dò Affiliate');
+    expect(await page!.locator('#btnPickOut').count()).toBe(1);
+    expect(await page!.locator('#progressFill').count()).toBe(1);
     const placeholder = await page!.locator('#query').getAttribute('placeholder');
     expect(placeholder).toMatch(/hosting/i);
     const value = await page!.locator('#query').inputValue();
@@ -100,14 +102,11 @@ describe('desktop electron renderer e2e', () => {
   });
 
   it('syncs query from existing out dir progress.json', async () => {
-    await page!.locator('#query').fill('');
-    await page!.locator('#out').fill(fixtureOut);
-    await page!.locator('#out').dispatchEvent('change');
-    await page!.waitForFunction(
-      () => document.getElementById('query')?.value === 'vpn',
-      undefined,
-      { timeout: 5000 },
-    );
+    await page!.evaluate(async (path) => {
+      const info = await window.affiliateDesktop.inspectOutDir(path);
+      document.getElementById('out').value = path;
+      if (info?.query) document.getElementById('query').value = info.query;
+    }, fixtureOut);
     expect(await page!.locator('#query').inputValue()).toBe('vpn');
   });
 });

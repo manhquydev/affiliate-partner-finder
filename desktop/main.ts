@@ -3,7 +3,7 @@
  * Dev entry: `npx tsx desktop/main.ts` or `npm run desktop:dev`.
  */
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultDesktopProfileDir, defaultDesktopRunsDir } from './build-scan-argv.ts';
@@ -46,8 +46,10 @@ const supervisor = new JobSupervisor({
 
 function createWindow(): void {
   win = new BrowserWindow({
-    width: 880,
-    height: 720,
+    width: 920,
+    height: 820,
+    minWidth: 720,
+    minHeight: 640,
     webPreferences: {
       preload: join(appDir, 'preload.cjs'),
       contextIsolation: true,
@@ -130,6 +132,62 @@ ipcMain.handle('desktop:defaults', () => {
     profile: profileRoot,
     runsRoot,
   };
+});
+
+ipcMain.handle('desktop:new-out-dir', () => {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const out = join(runsRoot, `run-${stamp}`);
+  mkdirSync(out, { recursive: true });
+  return { path: out };
+});
+
+ipcMain.handle('desktop:pick-out-dir', async () => {
+  if (!win) return { canceled: true as const };
+  const result = await dialog.showOpenDialog(win, {
+    defaultPath: runsRoot,
+    title: 'Chọn thư mục lưu job',
+    buttonLabel: 'Chọn',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || !result.filePaths[0]) {
+    return { canceled: true as const };
+  }
+  const path = resolveSafeOutDir(result.filePaths[0]);
+  return { canceled: false as const, path };
+});
+
+ipcMain.handle('desktop:list-runs', () => {
+  mkdirSync(runsRoot, { recursive: true });
+  const rows = readdirSync(runsRoot, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => {
+      const path = join(runsRoot, d.name);
+      const progress = readProgress(path);
+      let mtime = 0;
+      try {
+        mtime = statSync(path).mtimeMs;
+      } catch {
+        /* ignore */
+      }
+      return {
+        path,
+        name: d.name,
+        mtime,
+        progress,
+        canResume: existsSync(join(path, 'companies.json')),
+        query: progress?.query ?? '',
+        completed: progress?.completed ?? 0,
+        total: progress?.total ?? 0,
+      };
+    })
+    .sort((a, b) => b.mtime - a.mtime)
+    .slice(0, 30);
+  return { runsRoot, runs: rows };
+});
+
+ipcMain.handle('desktop:open-runs-root', async () => {
+  await shell.openPath(runsRoot);
+  return { ok: true };
 });
 
 ipcMain.handle('desktop:inspect-out', (_e, outPath: string) => {
