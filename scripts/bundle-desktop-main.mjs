@@ -13,6 +13,12 @@ await build({
   external: ['electron'],
   sourcemap: true,
   logLevel: 'info',
+  banner: {
+    js: "var __import_meta_url = require('url').pathToFileURL(__filename).href;",
+  },
+  define: {
+    'import.meta.url': '__import_meta_url',
+  },
 });
 
 console.log('[bundle-desktop-main] wrote desktop/main.bundle.cjs');

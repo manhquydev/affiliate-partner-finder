@@ -14,10 +14,13 @@ function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, {
     cwd: opts.cwd ?? root,
     stdio: 'inherit',
+    shell: opts.shell ?? process.platform === 'win32',
     env: { ...process.env, ...opts.env },
   });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
+
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 console.log('[prepare-desktop-pack] bundle CLI…');
 run(process.execPath, ['scripts/bundle-cli.mjs']);
@@ -46,7 +49,7 @@ writeFileSync(
 );
 
 console.log('[prepare-desktop-pack] install CLI runtime deps (skip browser download)…');
-run('npm', ['install', '--omit=dev', '--no-package-lock'], {
+run(npmCmd, ['install', '--omit=dev', '--no-package-lock'], {
   cwd: cliDir,
   env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' },
 });

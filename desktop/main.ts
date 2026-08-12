@@ -11,11 +11,8 @@ import { JobSupervisor, readJobFile } from './job-supervisor.ts';
 import { releaseOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, isPathInside, resolveExistingPath } from './progress.ts';
 
-const __dirname =
-  typeof __filename !== 'undefined'
-    ? dirname(__filename)
-    : dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..');
+const appDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(appDir, '..');
 
 const runsRoot = defaultDesktopRunsDir();
 const profileRoot = defaultDesktopProfileDir();
@@ -52,13 +49,13 @@ function createWindow(): void {
     width: 880,
     height: 720,
     webPreferences: {
-      preload: join(__dirname, 'preload.cjs'),
+      preload: join(appDir, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
     },
   });
-  void win.loadFile(join(__dirname, 'renderer', 'index.html'));
+  void win.loadFile(join(appDir, 'renderer', 'index.html'));
 }
 
 function chromeInstalled(): boolean {
