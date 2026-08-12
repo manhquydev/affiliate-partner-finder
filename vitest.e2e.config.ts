@@ -3,10 +3,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
-    // Default node env; detector.test.ts opts into jsdom via a file docblock.
     environment: 'node',
-    include: ['test/**/*.test.ts'],
-    exclude: ['test/desktop-electron.e2e.test.ts'],
+    include: ['test/desktop-electron.e2e.test.ts'],
     testTimeout: 120_000,
     hookTimeout: 120_000,
   },
