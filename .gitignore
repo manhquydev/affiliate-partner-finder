@@ -38,7 +38,7 @@ plans/backups/
 
 dist-cli/
 dist-desktop/
+desktop/main.bundle.cjs
+desktop/main.bundle.cjs.map
 
 # Desktop packaging artefacts
-dist-cli/
-dist-desktop/
