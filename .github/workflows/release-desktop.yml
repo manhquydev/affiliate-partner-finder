@@ -39,7 +39,7 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
       - name: Build NSIS installer
-        run: npx electron-builder --config desktop/electron-builder.yml --win
+        run: npx electron-builder --config desktop/electron-builder.yml --win --publish never
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
