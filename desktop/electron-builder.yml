@@ -15,6 +15,12 @@ extraResources:
     to: cli
     filter:
       - "**/*"
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Utility
+  maintainer: manhquydev
 win:
   target:
     - target: nsis

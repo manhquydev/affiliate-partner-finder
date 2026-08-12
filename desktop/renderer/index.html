@@ -13,7 +13,11 @@
     </header>
 
     <section class="form">
-      <label>Từ khoá <input id="query" type="text" value="design" /></label>
+      <label>
+        Từ khoá Trustpilot
+        <input id="query" type="text" placeholder="vd: hosting, vpn, marketing…" autocomplete="off" aria-describedby="query-hint" />
+        <span class="hint" id="query-hint">Tìm công ty trên Trustpilot theo từ khoá bạn nhập — không cố định “design”.</span>
+      </label>
       <label>Số công ty <input id="limit" type="number" min="1" max="10000" value="20" /></label>
       <label>Thư mục lưu <input id="out" type="text" placeholder="…/runs/job-1" /></label>
       <div class="actions">
@@ -28,6 +32,7 @@
     <section class="status" aria-live="polite">
       <div id="state">Trạng thái: chờ</div>
       <div id="progress">Tiến độ: —</div>
+      <div id="jobQuery">Từ khoá job: —</div>
       <div id="current">Đang xử lý: —</div>
       <div id="counts">Kết quả: —</div>
       <div id="message"></div>

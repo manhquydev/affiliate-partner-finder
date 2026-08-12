@@ -2,7 +2,13 @@ import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildScanArgv, clampConcurrency, clampDelayMs, defaultDesktopProfileDir } from '../desktop/build-scan-argv';
+import {
+  buildScanArgv,
+  clampConcurrency,
+  clampDelayMs,
+  defaultDesktopProfileDir,
+  defaultDesktopRunsDir,
+} from '../desktop/build-scan-argv';
 import {
   assertOutJobLockFree,
   isProcessAlive,
@@ -94,6 +100,40 @@ describe('desktop adapter', () => {
     });
     expect(args).toContain('--resume');
     expect(args).not.toContain('--query');
+  });
+
+  it('buildScanArgv rejects empty or whitespace query when not resuming', () => {
+    const base = { out: '/tmp/out1', profile: '/tmp/profile1', platform: 'linux' as const };
+    expect(() => buildScanArgv({ ...base, query: '' })).toThrow(/query is required/);
+    expect(() => buildScanArgv({ ...base, query: '   \t' })).toThrow(/query is required/);
+    expect(() => buildScanArgv({ ...base, query: undefined })).toThrow(/query is required/);
+  });
+
+  it('inspect-out returns empty query when progress.json missing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'apf-inspect-'));
+    const progress = readProgress(dir);
+    expect(progress).toBeNull();
+    // mirrors desktop/main.ts desktop:inspect-out handler
+    expect(progress?.query ?? '').toBe('');
+    expect(canStartFresh(dir)).toBe(true);
+  });
+
+  it('assertSafeJobPaths rejects path traversal escape via ..', () => {
+    const root = join(tmpdir(), 'apf-runs-root');
+    mkdirSync(root, { recursive: true });
+    const escape = join(root, '..', 'apf-escape');
+    expect(() =>
+      assertSafeJobPaths({
+        out: escape,
+        profile: join(tmpdir(), 'apf-profile'),
+        allowedOutRoot: root,
+      }),
+    ).toThrow(/out directory/);
+  });
+
+  it('defaultDesktopRunsDir uses Documents on win32', () => {
+    const p = defaultDesktopRunsDir({ USERPROFILE: 'C:\\Users\\alice' }, 'win32');
+    expect(p.replace(/\\/g, '/')).toBe('C:/Users/alice/Documents/AffiliatePartnerFinder/runs');
   });
 
   it('defaultDesktopProfileDir uses LOCALAPPDATA on win32', () => {

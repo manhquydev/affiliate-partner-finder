@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('affiliateDesktop', {
   stopJob: () => ipcRenderer.invoke('desktop:stop'),
   openOutDir: () => ipcRenderer.invoke('desktop:open-out'),
   openCsv: () => ipcRenderer.invoke('desktop:open-csv'),
+  inspectOutDir: (out) => ipcRenderer.invoke('desktop:inspect-out', out),
   onStatus: (cb) => {
     const handler = (_e, status) => cb(status);
     ipcRenderer.on('desktop:status', handler);

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { defaultDesktopProfileDir, defaultDesktopRunsDir } from './build-scan-argv.ts';
 import { JobSupervisor, readJobFile } from './job-supervisor.ts';
 import { releaseOutJobLock } from './job-lock.ts';
-import { assertSafeJobPaths, isPathInside, resolveExistingPath } from './progress.ts';
+import { assertSafeJobPaths, canStartFresh, isPathInside, readProgress, resolveExistingPath } from './progress.ts';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(appDir, '..');
@@ -105,6 +105,24 @@ app.whenReady().then(() => {
   createWindow();
 });
 
+function resolveSafeOutDir(outPath: string): string {
+  if (typeof outPath !== 'string' || !outPath.trim()) {
+    throw new Error('Thư mục lưu không hợp lệ');
+  }
+  const out = resolve(outPath.trim());
+  assertSafeJobPaths({
+    out,
+    profile: profileRoot,
+    allowedOutRoot: runsRoot,
+    allowedProfileRoot: profileRoot,
+  });
+  const real = resolveExistingPath(out);
+  if (!isPathInside(runsRoot, real) && real !== resolve(runsRoot)) {
+    throw new Error('out path escape blocked');
+  }
+  return real;
+}
+
 ipcMain.handle('desktop:defaults', () => {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   return {
@@ -114,17 +132,24 @@ ipcMain.handle('desktop:defaults', () => {
   };
 });
 
+ipcMain.handle('desktop:inspect-out', (_e, outPath: string) => {
+  const real = resolveSafeOutDir(outPath);
+  const progress = readProgress(real);
+  const query = typeof progress?.query === 'string' ? progress.query : '';
+  return {
+    progress,
+    canStartFresh: canStartFresh(real),
+    canResume: existsSync(join(real, 'companies.json')),
+    query,
+    total: progress?.total ?? null,
+  };
+});
+
 ipcMain.handle('desktop:status', () => supervisor.getStatus());
 
 ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: number; out: string; resume?: boolean; earlyExit?: boolean }) => {
-  const out = resolve(opts.out);
+  const out = resolveSafeOutDir(opts.out);
   const profile = profileRoot;
-  assertSafeJobPaths({
-    out,
-    profile,
-    allowedOutRoot: runsRoot,
-    allowedProfileRoot: profileRoot,
-  });
   await supervisor.start({
     query: opts.query,
     limit: opts.limit,

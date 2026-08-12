@@ -32,6 +32,19 @@ input {
   border: 1px solid var(--line);
   background: #fff;
 }
+.hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+input:disabled,
+input:read-only {
+  background: #eee;
+  color: var(--muted);
+  cursor: not-allowed;
+}
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
 button {
   border: 1px solid var(--ink);
