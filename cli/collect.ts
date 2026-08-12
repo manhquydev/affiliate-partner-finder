@@ -48,6 +48,8 @@ async function gotoWithRetry(page: Page, url: string, attempts = 4): Promise<voi
 export type CollectCliOptions = {
   /** Called after each successful page with the cumulative company list (for checkpoint). */
   onProgress?: (companies: Company[], pageNum: number, totalPagesHint: number | null) => void;
+  /** When true, abort pagination and return partial results (soft stop). */
+  shouldStop?: () => boolean;
 };
 
 /**
@@ -71,6 +73,10 @@ export async function collectCli(
 
   try {
     for (let pageNum = 1; pageNum <= maxPages && out.length < limit; pageNum++) {
+      if (opts.shouldStop?.()) {
+        console.log('[cli] collect stop requested — returning partial checkpoint');
+        break;
+      }
       const url = `${SEARCH_BASE}?query=${encodeURIComponent(query)}&page=${pageNum}`;
       console.log(`[cli] collect page ${pageNum}/${maxPages} collected=${out.length}/${limit}`);
       await gotoWithRetry(page, url);
@@ -106,7 +112,13 @@ export async function collectCli(
       opts.onProgress?.(out.slice(), pageNum, totalPagesHint);
 
       if (res.currentPage != null && res.totalPages != null && res.currentPage >= res.totalPages) break;
-      if (out.length < limit) await sleep(delayMs);
+      if (out.length < limit) {
+        if (opts.shouldStop?.()) {
+          console.log('[cli] collect stop requested — returning partial checkpoint');
+          break;
+        }
+        await sleep(delayMs);
+      }
     }
   } finally {
     await page.close().catch(() => undefined);

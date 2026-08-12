@@ -6,11 +6,15 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defaultDesktopProfileDir, defaultDesktopRunsDir } from './build-scan-argv';
-import { JobSupervisor, readJobFile } from './job-supervisor';
-import { assertSafeJobPaths, isPathInside, resolveExistingPath } from './progress';
+import { defaultDesktopProfileDir, defaultDesktopRunsDir } from './build-scan-argv.ts';
+import { JobSupervisor, readJobFile } from './job-supervisor.ts';
+import { releaseOutJobLock } from './job-lock.ts';
+import { assertSafeJobPaths, isPathInside, resolveExistingPath } from './progress.ts';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname =
+  typeof __filename !== 'undefined'
+    ? dirname(__filename)
+    : dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 
 const runsRoot = defaultDesktopRunsDir();
@@ -30,13 +34,13 @@ const supervisor = new JobSupervisor({
     if (existsSync(tsxCli)) {
       return { command: process.execPath, prefixArgs: [tsxCli, entry], cwd: repoRoot };
     }
-    // Packaged: ELECTRON_RUN_AS_NODE + bundled cli
-    const bundled = join(process.resourcesPath || repoRoot, 'cli', 'index.js');
-    return {
-      command: process.execPath,
-      prefixArgs: existsSync(bundled) ? [bundled] : [entry],
-      cwd: repoRoot,
-    };
+    // Packaged: ELECTRON_RUN_AS_NODE + bundled cli under extraResources
+    const cliRoot = join(process.resourcesPath || repoRoot, 'cli');
+    const bundled = join(cliRoot, 'index.js');
+    if (existsSync(bundled)) {
+      return { command: process.execPath, prefixArgs: [bundled], cwd: cliRoot };
+    }
+    return { command: process.execPath, prefixArgs: [entry], cwd: repoRoot };
   },
   onStatus: (status) => {
     win?.webContents.send('desktop:status', status);
@@ -90,6 +94,7 @@ app.whenReady().then(() => {
       app.quit();
       return;
     }
+    if (orphan.out) releaseOutJobLock(orphan.out);
   }
 
   if (!chromeInstalled()) {
@@ -114,7 +119,7 @@ ipcMain.handle('desktop:defaults', () => {
 
 ipcMain.handle('desktop:status', () => supervisor.getStatus());
 
-ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: number; out: string; resume?: boolean }) => {
+ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: number; out: string; resume?: boolean; earlyExit?: boolean }) => {
   const out = resolve(opts.out);
   const profile = profileRoot;
   assertSafeJobPaths({
@@ -131,6 +136,7 @@ ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: numbe
     resume: Boolean(opts.resume),
     scanProfile: true,
     acceptFailures: true,
+    earlyExit: Boolean(opts.earlyExit),
     allowedOutRoot: runsRoot,
     allowedProfileRoot: profileRoot,
   });

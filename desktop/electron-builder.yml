@@ -2,13 +2,19 @@ appId: com.affiliatepartnerfinder.desktop
 productName: Affiliate Partner Finder
 directories:
   output: dist-desktop
+extraMetadata:
+  main: desktop/main.bundle.cjs
 files:
   - desktop/**/*
   - package.json
   - "!desktop/**/*.md"
+  - "!desktop/main.ts"
+  - "!desktop/**/*.ts"
 extraResources:
   - from: dist-cli
     to: cli
+    filter:
+      - "**/*"
 win:
   target:
     - target: nsis

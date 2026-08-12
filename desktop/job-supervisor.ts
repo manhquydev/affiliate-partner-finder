@@ -1,10 +1,11 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { buildScanArgv } from './build-scan-argv';
-import { countKetQuaFromJsonl, parseCliStatusLine, writeSimpleCsvFromJsonl, emptyCounts } from './ket-qua-counts';
-import { assertSafeJobPaths, canStartFresh, readProgress } from './progress';
-import type { JobOptions, JobRecord, JobStatus } from './types';
+import { buildScanArgv } from './build-scan-argv.ts';
+import { countKetQuaFromJsonl, parseCliStatusLine, writeSimpleCsvFromJsonl, emptyCounts } from './ket-qua-counts.ts';
+import { assertOutJobLockFree, releaseOutJobLock, writeOutJobLock } from './job-lock.ts';
+import { assertSafeJobPaths, canStartFresh, readProgress } from './progress.ts';
+import type { JobOptions, JobRecord, JobStatus } from './types.ts';
 
 export type SupervisorHooks = {
   onStatus?: (status: JobStatus) => void;
@@ -48,6 +49,8 @@ export class JobSupervisor {
 
     mkdirSync(out, { recursive: true });
 
+    assertOutJobLockFree(out);
+
     if (!opts.resume && !canStartFresh(out)) {
       throw new Error('Thư mục đã có dữ liệu — dùng Tiếp tục hoặc chọn thư mục mới');
     }
@@ -85,6 +88,14 @@ export class JobSupervisor {
     });
 
     const pid = this.child.pid;
+    if (pid) {
+      writeOutJobLock(out, {
+        pid,
+        out,
+        profile,
+        startedAt: new Date().toISOString(),
+      });
+    }
     if (pid && this.hooks.jobFilePath) {
       const rec: JobRecord = {
         pid,
@@ -201,6 +212,7 @@ export class JobSupervisor {
       } catch {
         /* ignore */
       }
+      releaseOutJobLock(this.outDir);
     }
     if (this.hooks.jobFilePath && existsSync(this.hooks.jobFilePath)) {
       try {

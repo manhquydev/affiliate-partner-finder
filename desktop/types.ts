@@ -25,6 +25,7 @@ export type JobOptions = {
   maxPages?: number;
   scanProfile?: boolean;
   acceptFailures?: boolean;
+  earlyExit?: boolean;
   /** Test / override; default process.platform */
   platform?: NodeJS.Platform;
 };

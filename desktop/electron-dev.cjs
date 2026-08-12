@@ -1,6 +1,7 @@
 /** Electron bootstraps then loads ESM TS main via tsx. */
-require('tsx/cjs/api').register();
+const { register } = require('tsx/cjs/api');
+register();
 import('./main.ts').catch((err) => {
-  console.error(err);
+  console.error('[desktop] failed to load main:', err);
   process.exit(1);
 });

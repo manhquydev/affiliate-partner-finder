@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { JobOptions } from './types';
+import type { JobOptions } from './types.ts';
 
 const MIN_DELAY_MS = 1000;
 const MAX_CONCURRENCY = 3;
@@ -44,6 +44,7 @@ export function buildScanArgv(opts: JobOptions): string[] {
 
   if (scanProfile) args.push('--scan-profile');
   if (acceptFailures) args.push('--accept-failures');
+  if (opts.earlyExit) args.push('--early-exit');
 
   // Windows desktop never uses Xvfb; Linux GUI also skips unless ops CLI.
   if (platform === 'win32' && args.includes('--virtual-display')) {

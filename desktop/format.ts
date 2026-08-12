@@ -1,4 +1,4 @@
-import type { KetQuaCounts, ProgressSnapshot } from './types';
+import type { KetQuaCounts, ProgressSnapshot } from './types.ts';
 
 export function formatProgress(p: ProgressSnapshot | null): string {
   if (!p) return 'Chưa có tiến độ';

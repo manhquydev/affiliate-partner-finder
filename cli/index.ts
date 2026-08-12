@@ -219,10 +219,15 @@ async function main(): Promise<number> {
                 (totalPagesHint != null ? ` (tp totalPages≈${totalPagesHint})` : ''),
             );
           },
+          shouldStop: () => stopRequested,
         },
       );
       atomicWriteJson(companiesPath, companies);
       console.log(`[cli] collected ${companies.length} companies → ${companiesPath}`);
+      if (stopRequested) {
+        console.log('[cli] stopped during collect — checkpoint saved, resume safe');
+        return 130;
+      }
     } catch (e) {
       console.error(`[cli] collect failed: ${e instanceof Error ? e.message : e}`);
       // Keep partial checkpoint if any — continue scanning what we have.

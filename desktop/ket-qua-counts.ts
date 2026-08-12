@@ -1,9 +1,9 @@
 import { createReadStream, existsSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
-import { simpleHit, toSimpleCSV } from '../lib/export';
-import type { ScanResult } from '../lib/types';
-import type { KetQuaCounts } from './types';
+import { simpleHit, toSimpleCSV } from '../lib/export.ts';
+import type { ScanResult } from '../lib/types.ts';
+import type { KetQuaCounts } from './types.ts';
 
 export function emptyCounts(): KetQuaCounts {
   return { true: 0, false: 0, unknown: 0 };

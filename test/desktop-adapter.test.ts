@@ -4,6 +4,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildScanArgv, clampConcurrency, clampDelayMs, defaultDesktopProfileDir } from '../desktop/build-scan-argv';
 import {
+  assertOutJobLockFree,
+  isProcessAlive,
+  readOutJobLock,
+  releaseOutJobLock,
+  writeOutJobLock,
+} from '../desktop/job-lock';
+import {
   assertSafeJobPaths,
   canStartFresh,
   readProgress,
@@ -53,6 +60,18 @@ describe('desktop adapter', () => {
     expect(args[args.indexOf('--concurrency') + 1]).toBe('3');
     expect(args[args.indexOf('--delay-ms') + 1]).toBe('1000');
     expect(args).not.toContain('--virtual-display');
+    expect(args).not.toContain('--early-exit');
+  });
+
+  it('buildScanArgv passes --early-exit when enabled', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      earlyExit: true,
+      platform: 'linux',
+    });
+    expect(args).toContain('--early-exit');
   });
 
   it('win32 always has profile and never virtual-display', () => {
@@ -176,5 +195,24 @@ describe('desktop adapter', () => {
       }),
     ).toContain('25%');
     expect(formatCounts({ true: 1, false: 2, unknown: 3 })).toContain('unknown 3');
+  });
+
+  it('out job lock rejects live pid and clears stale', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'apf-lock-'));
+    writeOutJobLock(dir, {
+      pid: process.pid,
+      out: dir,
+      profile: '/tmp/p',
+      startedAt: new Date().toISOString(),
+    });
+    expect(() => assertOutJobLockFree(dir)).toThrow(/PID/);
+    expect(readOutJobLock(dir)?.pid).toBe(process.pid);
+    releaseOutJobLock(dir);
+    expect(readOutJobLock(dir)).toBeNull();
+    assertOutJobLockFree(dir);
+    writeOutJobLock(dir, { pid: 999_999_999, out: dir, profile: '/tmp/p', startedAt: new Date().toISOString() });
+    expect(isProcessAlive(999_999_999)).toBe(false);
+    assertOutJobLockFree(dir);
+    expect(readOutJobLock(dir)).toBeNull();
   });
 });
