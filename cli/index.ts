@@ -1,6 +1,6 @@
 // Local CLI batch orchestrator — collect → resolve → scan → JSONL/CSV.
 
-import { mkdirSync, readFileSync, writeFileSync, existsSync, openSync, writeSync, fsyncSync, closeSync, renameSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, openSync, writeSync, fsyncSync, closeSync, renameSync, unlinkSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import pLimit from 'p-limit';
 import { CONFIG, DEFAULT_RUN_CONFIG } from '../lib/config';
@@ -10,6 +10,7 @@ import type { Company, ScanResult, RunConfig } from '../lib/types';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
 import { collectCli } from './collect';
 import { scanWithRetry } from './scan';
+import { maybeReexecUnderXvfb } from './virtual-display';
 
 type Args = {
   query: string;
@@ -22,6 +23,7 @@ type Args = {
   profile: string;
   headedScan: boolean;
   scanProfile: boolean;
+  virtualDisplay: boolean;
   earlyExit: boolean;
   acceptFailures: boolean;
   help: boolean;
@@ -44,12 +46,14 @@ Options:
   --profile <dir>     Chrome persistent profile (default ~/.cache/affiliate-partner-finder/chrome-profile)
   --headed-scan       Headed browser for site scans
   --scan-profile      Site scans use the same persistent profile (CF cookies); implies headed
+  --virtual-display   Re-exec under Xvfb (headed Chrome off primary screen; keeps CF quality)
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
   --accept-failures   Treat timeout/error rows as terminal on --resume (do not requeue)
   --help              Show help
 
 Ethics: concurrency ≤3, delay ≥1000 recommended. No CAPTCHA bypass.
 After CF challenge: complete check once in the persistent profile window, re-run.
+For overnight UX: prefer --scan-profile --virtual-display (requires package xvfb).
 `);
 }
 
@@ -65,6 +69,7 @@ function parseArgs(argv: string[]): Args {
     profile: DEFAULT_PROFILE_DIR,
     headedScan: false,
     scanProfile: false,
+    virtualDisplay: false,
     earlyExit: false,
     acceptFailures: false,
     help: false,
@@ -83,6 +88,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--profile') args.profile = next();
     else if (a === '--headed-scan') args.headedScan = true;
     else if (a === '--scan-profile') args.scanProfile = true;
+    else if (a === '--virtual-display') args.virtualDisplay = true;
     else if (a === '--early-exit') args.earlyExit = true;
     else if (a === '--accept-failures') args.acceptFailures = true;
   }
@@ -138,6 +144,8 @@ function isTerminal(r: ScanResult, acceptFailures: boolean): boolean {
 
 async function main(): Promise<number> {
   const args = parseArgs(process.argv.slice(2));
+  // Headed Chrome on Xvfb — must run before --help so smoke/`scan:xvfb --help` exercise re-exec.
+  maybeReexecUnderXvfb(args.virtualDisplay);
   if (args.help) {
     printHelp();
     return 0;
@@ -156,6 +164,20 @@ async function main(): Promise<number> {
   const csvPath = join(outDir, 'results.csv');
   const csvFullPath = join(outDir, 'results.full.csv');
   const jsonPath = join(outDir, 'results.json');
+  const stopFlagPath = join(outDir, '.stop');
+
+  let stopRequested = false;
+  const requestStop = () => {
+    if (stopRequested) return;
+    stopRequested = true;
+    console.log('[cli] stop requested — finishing in-flight work, then export');
+  };
+  process.once('SIGINT', requestStop);
+  process.once('SIGTERM', requestStop);
+  const stopPoll = setInterval(() => {
+    if (existsSync(stopFlagPath)) requestStop();
+  }, 500);
+  stopPoll.unref?.();
 
   const resultsMap = loadResultsMap(jsonlPath);
   const run: RunConfig = {
@@ -238,7 +260,7 @@ async function main(): Promise<number> {
   let shuttingDown = false;
   let disconnectFatal = false;
   session.bindDisconnect(() => {
-    if (shuttingDown) return;
+    if (shuttingDown || stopRequested) return;
     disconnectFatal = true;
     console.error('[cli] scan browser disconnected');
   });
@@ -277,9 +299,10 @@ async function main(): Promise<number> {
     await Promise.all(
       pending.map((company, i) =>
         limit(async () => {
-          if (disconnectFatal) return;
+          if (disconnectFatal || stopRequested) return;
           // Start stagger so first wave doesn't blast all navigations at t=0
           await sleep(i * Math.min(args.delayMs, 500));
+          if (disconnectFatal || stopRequested) return;
           const websiteUrl = await resolveWebsite(company.domain, run.resolveViaReviewPage);
           console.log(`[cli] scan ${company.domain} → ${websiteUrl}`);
           const result = await scanWithRetry(session, company, websiteUrl, run, CONFIG, {
@@ -291,12 +314,18 @@ async function main(): Promise<number> {
       ),
     );
   } finally {
+    clearInterval(stopPoll);
     await writeChain.catch(() => undefined);
     shuttingDown = true;
     await session.close();
+    try {
+      if (existsSync(stopFlagPath)) unlinkSync(stopFlagPath);
+    } catch {
+      /* ignore */
+    }
   }
 
-  if (disconnectFatal) {
+  if (disconnectFatal && !stopRequested) {
     console.error('[cli] aborted due to browser disconnect — re-run with --resume');
     return 1;
   }
@@ -317,8 +346,8 @@ async function main(): Promise<number> {
   console.log(`[cli] export ${csvPath} (end-user: true=${hits} false=${misses} unknown=${unknown})`);
   console.log(`[cli] export ${csvFullPath}`);
   console.log(`[cli] export ${jsonPath}`);
-  console.log(`[cli] completed ${resultsMap.size}/${total}`);
-  return 0;
+  console.log(`[cli] completed ${resultsMap.size}/${total}${stopRequested ? ' (stopped early — resume safe)' : ''}`);
+  return stopRequested ? 130 : 0;
 }
 
 function uniqueByDomain(

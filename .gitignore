@@ -35,3 +35,10 @@ Thumbs.db
 
 # Local backups of skill trees (do not vendor into git)
 plans/backups/
+
+dist-cli/
+dist-desktop/
+
+# Desktop packaging artefacts
+dist-cli/
+dist-desktop/

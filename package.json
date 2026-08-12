@@ -12,10 +12,17 @@
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "scan": "tsx cli/index.ts",
-    "cli": "tsx cli/index.ts"
+    "scan:xvfb": "tsx cli/index.ts --virtual-display",
+    "cli": "tsx cli/index.ts",
+    "desktop:dev": "electron --no-sandbox desktop/electron-dev.cjs",
+    "desktop:bundle-cli": "node scripts/bundle-cli.mjs",
+    "desktop:pack": "npm run desktop:bundle-cli && electron-builder --config desktop/electron-builder.yml --win"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "electron": "^37.10.3",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.25.12",
     "jsdom": "^25.0.0",
     "p-limit": "^7.3.1",
     "playwright": "^1.62.1",
@@ -26,5 +33,11 @@
   },
   "dependencies": {
     "idb": "^8.0.0"
+  },
+  "allowScripts": {
+    "electron@37.10.3": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
   }
 }

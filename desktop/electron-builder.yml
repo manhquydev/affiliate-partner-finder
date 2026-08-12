@@ -1,0 +1,21 @@
+appId: com.affiliatepartnerfinder.desktop
+productName: Affiliate Partner Finder
+directories:
+  output: dist-desktop
+files:
+  - desktop/**/*
+  - package.json
+  - "!desktop/**/*.md"
+extraResources:
+  - from: dist-cli
+    to: cli
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

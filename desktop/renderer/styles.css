@@ -1,0 +1,46 @@
+:root {
+  --ink: #0a0a0a;
+  --muted: #5c564e;
+  --paper: #faf7f2;
+  --panel: #f0ebe1;
+  --accent: #b8232c;
+  --line: #d9d2c5;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 1.25rem 1.5rem 2rem;
+  background: var(--paper);
+  color: var(--ink);
+  max-width: 52rem;
+}
+h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+.sub { color: var(--muted); margin: 0 0 1.25rem; }
+.form, .status, .cf {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+label { display: block; margin-bottom: 0.6rem; font-size: 0.9rem; }
+input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+button {
+  border: 1px solid var(--ink);
+  background: #fff;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+#btnStart { background: var(--ink); color: #fff; }
+.cf { border-left: 3px solid var(--accent); }
+.cf strong { color: var(--accent); }
+#message { margin-top: 0.5rem; color: var(--muted); }

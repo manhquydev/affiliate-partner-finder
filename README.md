@@ -42,6 +42,17 @@ npm run build        # -> .output/chrome-mv3/
 npm test             # Vitest unit tests (detector/classify/export/golden)
 ```
 
+## Desktop GUI (Windows-first)
+
+Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI, theo dõi tiến độ, CSV HITL.
+
+```bash
+npm install
+npm run desktop:dev
+```
+
+Hướng dẫn khách / đóng gói: [`docs/desktop-windows.md`](./docs/desktop-windows.md). Adapter + test: `desktop/`, `test/desktop-adapter.test.ts`.
+
 ## Local CLI (batch)
 
 Batch scanner cho quét theo ngành trên máy local (Playwright), dùng chung detector/classify với extension. Output CSV/JSON + resume.
@@ -60,6 +71,13 @@ npm run scan -- --resume --out ./out/run1
   ```bash
   npm run scan -- --resume --out ./out/run1 --scan-profile --accept-failures --concurrency 2
   ```
+- **Không chiếm màn hình chính:** `--virtual-display` re-exec dưới Xvfb (cần `xvfb` / `xvfb-run`). Chrome vẫn *headed* với anti-bot nhưng không hiện trên desktop `:0`:
+  ```bash
+  npm run scan -- --resume --out ./out/run1 --scan-profile --virtual-display --accept-failures
+  # hoặc
+  npm run scan:xvfb -- --resume --out ./out/run1 --scan-profile --accept-failures
+  ```
+  Khi gặp Cloudflare: vượt challenge một lần trên display thật (bỏ `--virtual-display` tạm) hoặc gắn VNC vào display ảo, rồi `--resume`.
 - Artefacts: `companies.json`, `results.jsonl`, **`results.csv`** (end-user: `ten_cong_ty,website,ket_qua,huong_dan` với `true`/`false`/`unknown`), `results.full.csv` + `results.json` (kỹ thuật/audit).
 - `ket_qua=true` = có dấu hiệu affiliate **hoặc** partner → người vào xác nhận; `false` = đã mở trang, không thấy dấu hiệu; `unknown` = không mở được (không ghi false để tránh miss).
 - Kiểm tra live export kỹ thuật: `node test/verify-golden.mjs ./out/run1/results.json`

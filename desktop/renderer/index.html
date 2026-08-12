@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trình dò Affiliate/Partner</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Trình dò Affiliate/Partner</h1>
+      <p class="sub">Quét Trustpilot → website · CSV true/false/unknown · chạy local</p>
+    </header>
+
+    <section class="form">
+      <label>Từ khoá <input id="query" type="text" value="design" /></label>
+      <label>Số công ty <input id="limit" type="number" min="1" max="10000" value="20" /></label>
+      <label>Thư mục lưu <input id="out" type="text" placeholder="…/runs/job-1" /></label>
+      <div class="actions">
+        <button id="btnStart" type="button">Bắt đầu</button>
+        <button id="btnResume" type="button">Tiếp tục</button>
+        <button id="btnStop" type="button">Dừng</button>
+        <button id="btnFolder" type="button">Mở thư mục</button>
+        <button id="btnCsv" type="button">Mở CSV</button>
+      </div>
+    </section>
+
+    <section class="status" aria-live="polite">
+      <div id="state">Trạng thái: chờ</div>
+      <div id="progress">Tiến độ: —</div>
+      <div id="current">Đang xử lý: —</div>
+      <div id="counts">Kết quả: —</div>
+      <div id="message"></div>
+    </section>
+
+    <section class="cf" id="cfPanel">
+      <strong>Cần bạn (Cloudflare / xác minh trình duyệt)</strong>
+      <ol>
+        <li>Cửa sổ Chrome của ứng dụng đã mở — hoàn thành kiểm tra một lần.</li>
+        <li>Quay lại đây → bấm <em>Tiếp tục</em> nếu việc đã dừng.</li>
+      </ol>
+      <p>Không tự vượt CAPTCHA. Không dùng bộ giải captcha.</p>
+    </section>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
