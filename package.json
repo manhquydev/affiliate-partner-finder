@@ -16,7 +16,12 @@
     "cli": "tsx cli/index.ts",
     "desktop:dev": "electron --no-sandbox desktop/electron-dev.cjs",
     "desktop:bundle-cli": "node scripts/bundle-cli.mjs",
-    "desktop:pack": "npm run desktop:bundle-cli && electron-builder --config desktop/electron-builder.yml --win"
+    "desktop:prepare-pack": "node scripts/prepare-desktop-pack.mjs",
+    "desktop:pack": "npm run desktop:prepare-pack && electron-builder --config desktop/electron-builder.yml --win",
+    "shard:scan": "node scripts/shard-scan.mjs",
+    "shard:merge": "tsx scripts/merge-shards.ts",
+    "shard:relaunch": "node scripts/shard-relaunch.mjs",
+    "shard:watch": "node scripts/shard-watch.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
