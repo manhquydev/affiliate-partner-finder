@@ -1,11 +1,46 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  openSync,
+  readSync,
+  closeSync,
+  fstatSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { buildScanArgv } from './build-scan-argv.ts';
+import {
+  EtaTracker,
+  extractScannedAtMsFromJsonlText,
+  samplesFromScanTimestamps,
+  type EtaSnapshot,
+} from './eta.ts';
 import { countKetQuaFromJsonl, parseCliStatusLine, writeSimpleCsvFromJsonl, emptyCounts } from './ket-qua-counts.ts';
 import { assertOutJobLockFree, releaseOutJobLock, writeOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, canStartFresh, readProgress } from './progress.ts';
 import type { JobOptions, JobRecord, JobStatus } from './types.ts';
+
+const JSONL_SEED_TAIL_BYTES = 512_000;
+
+function readFileTailUtf8(path: string, maxBytes: number): string {
+  if (!existsSync(path)) return '';
+  const fd = openSync(path, 'r');
+  try {
+    const st = fstatSync(fd);
+    const size = st.size;
+    if (size <= 0) return '';
+    const start = Math.max(0, size - maxBytes);
+    const len = size - start;
+    const buf = Buffer.alloc(len);
+    readSync(fd, buf, 0, len, start);
+    return buf.toString('utf8');
+  } finally {
+    closeSync(fd);
+  }
+}
 
 export type SupervisorHooks = {
   onStatus?: (status: JobStatus) => void;
@@ -19,11 +54,13 @@ export class JobSupervisor {
   private child: ChildProcess | null = null;
   private pollTimer: NodeJS.Timeout | null = null;
   private currentDomains = new Set<string>();
+  private etaTracker = new EtaTracker();
   private lastStatus: JobStatus = {
     state: 'idle',
     progress: null,
     counts: emptyCounts(),
     currentDomains: [],
+    eta: null,
   };
   private outDir = '';
   private profile = '';
@@ -68,12 +105,18 @@ export class JobSupervisor {
     this.outDir = out;
     this.profile = profile;
     this.currentDomains.clear();
+    this.etaTracker.begin(out);
+
+    const progress = readProgress(out);
+    this.seedEtaFromJsonl(out, progress?.completed ?? 0);
+    const eta = this.computeEta(progress);
     this.emit({
       state: 'running',
-      progress: readProgress(out),
+      progress,
       counts: emptyCounts(),
       currentDomains: [],
       outDir: out,
+      eta,
       message: 'Đang khởi động…',
     });
 
@@ -176,10 +219,29 @@ export class JobSupervisor {
     this.pollTimer = null;
   }
 
+  private seedEtaFromJsonl(outDir: string, absoluteCompleted: number): void {
+    try {
+      const text = readFileTailUtf8(join(outDir, 'results.jsonl'), JSONL_SEED_TAIL_BYTES);
+      const times = extractScannedAtMsFromJsonlText(text);
+      this.etaTracker.seed(samplesFromScanTimestamps(times, absoluteCompleted));
+    } catch {
+      /* ignore seed failures */
+    }
+  }
+
+  private computeEta(progress: JobStatus['progress']): EtaSnapshot | null {
+    if (!progress || progress.total <= 0) return null;
+    return this.etaTracker.observe({
+      completed: progress.completed,
+      total: progress.total,
+    });
+  }
+
   private async refresh(): Promise<void> {
     if (!this.outDir) return;
     const progress = readProgress(this.outDir);
     const counts = await countKetQuaFromJsonl(join(this.outDir, 'results.jsonl'));
+    const eta = this.computeEta(progress);
     this.emit({
       state: this.lastStatus.state === 'stopping' ? 'stopping' : 'running',
       progress,
@@ -189,6 +251,7 @@ export class JobSupervisor {
       csvPath: existsSync(join(this.outDir, 'results.csv'))
         ? join(this.outDir, 'results.csv')
         : undefined,
+      eta,
     });
   }
 
@@ -225,6 +288,10 @@ export class JobSupervisor {
     const counts = this.outDir
       ? await countKetQuaFromJsonl(join(this.outDir, 'results.jsonl'))
       : emptyCounts();
+    const eta =
+      progress && progress.total > 0
+        ? this.etaTracker.observe({ completed: progress.completed, total: progress.total })
+        : null;
     this.emit({
       state: 'idle',
       progress,
@@ -233,6 +300,7 @@ export class JobSupervisor {
       outDir: this.outDir || undefined,
       csvPath: csvOk && csvPath ? csvPath : undefined,
       message,
+      eta,
     });
   }
 

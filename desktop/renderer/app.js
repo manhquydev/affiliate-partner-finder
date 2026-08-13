@@ -50,6 +50,53 @@ function pct(completed, total) {
   return Math.min(100, Math.round((100 * completed) / total));
 }
 
+function renderEta(eta, { running, completed, total }) {
+  const el = $('progressEta');
+  if (!el) return;
+
+  if (!running || !total || completed >= total) {
+    if (!running && eta?.relativeLabel && completed > 0 && completed < total) {
+      el.hidden = false;
+      el.dataset.stalled = eta.stalled ? 'true' : 'false';
+      el.dataset.confidence = eta.confidence || 'none';
+      el.innerHTML = '';
+      el.appendChild(document.createTextNode(`Lần chạy trước: ${eta.relativeLabel}`));
+      if (eta.rateLabel) {
+        const rate = document.createElement('span');
+        rate.className = 'eta-rate';
+        rate.textContent = eta.rateLabel;
+        el.appendChild(rate);
+      }
+      return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+    el.dataset.stalled = 'false';
+    el.dataset.confidence = 'none';
+    return;
+  }
+
+  if (!eta) {
+    el.hidden = false;
+    el.dataset.stalled = 'false';
+    el.dataset.confidence = 'none';
+    el.textContent = 'ETA: đang đo tốc độ…';
+    return;
+  }
+
+  el.hidden = false;
+  el.dataset.stalled = eta.stalled ? 'true' : 'false';
+  el.dataset.confidence = eta.confidence || 'none';
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode(eta.relativeLabel || 'ETA: đang đo tốc độ…'));
+  if (eta.rateLabel) {
+    const rate = document.createElement('span');
+    rate.className = 'eta-rate';
+    rate.textContent = eta.rateLabel;
+    el.appendChild(rate);
+  }
+}
+
 function formatRunOption(run) {
   const q = run.query ? ` · ${run.query}` : '';
   const prog = run.total > 0 ? ` · ${run.completed}/${run.total}` : '';
@@ -101,6 +148,8 @@ function renderStatus(s) {
   } else {
     $('progressHint').textContent = 'Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.';
   }
+
+  renderEta(s.eta, { running, completed, total });
 
   const jobQuery = p?.query?.trim();
   $('jobQuery').textContent = jobQuery ? `Từ khoá job: ${jobQuery}` : 'Từ khoá job: —';
