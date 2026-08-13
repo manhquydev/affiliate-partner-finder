@@ -30,6 +30,8 @@ Ba ràng buộc đã được **kiểm chứng thật trên trình duyệt** (xe
 | `08-implementation-guide.md` | Hướng dẫn build từng bước cho AI agent |
 | `09-manifest-and-skeleton.md` | manifest.json + code khung khởi đầu |
 | `10-roadmap-and-ai-extension.md` | Roadmap giai đoạn 2 (khi nào cần AI) |
+| `11-tech-stack.md` | Tech stack |
+| `desktop-windows.md` | Desktop GUI (Windows/Linux): dùng app, tùy chọn Track A, tải Releases |
 | `data/test-results.json` | Dữ liệu kiểm thử thô (evidence) |
 
 ## Nguyên tắc cốt lõi: chống ảo giác kết quả
