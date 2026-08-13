@@ -44,14 +44,19 @@ npm test             # Vitest unit tests (detector/classify/export/golden)
 
 ## Desktop GUI (Windows-first)
 
-Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI, theo dõi tiến độ, CSV HITL.
+Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI, theo dõi tiến độ + **ETA**, CSV HITL.
 
 ```bash
 npm install
 npm run desktop:dev
 ```
 
-Hướng dẫn khách / đóng gói: [`docs/desktop-windows.md`](./docs/desktop-windows.md). Adapter + test: `desktop/`, `test/desktop-adapter.test.ts`.
+**v1.0.4:** bảng tiến độ có ETA lăn; tùy chọn quét (mặc định **tắt**): early-exit, `--network-evidence`, `--lazy-settle` — chỉ bật khi đo A/B / cần thêm tín hiệu trang `ok`, **không** dùng để “giảm unknown”.
+
+Hướng dẫn khách / đóng gói / tải bản phát hành: [`docs/desktop-windows.md`](./docs/desktop-windows.md).  
+Releases: https://github.com/manhquydev/affiliate-partner-finder/releases
+
+Adapter + test: `desktop/`, `test/desktop-adapter.test.ts`.
 
 ## Local CLI (batch)
 
