@@ -97,6 +97,25 @@ input:read-only {
 
 .run-picker-label { margin-bottom: 0.35rem; }
 
+.scan-opts .check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-weight: 500;
+  margin-bottom: 0.45rem;
+}
+
+.scan-opts .check input {
+  width: auto;
+  margin: 0.2rem 0 0;
+  flex-shrink: 0;
+}
+
+.scan-opts code {
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
 .btn-link {
   border: none;
   background: none;

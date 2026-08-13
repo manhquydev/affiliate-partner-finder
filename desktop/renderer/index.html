@@ -39,6 +39,23 @@
         <button id="btnOpenRunsRoot" type="button" class="btn-link">Mở thư mục runs trong trình quản lý file</button>
       </fieldset>
 
+      <fieldset class="out-fieldset scan-opts">
+        <legend>Tùy chọn quét (mặc định tắt Track A)</legend>
+        <label class="check">
+          <input id="earlyExit" type="checkbox" />
+          Early-exit path-probe khi đã có tín hiệu trang chủ
+        </label>
+        <label class="check">
+          <input id="networkEvidence" type="checkbox" />
+          Network evidence — bắt host affiliate từ request/response (<code>--network-evidence</code>)
+        </label>
+        <label class="check">
+          <input id="lazySettle" type="checkbox" />
+          Lazy settle — scroll + MutationObserver thay cố định 1.2s (<code>--lazy-settle</code>)
+        </label>
+        <span class="hint">Hai tùy chọn Track A chỉ bật khi đo A/B recall trên trang tải được — không dùng để “giảm unknown”.</span>
+      </fieldset>
+
       <div class="actions">
         <button id="btnStart" type="button">Bắt đầu</button>
         <button id="btnResume" type="button">Tiếp tục</button>

@@ -150,9 +150,18 @@ async function scanOnPage(
     let probe: PathProbeResult | undefined;
     /** true when path-probe was attempted but aborted — must not look like a clean empty probe. */
     let probeIncomplete = false;
+    // Snapshot network hosts before path-probe so --early-exit can skip when network-only affiliates already matched.
+    const networkHits = networkEvidence ? (collector?.matchedPlatforms() ?? []) : [];
 
     if (det.loadStatus === 'ok') {
-      const skipProbe = Boolean(opts.earlyExit) && shouldSkipPathProbe(det);
+      const skipProbe =
+        Boolean(opts.earlyExit) &&
+        shouldSkipPathProbe({
+          loadStatus: det.loadStatus,
+          linkHits: det.linkHits,
+          platformHits: det.platformHits,
+          networkHits,
+        });
       if (!skipProbe) {
         try {
           const origin = new URL(finalUrl).origin;
@@ -175,7 +184,6 @@ async function scanOnPage(
       }
     }
 
-    const networkHits = collector?.matchedPlatforms() ?? [];
     const evidence: Evidence = {
       linkHits: det.linkHits ?? [],
       platformHits: det.platformHits ?? [],

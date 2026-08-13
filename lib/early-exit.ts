@@ -3,9 +3,15 @@
 
 import type { DetectorResult } from './types';
 
-export function shouldSkipPathProbe(det: DetectorResult): boolean {
+export type EarlyExitSignal = Pick<DetectorResult, 'loadStatus' | 'linkHits' | 'platformHits'> & {
+  /** When --network-evidence is on, treat observed platform hosts like DOM platformHits. */
+  networkHits?: string[];
+};
+
+export function shouldSkipPathProbe(det: EarlyExitSignal): boolean {
   if (det.loadStatus !== 'ok') return false;
   const strongLink = (det.linkHits ?? []).some((h) => h.isStrong);
-  const hasPlatform = (det.platformHits ?? []).length > 0;
+  const hasPlatform =
+    (det.platformHits ?? []).length > 0 || (det.networkHits ?? []).length > 0;
   return strongLink || hasPlatform;
 }

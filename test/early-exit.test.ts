@@ -42,4 +42,15 @@ describe('shouldSkipPathProbe', () => {
       }),
     ).toBe(false);
   });
+
+  it('skips when networkHits alone (network-evidence path)', () => {
+    expect(
+      shouldSkipPathProbe({
+        loadStatus: 'ok',
+        linkHits: [],
+        platformHits: [],
+        networkHits: ['awin'],
+      }),
+    ).toBe(true);
+  });
 });
