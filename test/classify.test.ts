@@ -24,6 +24,25 @@ describe('classify() — decision table (docs/05 §6)', () => {
     expect(classify({ loadStatus: 'ok', platformHits: ['uppromote'] })).toEqual({ verdict: 'affiliate', confidence: 'high' });
   });
 
+  it('row 2c: networkHits alone ⇒ affiliate/high (same strength as platformHits)', () => {
+    expect(classify({ loadStatus: 'ok', networkHits: ['awin'] })).toEqual({ verdict: 'affiliate', confidence: 'high' });
+  });
+
+  it('row 2d: networkHits do not override loadStatus!==ok → unknown', () => {
+    expect(classify({ loadStatus: 'blocked', networkHits: ['awin'] })).toEqual({
+      verdict: 'unknown',
+      confidence: 'blocked',
+    });
+    expect(classify({ loadStatus: 'timeout', networkHits: ['uppromote'] }).verdict).toBe('unknown');
+  });
+
+  it('row 2e: known-none (empty networkHits) stays none/high', () => {
+    expect(classify({ loadStatus: 'ok', linkHits: [], platformHits: [], networkHits: [], pathHits: [] })).toEqual({
+      verdict: 'none',
+      confidence: 'high',
+    });
+  });
+
   it('row 3: strong pathHit only ⇒ affiliate/medium', () => {
     expect(classify({ loadStatus: 'ok', pathHits: [strongPath] })).toEqual({ verdict: 'affiliate', confidence: 'medium' });
   });

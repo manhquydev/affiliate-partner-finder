@@ -1,5 +1,7 @@
 /** Shared desktop job contracts — mirrors CLI progress.json shape. */
 
+import type { EtaSnapshot } from './eta.ts';
+
 export type ProgressSnapshot = {
   query: string;
   total: number;
@@ -7,6 +9,8 @@ export type ProgressSnapshot = {
   updatedAt: string;
   earlyExit: boolean;
 };
+
+export type { EtaSnapshot };
 
 export type KetQuaCounts = {
   true: number;
@@ -26,6 +30,15 @@ export type JobOptions = {
   scanProfile?: boolean;
   acceptFailures?: boolean;
   earlyExit?: boolean;
+  /**
+   * Opt-in CLI `--lazy-settle`. Default OFF — desktop must not enable unless operator sets it.
+   * When true, MO+scroll settle replaces fixed 1200ms (does not stack).
+   */
+  lazySettle?: boolean;
+  /**
+   * Opt-in CLI `--network-evidence`. Default OFF — observe request/response platform hosts.
+   */
+  networkEvidence?: boolean;
   /** Test / override; default process.platform */
   platform?: NodeJS.Platform;
 };
@@ -46,4 +59,6 @@ export type JobStatus = {
   message?: string;
   outDir?: string;
   csvPath?: string;
+  /** Rolling completion estimate while running (and last snapshot when idle). */
+  eta?: EtaSnapshot | null;
 };

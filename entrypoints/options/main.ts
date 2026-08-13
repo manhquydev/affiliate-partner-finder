@@ -129,11 +129,17 @@ function detailRow(r: ScanResult): HTMLTableRowElement {
     `<div><b>Quét lúc:</b> ${escapeHtml(r.scannedAt)} · <b>Detector:</b> v${escapeHtml(r.detectorVersion)} · <b>Junk baseline:</b> ${r.evidence.junkBaselineStatus ?? '—'}</div>`;
   td.appendChild(meta);
 
-  const { linkHits, platformHits, pathHits } = r.evidence;
+  const { linkHits, platformHits, pathHits, networkHits = [] } = r.evidence;
   if (platformHits.length) {
     const p = document.createElement('div');
     p.className = 'detail-block';
     p.innerHTML = `<b>Nền tảng affiliate:</b> ${escapeHtml(platformHits.join(', '))}`;
+    td.appendChild(p);
+  }
+  if (networkHits.length) {
+    const p = document.createElement('div');
+    p.className = 'detail-block';
+    p.innerHTML = `<b>Nền tảng (mạng):</b> ${escapeHtml(networkHits.join(', '))}`;
     td.appendChild(p);
   }
   if (linkHits.length) {
@@ -169,7 +175,7 @@ function detailRow(r: ScanResult): HTMLTableRowElement {
     wrap.appendChild(ul);
     td.appendChild(wrap);
   }
-  if (!platformHits.length && !linkHits.length && !pathHits.length) {
+  if (!platformHits.length && !networkHits.length && !linkHits.length && !pathHits.length) {
     const none = document.createElement('div');
     none.className = 'detail-block muted';
     none.textContent =

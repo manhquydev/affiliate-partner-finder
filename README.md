@@ -67,6 +67,7 @@ npm run scan -- --resume --out ./out/run1
 - Collect Trustpilot: Chrome persistent profile mặc định `~/.cache/affiliate-partner-finder/chrome-profile` (headed). Nếu Cloudflare: vượt challenge một lần trong cửa sổ đó, rồi chạy lại — **không bypass CAPTCHA**.
 - Scan: concurrency mặc định 2 (max 3), `--delay-ms` start-stagger. Path-probe luôn chạy trừ khi bật `--early-exit`.
 - Chống treo batch: `page`/`context` close bị giới hạn ~3s (`closeQuietly`) — site kẹt không chặn cả job.
+- **Lazy settle (opt-in):** `--lazy-settle` thay fixed `waitForTimeout(1200)` bằng scroll + MutationObserver trong budget ≤1200ms (không cộng thêm). **Default OFF** — giữ throughput; bật chỉ khi đo A/B recall trên trang `ok`. Extension vẫn `sleep(700)` (parity riêng).
 - **Golden / CF:** thêm `--scan-profile` (kéo theo headed) để site scan dùng cùng profile cookies; khuyến nghị:
   ```bash
   npm run scan -- --resume --out ./out/run1 --scan-profile --accept-failures --concurrency 2

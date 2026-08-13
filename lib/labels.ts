@@ -25,10 +25,11 @@ export const LOAD_STATUS_LABEL: Record<LoadStatus, string> = {
   error: 'Lỗi',
 };
 
-export const METHOD_LABEL: Record<'link' | 'platform' | 'path' | '', string> = {
+export const METHOD_LABEL: Record<'link' | 'platform' | 'path' | 'network' | '', string> = {
   link: 'liên kết',
   platform: 'nền tảng',
   path: 'đường dẫn',
+  network: 'mạng',
   '': '—',
 };
 
