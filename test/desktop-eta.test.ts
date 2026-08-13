@@ -71,6 +71,17 @@ describe('desktop ETA', () => {
     expect(eta.relativeLabel).toMatch(/tạm dừng/);
   });
 
+  it('refuses ETA when blended rate is near-zero (avoids multi-year labels)', () => {
+    const now = 30_000_000;
+    const samples = [
+      { tsMs: now - 60 * 60_000, completed: 10 },
+      { tsMs: now, completed: 11 }, // 1/h over 60m — below MIN_USABLE_RATE_PER_HOUR
+    ];
+    const eta = estimateCompletion({ samples, total: 5000, completed: 11, nowMs: now });
+    expect(eta.remainingMs).toBeNull();
+    expect(eta.relativeLabel).toMatch(/quá thấp|ước tính/);
+  });
+
   it('aligns JSONL tail timestamps to absolute completed', () => {
     const base = Date.parse('2026-08-12T10:00:00Z');
     const times = Array.from({ length: 10 }, (_, i) => base + i * 60_000);

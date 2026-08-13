@@ -29,6 +29,8 @@ const MIN_SPAN_RECENT_MS = 90_000;
 const MIN_SPAN_MEDIUM_MS = 4 * 60_000;
 const WINDOW_RECENT_MS = 8 * 60_000;
 const WINDOW_MEDIUM_MS = 25 * 60_000;
+/** Below this rate, ETA is noise (multi-year finishes) — refuse confidence. */
+const MIN_USABLE_RATE_PER_HOUR = 2;
 
 export function emptyEta(message = 'ETA: đang đo tốc độ…'): EtaSnapshot {
   return {
@@ -177,6 +179,9 @@ export function estimateCompletion(input: {
 
   if (rate == null || rate <= 0 || confidence === 'none') {
     return emptyEta('ETA: cần thêm vài phút tiến độ để ước tính');
+  }
+  if (rate < MIN_USABLE_RATE_PER_HOUR) {
+    return emptyEta('ETA: tốc độ quá thấp để ước tính tin cậy');
   }
 
   const remainingMs = (remaining / rate) * 3_600_000;

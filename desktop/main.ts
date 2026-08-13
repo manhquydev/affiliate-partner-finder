@@ -205,7 +205,20 @@ ipcMain.handle('desktop:inspect-out', (_e, outPath: string) => {
 
 ipcMain.handle('desktop:status', () => supervisor.getStatus());
 
-ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: number; out: string; resume?: boolean; earlyExit?: boolean }) => {
+ipcMain.handle(
+  'desktop:start',
+  async (
+    _e,
+    opts: {
+      query?: string;
+      limit?: number;
+      out: string;
+      resume?: boolean;
+      earlyExit?: boolean;
+      lazySettle?: boolean;
+      networkEvidence?: boolean;
+    },
+  ) => {
   const out = resolveSafeOutDir(opts.out);
   const profile = profileRoot;
   await supervisor.start({
@@ -217,6 +230,9 @@ ipcMain.handle('desktop:start', async (_e, opts: { query?: string; limit?: numbe
     scanProfile: true,
     acceptFailures: true,
     earlyExit: Boolean(opts.earlyExit),
+    // Track A opt-in — default OFF unless UI/operator explicitly sets true.
+    lazySettle: Boolean(opts.lazySettle),
+    networkEvidence: Boolean(opts.networkEvidence),
     allowedOutRoot: runsRoot,
     allowedProfileRoot: profileRoot,
   });

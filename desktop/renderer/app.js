@@ -250,6 +250,14 @@ async function boot() {
 
   $('btnOpenRunsRoot').onclick = () => api.openRunsRoot?.();
 
+  function scanOptFlags() {
+    return {
+      earlyExit: Boolean($('earlyExit')?.checked),
+      networkEvidence: Boolean($('networkEvidence')?.checked),
+      lazySettle: Boolean($('lazySettle')?.checked),
+    };
+  }
+
   $('btnStart').onclick = async () => {
     await syncFromOutDir();
     const query = $('query').value.trim();
@@ -265,6 +273,7 @@ async function boot() {
         limit: Number($('limit').value),
         out: $('out').value,
         resume: false,
+        ...scanOptFlags(),
       });
     } catch (e) {
       $('message').textContent = e?.message || String(e);
@@ -274,7 +283,7 @@ async function boot() {
   $('btnResume').onclick = async () => {
     try {
       await syncFromOutDir({ force: true });
-      await api.startJob({ out: $('out').value, resume: true });
+      await api.startJob({ out: $('out').value, resume: true, ...scanOptFlags() });
     } catch (e) {
       $('message').textContent = e?.message || String(e);
     }
