@@ -7,14 +7,14 @@ import type { ScanResult } from './types';
 export interface StrongestEvidence {
   url: string;
   text: string;
-  method: 'link' | 'platform' | 'path' | '';
+  method: 'link' | 'platform' | 'path' | 'network' | '';
 }
 
 /** Pick the single strongest, openable piece of evidence for a result.
  * Guarantees a non-empty url for any result with a hit by falling back to the
  * page finalUrl (a strong keyword can match anchor TEXT while href is empty). */
 export function strongestEvidence(r: ScanResult): StrongestEvidence {
-  const { linkHits, pathHits } = r.evidence;
+  const { linkHits, pathHits, platformHits = [], networkHits = [] } = r.evidence;
 
   // Prefer a strong link that actually has an href; then any strong link.
   const strongLink =
@@ -30,6 +30,24 @@ export function strongestEvidence(r: ScanResult): StrongestEvidence {
   const strongPath = pathHits.find((h) => h.isStrong);
   if (strongPath) {
     return { url: strongPath.finalUrl || strongPath.path, text: strongPath.path, method: 'path' };
+  }
+
+  // DOM platform hits without a matching link still count as platform evidence.
+  if (platformHits.length > 0) {
+    return {
+      url: r.finalUrl,
+      text: platformHits.join(', '),
+      method: 'platform',
+    };
+  }
+
+  // Network-observed platform hosts (CLI) — provenance method=network.
+  if (networkHits.length > 0) {
+    return {
+      url: r.finalUrl,
+      text: networkHits.join(', '),
+      method: 'network',
+    };
   }
 
   const weakLink = linkHits[0];
@@ -101,8 +119,13 @@ export type SimpleHit = 'true' | 'false' | 'unknown';
 
 export function simpleHit(r: ScanResult): SimpleHit {
   if (r.loadStatus !== 'ok') return 'unknown';
-  const { linkHits, platformHits, pathHits } = r.evidence;
-  if ((linkHits?.length ?? 0) > 0 || (platformHits?.length ?? 0) > 0 || (pathHits?.length ?? 0) > 0) {
+  const { linkHits, platformHits, networkHits, pathHits } = r.evidence;
+  if (
+    (linkHits?.length ?? 0) > 0 ||
+    (platformHits?.length ?? 0) > 0 ||
+    (networkHits?.length ?? 0) > 0 ||
+    (pathHits?.length ?? 0) > 0
+  ) {
     return 'true';
   }
   return 'false';
@@ -123,6 +146,7 @@ export function simpleHint(r: ScanResult): string {
     for (const p of h.platform ?? []) kws.add(p);
   }
   for (const p of r.evidence.platformHits ?? []) kws.add(p);
+  for (const p of r.evidence.networkHits ?? []) kws.add(p);
   for (const h of r.evidence.pathHits ?? []) {
     if (h.path) kws.add(h.path);
   }

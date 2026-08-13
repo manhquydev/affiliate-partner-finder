@@ -26,6 +26,10 @@ type Args = {
   virtualDisplay: boolean;
   earlyExit: boolean;
   acceptFailures: boolean;
+  /** Opt-in MO+scroll settle (replaces fixed 1200ms). Default OFF. */
+  lazySettle: boolean;
+  /** Opt-in network host evidence (observe request/response). Default OFF. */
+  networkEvidence: boolean;
   help: boolean;
 };
 
@@ -48,6 +52,8 @@ Options:
   --scan-profile      Site scans use the same persistent profile (CF cookies); implies headed
   --virtual-display   Re-exec under Xvfb (headed Chrome off primary screen; keeps CF quality)
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
+  --lazy-settle       Replace fixed 1200ms settle with scroll+MutationObserver (≤1200ms; default OFF)
+  --network-evidence  Observe request/response hosts for affiliate platforms (default OFF; method=network)
   --accept-failures   Treat timeout/error rows as terminal on --resume (do not requeue)
   --help              Show help
 
@@ -72,6 +78,8 @@ function parseArgs(argv: string[]): Args {
     virtualDisplay: false,
     earlyExit: false,
     acceptFailures: false,
+    lazySettle: false,
+    networkEvidence: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -90,6 +98,8 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--scan-profile') args.scanProfile = true;
     else if (a === '--virtual-display') args.virtualDisplay = true;
     else if (a === '--early-exit') args.earlyExit = true;
+    else if (a === '--lazy-settle') args.lazySettle = true;
+    else if (a === '--network-evidence') args.networkEvidence = true;
     else if (a === '--accept-failures') args.acceptFailures = true;
   }
   if (args.scanProfile) args.headedScan = true;
@@ -255,7 +265,7 @@ async function main(): Promise<number> {
     return !prev || !isTerminal(prev, args.acceptFailures);
   });
   console.log(
-    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} acceptFailures=${args.acceptFailures} scanProfile=${args.scanProfile}`,
+    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} lazySettle=${args.lazySettle} networkEvidence=${args.networkEvidence} acceptFailures=${args.acceptFailures} scanProfile=${args.scanProfile}`,
   );
 
   const session = await launchScanSession({
@@ -312,6 +322,8 @@ async function main(): Promise<number> {
           console.log(`[cli] scan ${company.domain} → ${websiteUrl}`);
           const result = await scanWithRetry(session, company, websiteUrl, run, CONFIG, {
             earlyExit: args.earlyExit,
+            lazySettle: args.lazySettle,
+            networkEvidence: args.networkEvidence,
           });
           await enqueueWrite(result);
           console.log(`[cli] done ${company.domain} ${result.verdict}/${result.confidence} (${result.loadStatus})`);

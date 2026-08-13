@@ -45,6 +45,10 @@ export function buildScanArgv(opts: JobOptions): string[] {
   if (scanProfile) args.push('--scan-profile');
   if (acceptFailures) args.push('--accept-failures');
   if (opts.earlyExit) args.push('--early-exit');
+  // Default OFF — only pass when explicitly enabled (A7: do not regress throughput).
+  if (opts.lazySettle) args.push('--lazy-settle');
+  // Default OFF — network classify behind flag until operator opts in.
+  if (opts.networkEvidence) args.push('--network-evidence');
 
   // Windows desktop never uses Xvfb; Linux GUI also skips unless ops CLI.
   if (platform === 'win32' && args.includes('--virtual-display')) {

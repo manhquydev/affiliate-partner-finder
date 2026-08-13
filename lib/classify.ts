@@ -11,6 +11,7 @@ export function classify(input: ClassifyInput): Classification {
     loadStatus,
     linkHits = [],
     platformHits = [],
+    networkHits = [],
     pathHits = [],
   } = input;
 
@@ -20,8 +21,9 @@ export function classify(input: ClassifyInput): Classification {
   }
 
   const strongLink = linkHits.some((h) => h.isStrong);
-  const hasPlatform = platformHits.length > 0;
-  // Row 2 — clear affiliate signal on the page.
+  // DOM platformHits and networkHits are both strong platform evidence.
+  const hasPlatform = platformHits.length > 0 || networkHits.length > 0;
+  // Row 2 — clear affiliate signal on the page (or network).
   if (strongLink || hasPlatform) {
     return { verdict: 'affiliate', confidence: 'high' };
   }

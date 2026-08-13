@@ -159,6 +159,150 @@ export async function closeHandle(h: BrowserHandle): Promise<void> {
   if (h.browser) await closeQuietly(h.browser, DEFAULT_CLOSE_TIMEOUT_MS);
 }
 
+/** Fixed settle used when `--lazy-settle` is OFF (today's CLI path). */
+export const DEFAULT_SETTLE_MS = 1200;
+
+/**
+ * Hard wall for MutationObserver + scroll settle when `--lazy-settle` is ON.
+ * Replaces DEFAULT_SETTLE_MS — never stacks. Cap ≤1200ms (A7 > A6).
+ */
+export const DEFAULT_LAZY_SETTLE_BUDGET_MS = 1200;
+
+/** Total scroll distance (px) across settleLazy steps. */
+export const DEFAULT_LAZY_SETTLE_SCROLL_PX = 800;
+
+/** Quiet window after last DOM mutation before early exit (ms). */
+export const DEFAULT_LAZY_SETTLE_QUIET_MS = 150;
+
+export type LazySettleOptions = {
+  /** Settle wall; clamped to ≤ DEFAULT_LAZY_SETTLE_BUDGET_MS. */
+  budgetMs?: number;
+  scrollPx?: number;
+  quietMs?: number;
+  /** Remaining per-company scan wall; hard-stop = min(budget, remaining). */
+  remainingScanBudgetMs?: number;
+};
+
+/**
+ * Pure budget resolver — unit-testable.
+ * Prefer throughput (A7): never exceed maxMs or remaining scan budget.
+ */
+export function resolveLazySettleBudgetMs(
+  requestedMs?: number,
+  remainingScanBudgetMs?: number,
+  maxMs = DEFAULT_LAZY_SETTLE_BUDGET_MS,
+): number {
+  const raw = requestedMs == null || !Number.isFinite(requestedMs) ? maxMs : requestedMs;
+  let budget = Math.min(maxMs, Math.max(0, Math.trunc(raw)));
+  if (remainingScanBudgetMs != null && Number.isFinite(remainingScanBudgetMs)) {
+    budget = Math.min(budget, Math.max(0, Math.trunc(remainingScanBudgetMs)));
+  }
+  return budget;
+}
+
 export async function settle(page: Page, ms = 700): Promise<void> {
   await page.waitForTimeout(ms);
+}
+
+/**
+ * Scroll + MutationObserver settle under a hard time budget.
+ * Intended to **replace** `settle(page, 1200)` when `--lazy-settle` is on — do not call both.
+ */
+export async function settleLazy(page: Page, opts: LazySettleOptions = {}): Promise<void> {
+  const budgetMs = resolveLazySettleBudgetMs(opts.budgetMs, opts.remainingScanBudgetMs);
+  if (budgetMs <= 0) return;
+
+  const scrollPx = opts.scrollPx ?? DEFAULT_LAZY_SETTLE_SCROLL_PX;
+  const quietMs = opts.quietMs ?? DEFAULT_LAZY_SETTLE_QUIET_MS;
+  const started = Date.now();
+
+  const inPage = page.evaluate(
+    async ({ budgetMs: budget, scrollPx: scroll, quietMs: quiet }) => {
+      const deadline = performance.now() + budget;
+      const remaining = () => Math.max(0, deadline - performance.now());
+
+      const sleep = (ms: number) =>
+        new Promise<void>((resolve) => {
+          setTimeout(resolve, ms);
+        });
+
+      // Short scroll to trigger lazy widgets; never overrun budget.
+      const steps = 3;
+      const stepPx = Math.max(1, Math.floor(scroll / steps));
+      for (let i = 0; i < steps && remaining() > 0; i++) {
+        window.scrollBy(0, stepPx);
+        await sleep(Math.min(40, remaining()));
+      }
+      if (remaining() > 0) {
+        window.scrollTo(0, 0);
+      }
+
+      // Wait for quiet DOM or budget exhaustion.
+      await new Promise<void>((resolve) => {
+        let lastMutation = performance.now();
+        const obs = new MutationObserver(() => {
+          lastMutation = performance.now();
+        });
+        try {
+          obs.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            characterData: false,
+          });
+        } catch {
+          resolve();
+          return;
+        }
+
+        const tick = () => {
+          const now = performance.now();
+          if (now >= deadline || now - lastMutation >= quiet) {
+            obs.disconnect();
+            resolve();
+            return;
+          }
+          setTimeout(tick, Math.min(50, Math.max(1, deadline - now)));
+        };
+        setTimeout(tick, Math.min(50, Math.max(1, remaining())));
+      });
+    },
+    { budgetMs, scrollPx, quietMs },
+  );
+
+  // Node-side hard wall — evaluate must not exceed budget even if page JS stalls.
+  const elapsed = Date.now() - started;
+  const wall = Math.max(0, budgetMs - elapsed);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      inPage.catch(() => undefined),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, wall);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+export type SettleForScanOptions = {
+  /** When true, use settleLazy; when false/undefined, fixed settle. Default OFF. */
+  lazySettle?: boolean;
+  lazySettleBudgetMs?: number;
+  remainingScanBudgetMs?: number;
+};
+
+/**
+ * Single settle entry for CLI scan — never stacks lazy + fixed timeout.
+ */
+export async function settleForScan(page: Page, opts: SettleForScanOptions = {}): Promise<void> {
+  if (opts.lazySettle) {
+    await settleLazy(page, {
+      budgetMs: opts.lazySettleBudgetMs ?? DEFAULT_LAZY_SETTLE_BUDGET_MS,
+      remainingScanBudgetMs: opts.remainingScanBudgetMs,
+    });
+    return;
+  }
+  await settle(page, DEFAULT_SETTLE_MS);
 }

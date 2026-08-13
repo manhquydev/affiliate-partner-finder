@@ -102,6 +102,26 @@ describe('export', () => {
     ).toBe('true');
   });
 
+  it('simpleHit + strongestEvidence: networkHits-only ⇒ true / method=network', () => {
+    const net = result({
+      verdict: 'affiliate',
+      confidence: 'high',
+      evidence: {
+        linkHits: [],
+        platformHits: [],
+        networkHits: ['uppromote'],
+        pathHits: [],
+        junkBaselineStatus: 404,
+      },
+    });
+    expect(simpleHit(net)).toBe('true');
+    expect(strongestEvidence(net)).toEqual({
+      url: 'https://example.com/',
+      text: 'uppromote',
+      method: 'network',
+    });
+  });
+
   it('simpleHit: timeout/error ⇒ unknown (never confident false)', () => {
     expect(simpleHit(result({ loadStatus: 'timeout', verdict: 'unknown' }))).toBe('unknown');
     expect(simpleHit(result({ loadStatus: 'error', verdict: 'unknown' }))).toBe('unknown');

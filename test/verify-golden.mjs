@@ -13,7 +13,14 @@ import { readFileSync } from 'node:fs';
 function simpleHit(r) {
   if (r.loadStatus !== 'ok') return 'unknown';
   const e = r.evidence || {};
-  if ((e.linkHits || []).length || (e.platformHits || []).length || (e.pathHits || []).length) return 'true';
+  if (
+    (e.linkHits || []).length ||
+    (e.platformHits || []).length ||
+    (e.networkHits || []).length ||
+    (e.pathHits || []).length
+  ) {
+    return 'true';
+  }
   return 'false';
 }
 

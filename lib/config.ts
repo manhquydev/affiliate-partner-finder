@@ -105,7 +105,8 @@ export const PROBE_PATHS: string[] = [
   '/partnerprogramma',
 ];
 
-export const DETECTOR_VERSION = '1.0.0';
+/** 1.1.0 — Evidence.networkHits / CLI network evidence layer (Track A phase 2). */
+export const DETECTOR_VERSION = '1.1.0';
 
 /** Bundle passed to the injected detector via executeScript args. */
 export const CONFIG: DetectorConfig = {

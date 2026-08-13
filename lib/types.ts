@@ -58,6 +58,13 @@ export interface Evidence {
   linkHits: LinkHit[];
   platformHits: string[];
   pathHits: PathHit[];
+  /**
+   * Affiliate-platform hosts seen on network request/response URLs (CLI).
+   * Optional for back-compat with extension / pre-network results.
+   * When present and used for a verdict, export method should be `network`
+   * and detectorVersion should reflect network-capable scans (phase 2+).
+   */
+  networkHits?: string[];
   /** HTTP status of a random junk path; guards against soft-404 (docs/05 §C1). */
   junkBaselineStatus: number | 'err' | null;
   /** total <a> count seen — used for the bot-block heuristic. */
@@ -100,6 +107,8 @@ export interface ClassifyInput {
   loadStatus: LoadStatus;
   linkHits?: LinkHit[];
   platformHits?: string[];
+  /** Network-observed platform hosts — folded like platformHits (strong evidence). */
+  networkHits?: string[];
   pathHits?: PathHit[];
   junkBaselineStatus?: number | 'err' | null;
 }

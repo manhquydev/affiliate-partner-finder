@@ -80,6 +80,48 @@ describe('desktop adapter', () => {
     expect(args).toContain('--early-exit');
   });
 
+  it('buildScanArgv omits --lazy-settle by default (OFF)', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      platform: 'linux',
+    });
+    expect(args).not.toContain('--lazy-settle');
+  });
+
+  it('buildScanArgv passes --lazy-settle when enabled', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      lazySettle: true,
+      platform: 'linux',
+    });
+    expect(args).toContain('--lazy-settle');
+  });
+
+  it('buildScanArgv omits --network-evidence by default', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      platform: 'linux',
+    });
+    expect(args).not.toContain('--network-evidence');
+  });
+
+  it('buildScanArgv passes --network-evidence when enabled', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      networkEvidence: true,
+      platform: 'linux',
+    });
+    expect(args).toContain('--network-evidence');
+  });
+
   it('win32 always has profile and never virtual-display', () => {
     const args = buildScanArgv({
       query: 'design',
