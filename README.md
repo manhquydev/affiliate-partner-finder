@@ -51,6 +51,8 @@ npm install
 npm run desktop:dev
 ```
 
+**v1.0.5:** lỗi CLI không còn bị nuốt — dashboard hiện state **Lỗi** kèm nguyên nhân thật; bản đóng gói tự chứa đủ runtime (không còn chết ngay khi khởi động); nhận diện AWS WAF của Trustpilot + cửa sổ Chrome giữ 90s để vượt kiểm tra một lần rồi tự retry; trên Linux mặc định **Ẩn cửa sổ Chrome khi quét (Xvfb)** — không chiếm màn hình chính; tùy chọn quét viết lại bằng ngôn ngữ thường + nút **Tăng tốc** (3 trang web cùng lúc).
+
 **v1.0.4:** bảng tiến độ có ETA lăn; tùy chọn quét (mặc định **tắt**): early-exit, `--network-evidence`, `--lazy-settle` — chỉ bật khi đo A/B / cần thêm tín hiệu trang `ok`, **không** dùng để “giảm unknown”.
 
 Hướng dẫn khách / đóng gói / tải bản phát hành: [`docs/desktop-windows.md`](./docs/desktop-windows.md).  

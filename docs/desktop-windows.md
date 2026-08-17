@@ -61,4 +61,4 @@ Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigne
 
 ## Ops Linux
 
-CLI + `--virtual-display` vẫn dùng cho overnight; **không** dùng chung `--out`/`--profile` với desktop smoke. Chi tiết flag CLI: `README.md` (Lazy settle / Network evidence).
+Trên Linux desktop, mặc định **"Ẩn cửa sổ Chrome khi quét (Xvfb)"** (bật sẵn) — job tái sử dụng `--virtual-display` của CLI nên Chrome headed chạy trên display ảo, không chiếm màn hình chính. Nếu Trustpilot chặn khi chạy ẩn: **tắt tùy chọn đó**, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu vào profile), rồi bật lại. CLI + `--virtual-display` vẫn dùng cho overnight; **không** dùng chung `--out`/`--profile` với desktop smoke. Chi tiết flag CLI: `README.md` (Lazy settle / Network evidence).

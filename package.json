@@ -1,6 +1,6 @@
 {
   "name": "affiliate-partner-finder",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Chrome MV3 extension: find affiliate/partner programs of Trustpilot companies with evidence.",
   "private": true,
   "type": "module",
