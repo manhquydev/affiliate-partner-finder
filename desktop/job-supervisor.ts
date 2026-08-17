@@ -9,6 +9,7 @@ import {
   readSync,
   closeSync,
   fstatSync,
+  statSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { buildScanArgv } from './build-scan-argv.ts';
@@ -24,6 +25,8 @@ import { assertSafeJobPaths, canStartFresh, readProgress } from './progress.ts';
 import type { JobOptions, JobRecord, JobStatus } from './types.ts';
 
 const JSONL_SEED_TAIL_BYTES = 512_000;
+/** Keep this much recent CLI output (stdout+stderr) to explain early exits. */
+const OUTPUT_TAIL_CHARS = 16_000;
 
 function readFileTailUtf8(path: string, maxBytes: number): string {
   if (!existsSync(path)) return '';
@@ -64,6 +67,8 @@ export class JobSupervisor {
   };
   private outDir = '';
   private profile = '';
+  private outputTail = '';
+  private stopRequested = false;
   private readonly hooks: SupervisorHooks;
 
   constructor(hooks: SupervisorHooks = {}) {
@@ -105,6 +110,8 @@ export class JobSupervisor {
     this.outDir = out;
     this.profile = profile;
     this.currentDomains.clear();
+    this.outputTail = '';
+    this.stopRequested = false;
     this.etaTracker.begin(out);
 
     const progress = readProgress(out);
@@ -154,8 +161,8 @@ export class JobSupervisor {
     this.child.stdout?.on('data', (buf: Buffer) => this.onChunk(buf.toString('utf8')));
     this.child.stderr?.on('data', (buf: Buffer) => this.onChunk(buf.toString('utf8')));
 
-    this.child.on('exit', () => {
-      void this.onExit();
+    this.child.on('exit', (code, signal) => {
+      void this.onExit(code, signal);
     });
 
     this.startPoll();
@@ -163,6 +170,7 @@ export class JobSupervisor {
 
   async stop(): Promise<void> {
     if (!this.child?.pid) return;
+    this.stopRequested = true;
     this.emit({ ...this.lastStatus, state: 'stopping', message: 'Đang dừng an toàn…' });
     const child = this.child;
     const stopFlag = this.outDir ? join(this.outDir, '.stop') : '';
@@ -198,12 +206,40 @@ export class JobSupervisor {
   }
 
   private onChunk(text: string): void {
+    this.outputTail = (this.outputTail + text).slice(-OUTPUT_TAIL_CHARS);
     for (const line of text.split(/\r?\n/)) {
       const parsed = parseCliStatusLine(line);
       if (!parsed) continue;
       if (parsed.kind === 'scan') this.currentDomains.add(parsed.domain);
       if (parsed.kind === 'done') this.currentDomains.delete(parsed.domain);
     }
+  }
+
+  /** Human cause for an unexpected CLI exit, from the output tail we kept. */
+  private describeFailure(code: number | null, signal: NodeJS.Signals | null): string {
+    const lines = this.outputTail
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !/^(at\s|\.\.\.\s|Node\.js v\d|npm (notice|warn))/.test(l));
+    const cause =
+      // Real crash header, e.g. "Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'p-limit'…"
+      lines.filter((l) => /^Error\b|^\S*Error\b.*:/.test(l) && !/^\[cli\]/.test(l)).pop() ??
+      lines
+        .filter(
+          (l) =>
+            l.startsWith('[cli]') &&
+            // "no companies to scan" is a terminal symptom, never the cause.
+            !/no companies/i.test(l) &&
+            /(failed|error|✗|returned no companies|challenge)/i.test(l),
+        )
+        .pop() ??
+      lines.filter((l) => l.startsWith('[cli]')).pop() ??
+      lines[lines.length - 1] ??
+      '';
+    const exitPart = code != null ? `exit ${code}` : `signal ${signal ?? '?'}`;
+    return cause
+      ? `Job lỗi (${exitPart}): ${cause.slice(0, 400)}`
+      : `Job lỗi (${exitPart}) — xem cửa sổ log để biết chi tiết.`;
   }
 
   private startPoll(): void {
@@ -255,13 +291,27 @@ export class JobSupervisor {
     });
   }
 
-  private async onExit(): Promise<void> {
+  private async onExit(code: number | null = 0, signal: NodeJS.Signals | null = null): Promise<void> {
     this.stopPoll();
     this.child = null;
+    // Operator-requested stops (Dừng button → .stop flag / SIGINT) are expected;
+    // anything else with a non-zero exit is a failure the UI must surface.
+    const failed = !this.stopRequested && (code === null || code !== 0);
+    const resultsPath = this.outDir ? join(this.outDir, 'results.jsonl') : '';
+    let hasResults = false;
+    if (resultsPath) {
+      try {
+        hasResults = statSync(resultsPath).size > 0;
+      } catch {
+        /* no results file */
+      }
+    }
     const csvPath = this.outDir ? join(this.outDir, 'results.csv') : '';
     let csvOk = csvPath ? existsSync(csvPath) : false;
     let message = 'Đã dừng / hoàn tất';
-    if (this.outDir && !csvOk) {
+    // Never write a header-only CSV for a job that died before scanning anything —
+    // it fakes a "completed, nothing found" scan.
+    if (this.outDir && !csvOk && (!failed || hasResults)) {
       try {
         await writeSimpleCsvFromJsonl(this.outDir);
         csvOk = true;
@@ -293,15 +343,16 @@ export class JobSupervisor {
         ? this.etaTracker.observe({ completed: progress.completed, total: progress.total })
         : null;
     this.emit({
-      state: 'idle',
+      state: failed ? 'error' : 'idle',
       progress,
       counts,
       currentDomains: [],
       outDir: this.outDir || undefined,
       csvPath: csvOk && csvPath ? csvPath : undefined,
-      message,
+      message: failed ? this.describeFailure(code, signal) : message,
       eta,
     });
+    this.stopRequested = false;
   }
 
   private emit(status: JobStatus): void {

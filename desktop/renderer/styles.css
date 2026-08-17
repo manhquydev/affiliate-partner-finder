@@ -184,6 +184,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   color: #c2410c;
 }
 
+.state-badge[data-state='error'] {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .job-query {
   font-size: 0.85rem;
   color: var(--muted);
