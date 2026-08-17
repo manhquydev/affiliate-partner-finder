@@ -1,5 +1,6 @@
 appId: com.affiliatepartnerfinder.desktop
 productName: Affiliate Partner Finder
+afterPack: scripts/after-pack.cjs
 directories:
   output: dist-desktop
 extraMetadata:

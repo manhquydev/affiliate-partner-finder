@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Bundle CLI entry for Electron extraResources (no tsx at runtime).
- * YAGNI: marks playwright external — pack machine must have node_modules/playwright.
+ * Playwright stays external (native browsers/drivers); everything else
+ * (p-limit, idb, …) must be bundled so the packaged CLI runs standalone.
  */
 import { build } from 'esbuild';
 import { mkdirSync } from 'node:fs';
@@ -14,7 +15,7 @@ await build({
   platform: 'node',
   format: 'esm',
   outfile: 'dist-cli/index.js',
-  packages: 'external',
+  external: ['playwright'],
   sourcemap: true,
   logLevel: 'info',
 });
