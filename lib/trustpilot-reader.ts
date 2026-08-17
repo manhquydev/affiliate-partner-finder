@@ -17,11 +17,24 @@ export interface SearchReadResult {
  */
 export function readTrustpilotSearch(): SearchReadResult {
   const title = (document.title || '').toLowerCase();
-  const challenged = ['just a moment', 'verifying', 'attention required', 'checking your browser', 'access denied'].some(
-    (s) => title.includes(s),
-  );
+  // A genuine search result page ALWAYS carries __NEXT_DATA__ (verified live);
+  // its absence means we are on an interstitial (AWS WAF / CF / consent) —
+  // flag challenged regardless of title so callers retry instead of silently
+  // reading "zero companies".
   const el = document.getElementById('__NEXT_DATA__');
-  if (!el || !el.textContent) return { challenged, currentPage: null, totalPages: null, units: [] };
+  const hasNextData = Boolean(el && el.textContent);
+  const challenged =
+    !hasNextData ||
+    [
+      'just a moment',
+      'verifying',
+      'attention required',
+      'checking your browser',
+      'access denied',
+      'captcha',
+      'verification',
+    ].some((s) => title.includes(s));
+  if (!hasNextData) return { challenged, currentPage: null, totalPages: null, units: [] };
   try {
     const data = JSON.parse(el.textContent) as {
       props?: {

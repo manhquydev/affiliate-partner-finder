@@ -10,7 +10,7 @@ import type { Company, ScanResult, RunConfig } from '../lib/types';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
 import { collectCli } from './collect';
 import { scanWithRetry } from './scan';
-import { maybeReexecUnderXvfb } from './virtual-display';
+import { isUnderVirtualDisplay, maybeReexecUnderXvfb } from './virtual-display';
 
 type Args = {
   query: string;
@@ -214,14 +214,8 @@ async function main(): Promise<number> {
     const collectHandle = await launchPersistentCollect(args.profile);
     try {
       const skip = new Set(resultsMap.keys());
-      companies = await collectCli(
-        collectHandle.context,
-        args.query,
-        args.limit,
-        skip,
-        args.delayMs,
-        args.maxPages,
-        {
+      const runCollect = () =>
+        collectCli(collectHandle.context, args.query, args.limit, skip, args.delayMs, args.maxPages, {
           onProgress: (partial, pageNum, totalPagesHint) => {
             atomicWriteJson(companiesPath, partial);
             console.log(
@@ -230,26 +224,45 @@ async function main(): Promise<number> {
             );
           },
           shouldStop: () => stopRequested,
-        },
-      );
+        });
+      try {
+        companies = await runCollect();
+      } catch (e) {
+        console.error(`[cli] collect failed: ${e instanceof Error ? e.message : e}`);
+      }
+      // Zero companies usually means a WAF/CF challenge. The persistent Chrome
+      // window is still open — give the user a chance to pass the check once,
+      // then retry collect before giving up. No CAPTCHA bypass.
+      if (companies.length === 0 && !stopRequested) {
+        if (isUnderVirtualDisplay()) {
+          console.error(
+            '[cli] chưa lấy được công ty và đang chạy ẩn (Xvfb). Nếu Trustpilot chặn: tắt tùy chọn "Ẩn cửa sổ Chrome" trong app, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu lại), rồi bật lại để quét ẩn.',
+          );
+        } else {
+          console.error(
+            '[cli] chưa lấy được công ty — cửa sổ Chrome đang mở: nếu thấy kiểm tra Trustpilot/Cloudflare, hãy hoàn thành ngay trong cửa sổ đó (90s).',
+          );
+        }
+        const deadline = Date.now() + 90_000;
+        while (Date.now() < deadline && !stopRequested) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        if (!stopRequested) {
+          console.log('[cli] collect retry sau khi người dùng có thể vượt kiểm tra…');
+          try {
+            companies = await runCollect();
+          } catch (e) {
+            console.error(`[cli] collect retry failed: ${e instanceof Error ? e.message : e}`);
+          }
+        }
+      }
       atomicWriteJson(companiesPath, companies);
       console.log(`[cli] collected ${companies.length} companies → ${companiesPath}`);
-      if (stopRequested) {
+      if (stopRequested && companies.length === 0) {
         console.log('[cli] stopped during collect — checkpoint saved, resume safe');
         return 130;
       }
-    } catch (e) {
-      console.error(`[cli] collect failed: ${e instanceof Error ? e.message : e}`);
-      // Keep partial checkpoint if any — continue scanning what we have.
-      if (existsSync(companiesPath)) {
-        try {
-          companies = JSON.parse(readFileSync(companiesPath, 'utf8')) as Company[];
-        } catch {
-          companies = [];
-        }
-      }
       if (companies.length === 0) return 1;
-      console.warn(`[cli] continuing with partial collect: ${companies.length} companies`);
     } finally {
       await closeHandle(collectHandle);
     }

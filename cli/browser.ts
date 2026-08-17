@@ -47,8 +47,10 @@ export async function launchPersistentCollect(profileDir = DEFAULT_PROFILE_DIR):
       viewport: { width: 1280, height: 800 },
     });
     return { browser: null, context, persistent: true };
-  } catch {
-    console.warn('[cli] system Chrome unavailable — using bundled Chromium (CF pass-rate may be lower)');
+  } catch (e) {
+    console.warn(
+      `[cli] system Chrome launch failed (${e instanceof Error ? e.message.split('\n')[0] : e}) — using bundled Chromium (CF pass-rate may be lower)`,
+    );
     const context = await chromium.launchPersistentContext(profileDir, {
       headless: false,
       viewport: { width: 1280, height: 800 },
@@ -106,8 +108,10 @@ export async function launchScanSession(opts: {
         headless: !headed,
         viewport: { width: 1280, height: 800 },
       });
-    } catch {
-      console.warn('[cli] system Chrome unavailable for scan-profile — bundled Chromium');
+    } catch (e) {
+      console.warn(
+        `[cli] system Chrome launch failed for scan-profile (${e instanceof Error ? e.message.split('\n')[0] : e}) — bundled Chromium`,
+      );
       context = await chromium.launchPersistentContext(opts.profileDir, {
         headless: !headed,
         viewport: { width: 1280, height: 800 },

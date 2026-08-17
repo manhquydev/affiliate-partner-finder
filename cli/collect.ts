@@ -91,6 +91,9 @@ export async function collectCli(
             'Trustpilot Cloudflare challenge. Open trustpilot.com/search once in the persistent Chrome profile, pass the check, then re-run. No CAPTCHA bypass.',
           );
         }
+        console.error(
+          `[cli] collect page ${pageNum} returned no companies (title="${await page.title().catch(() => '?')}", challenged=${Boolean(res?.challenged)}) — page layout may have changed`,
+        );
         break;
       }
 
