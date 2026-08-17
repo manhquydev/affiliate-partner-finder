@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -27,6 +27,8 @@ import {
   writeSimpleCsvFromJsonl,
 } from '../desktop/ket-qua-counts';
 import { formatCounts, formatProgress } from '../desktop/format';
+import { JobSupervisor } from '../desktop/job-supervisor';
+import type { JobStatus } from '../desktop/types';
 import type { ScanResult } from '../lib/types';
 
 function sample(partial: Partial<ScanResult> & Pick<ScanResult, 'domain' | 'loadStatus' | 'verdict'>): ScanResult {
@@ -59,6 +61,7 @@ describe('desktop adapter', () => {
       profile: '/tmp/profile1',
       concurrency: 99,
       delayMs: 0,
+      virtualDisplay: false,
       platform: 'linux',
     });
     expect(args).toContain('--scan-profile');
@@ -67,6 +70,44 @@ describe('desktop adapter', () => {
     expect(args[args.indexOf('--delay-ms') + 1]).toBe('1000');
     expect(args).not.toContain('--virtual-display');
     expect(args).not.toContain('--early-exit');
+  });
+
+  it('buildScanArgv defaults to --virtual-display on linux (hide Chrome)', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      platform: 'linux',
+    });
+    expect(args).toContain('--virtual-display');
+    const explicit = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(explicit).not.toContain('--virtual-display');
+  });
+
+  it('buildScanArgv defaults concurrency to 2 and passes 3 when turbo', () => {
+    const normal = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(normal[normal.indexOf('--concurrency') + 1]).toBe('2');
+    const turbo = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      concurrency: 3,
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(turbo[turbo.indexOf('--concurrency') + 1]).toBe('3');
   });
 
   it('buildScanArgv passes --early-exit when enabled', () => {
@@ -297,4 +338,97 @@ describe('desktop adapter', () => {
     assertOutJobLockFree(dir);
     expect(readOutJobLock(dir)).toBeNull();
   });
+});
+
+describe('JobSupervisor failure surfacing', () => {
+  function fakeCli(script: string) {
+    return () => ({ command: process.execPath, prefixArgs: ['-e', script, '--'], cwd: tmpdir() });
+  }
+
+  async function runToFinal(script: string): Promise<JobStatus> {
+    const statuses: JobStatus[] = [];
+    const supervisor = new JobSupervisor({
+      resolveCli: fakeCli(script),
+      onStatus: (s) => statuses.push(s),
+      pollMs: 50,
+    });
+    const root = mkdtempSync(join(tmpdir(), 'apf-sup-out-'));
+    const profRoot = mkdtempSync(join(tmpdir(), 'apf-sup-prof-'));
+    await supervisor.start({
+      query: 'test',
+      limit: 1,
+      out: join(root, 'run1'),
+      profile: join(profRoot, 'p'),
+      resume: false,
+      allowedOutRoot: root,
+      allowedProfileRoot: profRoot,
+    });
+    const deadline = Date.now() + 15_000;
+    for (;;) {
+      const st = supervisor.getStatus();
+      if (st.state === 'idle' || st.state === 'error') return st;
+      if (Date.now() > deadline) throw new Error(`timed out in state ${st.state}`);
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
+
+  it('surfaces CLI failure as error state with cause and writes no empty CSV', async () => {
+    const st = await runToFinal(
+      `console.error('[cli] collect failed: page.evaluate: Execution context was destroyed'); process.exit(1);`,
+    );
+    expect(st.state).toBe('error');
+    expect(st.message).toMatch(/collect failed/);
+    expect(st.message).toMatch(/exit 1/);
+    expect(st.csvPath).toBeUndefined();
+    expect(existsSync(join(st.outDir!, 'results.csv'))).toBe(false);
+  }, 20_000);
+
+  it('treats clean exit with results as idle and exports CSV', async () => {
+    const st = await runToFinal(`
+      const fs = require('node:fs');
+      const out = process.argv[process.argv.indexOf('--out') + 1];
+      fs.writeFileSync(out + '/results.jsonl', JSON.stringify({
+        domain: 'acme.com', name: 'Acme', websiteUrl: 'https://acme.com', finalUrl: 'https://acme.com',
+        loadStatus: 'ok', verdict: 'none', confidence: 'high',
+        evidence: { linkHits: [], platformHits: [], pathHits: [] },
+        scannedAt: new Date().toISOString(), detectorVersion: 'test',
+      }) + '\\n');
+    `);
+    expect(st.state).toBe('idle');
+    expect(st.counts.false).toBe(1);
+    expect(st.csvPath).toBeTruthy();
+    expect(existsSync(st.csvPath!)).toBe(true);
+  }, 20_000);
+
+  it('exit without output still reports error state', async () => {
+    const st = await runToFinal(`process.exit(2);`);
+    expect(st.state).toBe('error');
+    expect(st.message).toMatch(/exit 2/);
+    expect(existsSync(join(st.outDir!, 'results.csv'))).toBe(false);
+  }, 20_000);
+
+  it('reports the real crash line, not the Node.js version footer', async () => {
+    const st = await runToFinal(
+      `console.error("node:internal/modules/package_json_reader:314");` +
+        `console.error("  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);");` +
+        `console.error("");` +
+        `console.error("Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'p-limit' imported from cli/index.js");` +
+        `console.error("Node.js v22.21.1");` +
+        `process.exit(1);`,
+    );
+    expect(st.state).toBe('error');
+    expect(st.message).toMatch(/Cannot find package 'p-limit'/);
+    expect(st.message).not.toMatch(/Node\.js v/);
+  }, 20_000);
+
+  it('prefers the collect failure cause over the "no companies" symptom', async () => {
+    const st = await runToFinal(
+      `console.error("[cli] collect failed: Trustpilot Cloudflare challenge. Pass the check, then re-run.");` +
+        `console.error("[cli] no companies to scan");` +
+        `process.exit(1);`,
+    );
+    expect(st.state).toBe('error');
+    expect(st.message).toMatch(/Cloudflare challenge/);
+    expect(st.message).not.toMatch(/no companies to scan/);
+  }, 20_000);
 });
