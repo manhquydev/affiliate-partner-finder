@@ -50,9 +50,14 @@ export function buildScanArgv(opts: JobOptions): string[] {
   // Default OFF — network classify behind flag until operator opts in.
   if (opts.networkEvidence) args.push('--network-evidence');
 
-  // Windows desktop never uses Xvfb; Linux GUI also skips unless ops CLI.
-  if (platform === 'win32' && args.includes('--virtual-display')) {
-    throw new Error('virtual-display is not allowed on Windows');
+  // Linux desktop: run headed Chrome off the primary display by default
+  // (reuses the CLI's --virtual-display Xvfb re-exec). Explicit false opts out
+  // (e.g. first run where the user must pass a WAF challenge in a visible window).
+  if (platform === 'linux' && opts.virtualDisplay !== false) {
+    args.push('--virtual-display');
+  }
+  if (platform !== 'linux' && opts.virtualDisplay === true) {
+    throw new Error('virtual-display is only supported on Linux');
   }
 
   if (platform === 'win32' && !args.includes('--profile')) {

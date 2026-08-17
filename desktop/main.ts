@@ -131,6 +131,7 @@ ipcMain.handle('desktop:defaults', () => {
     out: join(runsRoot, `run-${stamp}`),
     profile: profileRoot,
     runsRoot,
+    platform: process.platform,
   };
 });
 
@@ -217,6 +218,10 @@ ipcMain.handle(
       earlyExit?: boolean;
       lazySettle?: boolean;
       networkEvidence?: boolean;
+      /** Parallel site scans 1..3 (GUI: 2 normal, 3 turbo). */
+      concurrency?: number;
+      /** Linux: hide headed Chrome on a virtual display (Xvfb). Default true. */
+      virtualDisplay?: boolean;
     },
   ) => {
   const out = resolveSafeOutDir(opts.out);
@@ -229,10 +234,13 @@ ipcMain.handle(
     resume: Boolean(opts.resume),
     scanProfile: true,
     acceptFailures: true,
+    concurrency: opts.concurrency,
     earlyExit: Boolean(opts.earlyExit),
     // Track A opt-in — default OFF unless UI/operator explicitly sets true.
     lazySettle: Boolean(opts.lazySettle),
     networkEvidence: Boolean(opts.networkEvidence),
+    // Default ON on Linux — desktop must not seize the primary display.
+    virtualDisplay: opts.virtualDisplay !== false,
     allowedOutRoot: runsRoot,
     allowedProfileRoot: profileRoot,
   });

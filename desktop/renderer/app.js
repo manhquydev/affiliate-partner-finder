@@ -216,6 +216,11 @@ async function boot() {
     await syncFromOutDir({ force: true });
     if (!$('query').value.trim()) setQueryInput(loadLastQuery());
   }
+  // Xvfb is a Linux mechanism — hide the toggle elsewhere.
+  const hideChromeRow = $('hideChromeRow');
+  if (hideChromeRow && defaults?.platform && defaults.platform !== 'linux') {
+    hideChromeRow.hidden = true;
+  }
   await refreshRunPicker($('out').value.trim());
 
   api.onStatus((s) => {
@@ -255,6 +260,10 @@ async function boot() {
       earlyExit: Boolean($('earlyExit')?.checked),
       networkEvidence: Boolean($('networkEvidence')?.checked),
       lazySettle: Boolean($('lazySettle')?.checked),
+      // "Tăng tốc" = 3 sites in parallel, otherwise the safe default of 2.
+      concurrency: $('concurrencyRow')?.checked ? 3 : 2,
+      // Linux default ON — headed Chrome goes to a virtual display (Xvfb).
+      virtualDisplay: $('hideChrome')?.checked !== false,
     };
   }
 

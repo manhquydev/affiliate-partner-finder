@@ -40,20 +40,28 @@
       </fieldset>
 
       <fieldset class="out-fieldset scan-opts">
-        <legend>Tùy chọn quét (mặc định tắt Track A)</legend>
+        <legend>Tùy chọn quét</legend>
+        <label class="check">
+          <input id="concurrencyRow" type="checkbox" checked />
+          Tăng tốc: quét 3 trang web cùng lúc (thay vì 2)
+        </label>
         <label class="check">
           <input id="earlyExit" type="checkbox" />
-          Early-exit path-probe khi đã có tín hiệu trang chủ
+          Dừng sớm khi tìm thấy dấu hiệu ngay ở trang chủ (nhanh hơn, bỏ qua trang con)
         </label>
         <label class="check">
           <input id="networkEvidence" type="checkbox" />
-          Network evidence — bắt host affiliate từ request/response (<code>--network-evidence</code>)
+          Kiểm tra thêm kết nối mạng của trang web (phát hiện đầy đủ hơn, chậm hơn một chút)
         </label>
         <label class="check">
           <input id="lazySettle" type="checkbox" />
-          Lazy settle — scroll + MutationObserver thay cố định 1.2s (<code>--lazy-settle</code>)
+          Chờ trang tải linh hoạt thay vì chờ cố định (nhanh hơn đôi chút, kết quả có thể thay đổi)
         </label>
-        <span class="hint">Hai tùy chọn Track A chỉ bật khi đo A/B recall trên trang tải được — không dùng để “giảm unknown”.</span>
+        <label class="check" id="hideChromeRow">
+          <input id="hideChrome" type="checkbox" checked />
+          Ẩn cửa sổ Chrome khi quét — không chiếm màn hình chính
+        </label>
+        <span class="hint">Mặc định để nguyên là tốt nhất. Chỉ bật tùy chọn nâng cao khi được hướng dẫn. Nếu bị Trustpilot chặn khi chạy ẩn: tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (được ghi nhớ cho lần sau), rồi bật lại.</span>
       </fieldset>
 
       <div class="actions">

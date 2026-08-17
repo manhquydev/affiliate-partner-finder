@@ -39,6 +39,11 @@ export type JobOptions = {
    * Opt-in CLI `--network-evidence`. Default OFF — observe request/response platform hosts.
    */
   networkEvidence?: boolean;
+  /**
+   * Linux only: run headed Chrome off the primary display via `--virtual-display`
+   * (Xvfb re-exec). Default ON — desktop must not seize the user's screen.
+   */
+  virtualDisplay?: boolean;
   /** Test / override; default process.platform */
   platform?: NodeJS.Platform;
 };
