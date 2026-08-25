@@ -5,6 +5,18 @@ import type { JobOptions } from './types.ts';
 const MIN_DELAY_MS = 1000;
 const MAX_CONCURRENCY = 3;
 
+/**
+ * Xvfb / --virtual-display is Linux-only.
+ * Default ON on Linux so the desktop GUI does not seize the primary display.
+ * Always off on Windows/macOS — even if a caller (or hidden checkbox) sends true.
+ */
+export function resolveVirtualDisplay(
+  platform: NodeJS.Platform,
+  requested?: boolean,
+): boolean {
+  return platform === 'linux' && requested !== false;
+}
+
 export function clampConcurrency(n: number | undefined): number {
   const v = Number.isFinite(n) ? Math.trunc(n as number) : 2;
   return Math.min(MAX_CONCURRENCY, Math.max(1, v));
@@ -50,14 +62,8 @@ export function buildScanArgv(opts: JobOptions): string[] {
   // Default OFF — network classify behind flag until operator opts in.
   if (opts.networkEvidence) args.push('--network-evidence');
 
-  // Linux desktop: run headed Chrome off the primary display by default
-  // (reuses the CLI's --virtual-display Xvfb re-exec). Explicit false opts out
-  // (e.g. first run where the user must pass a WAF challenge in a visible window).
-  if (platform === 'linux' && opts.virtualDisplay !== false) {
+  if (resolveVirtualDisplay(platform, opts.virtualDisplay)) {
     args.push('--virtual-display');
-  }
-  if (platform !== 'linux' && opts.virtualDisplay === true) {
-    throw new Error('virtual-display is only supported on Linux');
   }
 
   if (platform === 'win32' && !args.includes('--profile')) {

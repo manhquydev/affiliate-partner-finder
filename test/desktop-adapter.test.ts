@@ -8,6 +8,7 @@ import {
   clampDelayMs,
   defaultDesktopProfileDir,
   defaultDesktopRunsDir,
+  resolveVirtualDisplay,
 } from '../desktop/build-scan-argv';
 import {
   assertOutJobLockFree,
@@ -172,6 +173,27 @@ describe('desktop adapter', () => {
     });
     expect(args).toContain('--profile');
     expect(args).not.toContain('--virtual-display');
+  });
+
+  it('resolveVirtualDisplay is linux-only and default ON there', () => {
+    expect(resolveVirtualDisplay('linux')).toBe(true);
+    expect(resolveVirtualDisplay('linux', true)).toBe(true);
+    expect(resolveVirtualDisplay('linux', false)).toBe(false);
+    expect(resolveVirtualDisplay('win32')).toBe(false);
+    expect(resolveVirtualDisplay('win32', true)).toBe(false);
+    expect(resolveVirtualDisplay('darwin', true)).toBe(false);
+  });
+
+  it('win32 ignores virtualDisplay true instead of throwing', () => {
+    const opts = {
+      query: 'design',
+      out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
+      profile: 'C:\\Users\\a\\AppData\\Local\\affiliate-partner-finder\\chrome-profile',
+      platform: 'win32' as const,
+      virtualDisplay: true,
+    };
+    expect(() => buildScanArgv(opts)).not.toThrow();
+    expect(buildScanArgv(opts)).not.toContain('--virtual-display');
   });
 
   it('resume omits query requirement', () => {

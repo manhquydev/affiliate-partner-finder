@@ -101,6 +101,13 @@ describe('desktop electron renderer e2e', () => {
     expect(await page!.locator('#btnStop').isDisabled()).toBe(true);
   });
 
+  it('keeps hide-chrome toggle visible and checked on linux', async () => {
+    if (process.platform !== 'linux') return;
+    expect(await page!.locator('#hideChromeRow').isVisible()).toBe(true);
+    expect(await page!.locator('#hideChrome').isChecked()).toBe(true);
+    expect(await page!.locator('#hideChromeHint').isVisible()).toBe(true);
+  });
+
   it('syncs query from existing out dir progress.json', async () => {
     await page!.evaluate(async (path) => {
       const info = await window.affiliateDesktop.inspectOutDir(path);

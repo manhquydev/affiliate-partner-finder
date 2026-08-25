@@ -6,7 +6,11 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defaultDesktopProfileDir, defaultDesktopRunsDir } from './build-scan-argv.ts';
+import {
+  defaultDesktopProfileDir,
+  defaultDesktopRunsDir,
+  resolveVirtualDisplay,
+} from './build-scan-argv.ts';
 import { JobSupervisor, readJobFile } from './job-supervisor.ts';
 import { releaseOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, canStartFresh, isPathInside, readProgress, resolveExistingPath } from './progress.ts';
@@ -220,7 +224,7 @@ ipcMain.handle(
       networkEvidence?: boolean;
       /** Parallel site scans 1..3 (GUI: 2 normal, 3 turbo). */
       concurrency?: number;
-      /** Linux: hide headed Chrome on a virtual display (Xvfb). Default true. */
+      /** Linux: hide headed Chrome on a virtual display (Xvfb). Ignored elsewhere. */
       virtualDisplay?: boolean;
     },
   ) => {
@@ -239,8 +243,7 @@ ipcMain.handle(
     // Track A opt-in — default OFF unless UI/operator explicitly sets true.
     lazySettle: Boolean(opts.lazySettle),
     networkEvidence: Boolean(opts.networkEvidence),
-    // Default ON on Linux — desktop must not seize the primary display.
-    virtualDisplay: opts.virtualDisplay !== false,
+    virtualDisplay: resolveVirtualDisplay(process.platform, opts.virtualDisplay),
     allowedOutRoot: runsRoot,
     allowedProfileRoot: profileRoot,
   });
