@@ -44,12 +44,14 @@ npm test             # Vitest unit tests (detector/classify/export/golden)
 
 ## Desktop GUI (Windows-first)
 
-Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI, theo dõi tiến độ + **ETA**, CSV HITL.
+Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI. Cửa sổ là **workspace job**: bảng job + preview chạy/theo dõi, **ETA**, CSV HITL.
 
 ```bash
 npm install
 npm run desktop:dev
 ```
+
+**v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. **Mở CSV / Mở thư mục job** mở artefact của lần chạy trên máy (nút tắt nếu đang xem job khác).
 
 **v1.0.8:** Collect 10k không còn cắt im lặng ~100 công ty — retry WAF, không tin `totalPages` khi trang vẫn đầy, tự `--max-pages` theo limit. Thanh lúc lấy danh sách hiện **đã lấy / số yêu cầu**; `10.000` = 10000. Ẩn Chrome + Cloudflare không chờ 90s cửa sổ đã ẩn.
 

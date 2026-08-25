@@ -2,7 +2,7 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản hiện tại:** `1.0.8` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
+**Phiên bản hiện tại:** `1.0.9` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
 
 ## Yêu cầu
 
@@ -13,7 +13,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag mới nhất (vd `v1.0.8`)
+2. Chọn tag mới nhất (vd `v1.0.9`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
@@ -28,10 +28,10 @@ npm run desktop:dev
 
 ## Cách dùng
 
-1. Nhập **từ khoá Trustpilot** + số công ty (`10000`, không gõ `10.000`). Lúc lấy danh sách thanh hiện **đã lấy / số yêu cầu**; lúc quét website mới hiện **đã quét / số đã lấy**. Nếu Trustpilot hết kết quả hoặc bị chặn, app không bịa thêm công ty.
-2. **Thư mục lưu:** dùng **Chọn thư mục…** / **Job mới** hoặc chọn job cũ trong danh sách — không cần gõ đường dẫn tay.
-3. Theo dõi **bảng tiến độ** (% + thống kê true/false/unknown) và dòng **ETA** (ẩn khi job tạm dừng >8 phút hoặc tốc độ quá thấp).
-4. **Tùy chọn quét** (mặc định **không** tick):
+1. Cửa sổ là **workspace job**: bảng job (trái; cửa sổ hẹp thì phía trên) và **preview** của job đang chọn. **Job mới** / **Chọn thư mục…** / click một dòng để chọn job. **Bắt đầu** và **Tiếp tục** luôn dùng job đang chọn, không phải job lần chạy trước.
+2. Trong preview: nhập **từ khoá Trustpilot** + số công ty (`10000`, không gõ `10.000`). Lúc lấy danh sách thanh hiện **đã lấy / số yêu cầu**; lúc quét website mới hiện **đã quét / số đã lấy**. Nếu Trustpilot hết kết quả hoặc bị chặn, app không bịa thêm công ty.
+3. Theo dõi tiến độ, **ETA** (ẩn khi job tạm dừng >8 phút hoặc tốc độ quá thấp), và đếm Có chương trình / Không có / Chưa rõ khi job đó đang (hoặc vừa) chạy trên máy.
+4. **Tùy chọn quét** (thu gọn; mặc định **không** tick trừ Ẩn Chrome):
    - **Early-exit** — bỏ path-probe khi trang chủ đã có tín hiệu mạnh
    - **Network evidence** — bắt host affiliate từ request/response (`--network-evidence`)
    - **Lazy settle** — scroll + MutationObserver thay chờ cố định 1.2s (`--lazy-settle`)
@@ -39,7 +39,7 @@ npm run desktop:dev
 5. Mặc định **Ẩn cửa sổ Chrome khi quét** (Windows: thu nhỏ / đưa ra ngoài màn hình, Chrome vẫn headed). Nếu Trustpilot/Cloudflare chặn: **tắt** tùy chọn đó → **Tiếp tục** → vượt kiểm tra một lần trong cửa sổ Chrome → có thể bật lại.
 6. Nếu Chrome hiện Cloudflare: hoàn thành **một lần** trong cửa sổ Chrome của app → **Tiếp tục** nếu việc đã dừng.
 7. **Dừng** = dừng an toàn (SIGINT) + xuất CSV từ kết quả đã có; lần sau **Tiếp tục** cùng thư mục.
-8. **Mở CSV** → `results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`.
+8. **Mở CSV** / **Mở thư mục job** mở artefact của **lần chạy trên máy** (`results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`). Nếu đang xem job khác trên bảng, hai nút đó tắt — chọn lại job vừa chạy, hoặc **Tiếp tục** job đang chọn.
 
 ## Quy tắc an toàn
 
@@ -56,7 +56,7 @@ npm run desktop:pack:win    # NSIS → dist-desktop/
 npm run desktop:pack:linux  # AppImage + deb
 ```
 
-CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.8`).
+CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.9`).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 
