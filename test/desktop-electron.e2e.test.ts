@@ -115,6 +115,28 @@ describe('desktop electron renderer e2e', () => {
     }, fixtureOut);
     expect(await page!.locator('#query').inputValue()).toBe('vpn');
   });
+
+  it('selecting a listed job keeps that folder as Start target', async () => {
+    const row = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
+    await row.waitFor({ timeout: 10_000 });
+    await row.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
+    expect(await page!.locator('#query').inputValue()).toBe('vpn');
+    await page!.waitForTimeout(300);
+    expect(await page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
+    expect(await row.getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('Job mới changes the Start target away from the selected run', async () => {
+    const row = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
+    await row.waitFor({ timeout: 10_000 });
+    await row.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
+    await page!.locator('#btnNewOut').click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).not.toContain('e2e-fixture-query-sync');
+    const out = await page!.locator('#out').inputValue();
+    expect(out.length).toBeGreaterThan(0);
+  });
 });
 
 describe('desktop packaged linux smoke', () => {

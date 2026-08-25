@@ -7,126 +7,227 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <h1>Trình dò Affiliate/Partner</h1>
-      <p class="sub">Quét Trustpilot → website · CSV true/false/unknown · chạy local</p>
-    </header>
+    <!--
+      THESIS: The window is a job workspace — an Explorer list of runs with a live preview — not a stacked utility form.
+      OWN-WORLD: Windows 11 mica #F3F3F3, white panes, hairline rgba(0,0,0,.09), Segoe UI Variable, accent #005FB8 only on selection and primary actions; 6px radius; Fluent-stroke SVG icons; status pills, not metric-hero cards.
+      STORY: Scan the job table, select a run, configure and start from the preview, watch CÓ/KHÔNG/CHƯA RÕ and ETA, open CSV.
+      FIRST VIEWPORT: Command bar with Job mới as the bar primary; two-pane workspace — job table ~58% left, preview ~42% right with Bắt đầu on the preview.
+      FORM: Canon Linear×Explorer desktop workspace, composition list+preview; seed 05be885a.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <svg xmlns="http://www.w3.org/2000/svg" hidden class="icon-sprite" aria-hidden="true">
+      <symbol id="i-plus" viewBox="0 0 16 16">
+        <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 16 16">
+        <path d="M2.5 13.5V4.5A1 1 0 0 1 3.5 3.5h2.2l1.2 1.5H12.5a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="i-folder-open" viewBox="0 0 16 16">
+        <path d="M2.5 7.5V4.75A1 1 0 0 1 3.5 3.75h2l1.2 1.4H12a.75.75 0 0 1 .75.75V7.5M2.6 7.5h11.3l-1.2 5.25H3.8L2.6 7.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 16 16">
+        <path d="M5 3.5v9l8-4.5-8-4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="i-resume" viewBox="0 0 16 16">
+        <path d="M4 3.5v9M8 3.5v9l6-4.5-6-4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-stop" viewBox="0 0 16 16">
+        <rect x="4" y="4" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" />
+      </symbol>
+      <symbol id="i-csv" viewBox="0 0 16 16">
+        <path d="M4 2.5h5.5L13 6v7.5H4v-11Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+        <path d="M9.5 2.5V6H13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+        <path d="M6 9.5h4M6 12h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 16 16">
+        <circle cx="7" cy="7" r="3.75" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <path d="M10 10.5 13.5 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </symbol>
+    </svg>
 
-    <section class="form">
-      <label>
-        Từ khoá Trustpilot
-        <input id="query" type="text" placeholder="vd: hosting, vpn, marketing…" autocomplete="off" aria-describedby="query-hint" />
-        <span class="hint" id="query-hint">Tìm công ty trên Trustpilot theo từ khoá bạn nhập.</span>
-      </label>
-      <label>
-        Số công ty
-        <input id="limit" type="number" min="1" max="10000" value="20" />
-        <span class="hint">Nhập số 1–10000 (ví dụ 10000, không gõ 10.000). Thanh tiến độ lúc đầu là số đã lấy trên Trustpilot, sau đó là số đã quét website.</span>
-      </label>
+    <div class="app">
+      <header class="chrome">
+        <h1>Trình dò Affiliate/Partner</h1>
+        <div class="command-bar" role="toolbar" aria-label="Lệnh job">
+          <button id="btnNewOut" type="button" class="btn btn-primary">
+            <svg class="icon"><use href="#i-plus" /></svg>
+            Job mới
+          </button>
+          <button id="btnPickOut" type="button" class="btn">
+            <svg class="icon"><use href="#i-folder" /></svg>
+            Chọn thư mục…
+          </button>
+          <button id="btnOpenRunsRoot" type="button" class="btn">
+            <svg class="icon"><use href="#i-folder-open" /></svg>
+            Mở thư mục runs
+          </button>
+          <label class="job-filter">
+            <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+            <span class="visually-hidden">Lọc job</span>
+            <input id="jobFilter" type="search" placeholder="Lọc job hoặc từ khoá…" autocomplete="off" />
+          </label>
+        </div>
+      </header>
 
-      <fieldset class="out-fieldset">
-        <legend>Thư mục lưu job</legend>
-        <p class="hint">Chọn hoặc tạo job trong vùng an toàn — không gõ đường dẫn tay (tránh lỗi).</p>
-        <div class="out-row">
-          <input id="out" type="text" readonly title="" aria-readonly="true" />
-          <div class="out-actions">
-            <button id="btnPickOut" type="button" class="btn-secondary">Chọn thư mục…</button>
-            <button id="btnNewOut" type="button" class="btn-secondary">Job mới</button>
+      <div class="workspace">
+        <section class="job-pane" aria-label="Danh sách job">
+          <div class="table-wrap">
+            <table class="job-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tên job</th>
+                  <th scope="col">Từ khoá</th>
+                  <th scope="col">Tiến độ</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col">Cập nhật</th>
+                </tr>
+              </thead>
+              <tbody id="jobTableBody"></tbody>
+            </table>
           </div>
-        </div>
-        <label class="run-picker-label">
-          Job đã có
-          <select id="runPicker">
-            <option value="">— Chọn job để tiếp tục —</option>
+          <p id="jobListEmpty" class="empty" hidden>
+            Chưa có job trong thư mục runs. Bấm <strong>Job mới</strong> để tạo, hoặc <strong>Chọn thư mục…</strong> nếu job nằm chỗ khác.
+          </p>
+          <select id="runPicker" hidden tabindex="-1" aria-hidden="true">
+            <option value="">Chọn job để tiếp tục</option>
           </select>
-        </label>
-        <button id="btnOpenRunsRoot" type="button" class="btn-link">Mở thư mục runs trong trình quản lý file</button>
-      </fieldset>
+        </section>
 
-      <fieldset class="out-fieldset scan-opts">
-        <legend>Tùy chọn quét</legend>
-        <label class="check">
-          <input id="concurrencyRow" type="checkbox" checked />
-          Tăng tốc: quét 3 trang web cùng lúc (thay vì 2)
-        </label>
-        <label class="check">
-          <input id="earlyExit" type="checkbox" />
-          Dừng sớm khi tìm thấy dấu hiệu ngay ở trang chủ (nhanh hơn, bỏ qua trang con)
-        </label>
-        <label class="check">
-          <input id="networkEvidence" type="checkbox" />
-          Kiểm tra thêm kết nối mạng của trang web (phát hiện đầy đủ hơn, chậm hơn một chút)
-        </label>
-        <label class="check">
-          <input id="lazySettle" type="checkbox" />
-          Chờ trang tải linh hoạt thay vì chờ cố định (nhanh hơn đôi chút, kết quả có thể thay đổi)
-        </label>
-        <label class="check" id="hideChromeRow">
-          <input id="hideChrome" type="checkbox" checked />
-          Ẩn cửa sổ Chrome khi quét — không chiếm màn hình chính
-        </label>
-        <span class="hint">Mặc định để nguyên là tốt nhất. Chỉ bật tùy chọn nâng cao khi được hướng dẫn.</span>
-        <span class="hint" id="hideChromeHint">Nếu bị Trustpilot chặn khi chạy ẩn: tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (được ghi nhớ cho lần sau), rồi bật lại.</span>
-      </fieldset>
+        <section class="preview" id="preview" aria-labelledby="previewTitle">
+          <header class="preview-head">
+            <div>
+              <h2>
+                <span class="live-dot" id="liveDot" data-state="idle" aria-hidden="true"></span>
+                <span id="previewTitle">Job mới</span>
+              </h2>
+              <p class="preview-sub" id="jobQuery">Chưa chọn job. Điền từ khoá rồi Bắt đầu.</p>
+            </div>
+            <span class="state-badge" id="stateBadge" data-state="idle">Chờ</span>
+          </header>
 
-      <div class="actions">
-        <button id="btnStart" type="button">Bắt đầu</button>
-        <button id="btnResume" type="button">Tiếp tục</button>
-        <button id="btnStop" type="button">Dừng</button>
-        <button id="btnFolder" type="button">Mở thư mục job</button>
-        <button id="btnCsv" type="button">Mở CSV</button>
+          <div class="preview-actions" role="group" aria-label="Chạy job">
+            <button id="btnStart" type="button" class="btn btn-primary">
+              <svg class="icon"><use href="#i-play" /></svg>
+              Bắt đầu
+            </button>
+            <button id="btnResume" type="button" class="btn">
+              <svg class="icon"><use href="#i-resume" /></svg>
+              Tiếp tục
+            </button>
+            <button id="btnStop" type="button" class="btn btn-danger" disabled>
+              <svg class="icon"><use href="#i-stop" /></svg>
+              Dừng
+            </button>
+          </div>
+          <div id="message" class="message"></div>
+
+          <section class="dashboard" id="dashboard" aria-live="polite">
+            <div class="progress-block" id="progressBlock">
+              <div class="progress-meta">
+                <span class="progress-fraction" id="progressFraction">0 / 0 công ty</span>
+              </div>
+              <div
+                class="progress-track"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                id="progressTrack"
+              >
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <p class="progress-hint" id="progressHint">Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.</p>
+              <p class="progress-eta" id="progressEta" hidden>ETA</p>
+            </div>
+
+            <div class="count-pills" id="countRow">
+              <span class="count-pill count-true">Có chương trình <strong id="statTrue">0</strong></span>
+              <span class="count-pill count-false">Không có <strong id="statFalse">0</strong></span>
+              <span class="count-pill count-unknown">Chưa rõ <strong id="statUnknown">0</strong></span>
+            </div>
+
+            <div class="live-row">
+              <div class="live-label">Đang xử lý</div>
+              <div class="live-domains" id="current"></div>
+            </div>
+          </section>
+
+          <button id="btnCsv" type="button" class="file-row">
+            <svg class="icon"><use href="#i-csv" /></svg>
+            <span class="file-row-name">results.csv</span>
+            <span class="file-row-action">Mở CSV</span>
+          </button>
+
+          <section class="form" aria-label="Cấu hình quét">
+            <div class="field-grid">
+              <label>
+                Từ khoá Trustpilot
+                <input
+                  id="query"
+                  type="text"
+                  placeholder="vd: hosting, vpn, marketing…"
+                  autocomplete="off"
+                  aria-describedby="query-hint"
+                />
+                <span class="hint" id="query-hint">Từ khoá tìm trên Trustpilot.</span>
+              </label>
+              <label>
+                Số công ty
+                <input id="limit" type="number" min="1" max="10000" value="20" />
+                <span class="hint">1–10000, không gõ 10.000.</span>
+              </label>
+            </div>
+
+            <div class="out-block">
+              <span class="field-label">Thư mục lưu job</span>
+              <input id="out" type="text" readonly title="" aria-readonly="true" />
+              <span class="hint">Chọn hoặc tạo job ở thanh lệnh. Không gõ đường dẫn tay.</span>
+            </div>
+
+            <button id="btnFolder" type="button" class="btn">
+              <svg class="icon"><use href="#i-folder-open" /></svg>
+              Mở thư mục job
+            </button>
+
+            <label class="check" id="hideChromeRow">
+              <input id="hideChrome" type="checkbox" checked />
+              Ẩn cửa sổ Chrome khi quét, không chiếm màn hình chính
+            </label>
+            <span class="hint" id="hideChromeHint">Nếu bị Trustpilot chặn khi chạy ẩn: tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome, rồi bật lại.</span>
+
+            <details class="scan-opts">
+              <summary>Tùy chọn quét</summary>
+              <label class="check">
+                <input id="concurrencyRow" type="checkbox" checked />
+                Tăng tốc: quét 3 trang web cùng lúc (thay vì 2)
+              </label>
+              <label class="check">
+                <input id="earlyExit" type="checkbox" />
+                Dừng sớm khi tìm thấy dấu hiệu ngay ở trang chủ (nhanh hơn, bỏ qua trang con)
+              </label>
+              <label class="check">
+                <input id="networkEvidence" type="checkbox" />
+                Kiểm tra thêm kết nối mạng của trang web (đầy đủ hơn, chậm hơn một chút)
+              </label>
+              <label class="check">
+                <input id="lazySettle" type="checkbox" />
+                Chờ trang tải linh hoạt thay vì chờ cố định (nhanh hơn đôi chút, kết quả có thể thay đổi)
+              </label>
+              <span class="hint">Mặc định để nguyên là tốt nhất. Chỉ bật tùy chọn nâng cao khi được hướng dẫn.</span>
+            </details>
+          </section>
+
+          <section class="cf" id="cfPanel">
+            <strong>Cần bạn: Cloudflare / xác minh trình duyệt</strong>
+            <ol>
+              <li>Cửa sổ Chrome của ứng dụng đã mở. Hoàn thành kiểm tra một lần.</li>
+              <li>Quay lại đây → bấm <em>Tiếp tục</em> nếu việc đã dừng.</li>
+            </ol>
+            <p>Không tự vượt CAPTCHA. Không dùng bộ giải captcha.</p>
+          </section>
+        </section>
       </div>
-    </section>
-
-    <section class="dashboard" id="dashboard" aria-live="polite">
-      <div class="dash-header">
-        <span class="state-badge" id="stateBadge" data-state="idle">Chờ</span>
-        <span class="job-query" id="jobQuery">Từ khoá job: —</span>
-      </div>
-
-      <div class="progress-block" id="progressBlock">
-        <div class="progress-meta">
-          <span class="progress-pct" id="progressPct">0%</span>
-          <span class="progress-fraction" id="progressFraction">0 / 0 công ty</span>
-        </div>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <p class="progress-hint" id="progressHint">Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.</p>
-        <p class="progress-eta" id="progressEta" hidden>— ETA —</p>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat stat-true">
-          <span class="stat-value" id="statTrue">0</span>
-          <span class="stat-label">Có chương trình</span>
-        </div>
-        <div class="stat stat-false">
-          <span class="stat-value" id="statFalse">0</span>
-          <span class="stat-label">Không có</span>
-        </div>
-        <div class="stat stat-unknown">
-          <span class="stat-value" id="statUnknown">0</span>
-          <span class="stat-label">Chưa rõ</span>
-        </div>
-      </div>
-
-      <div class="live-row">
-        <div class="live-label">Đang xử lý</div>
-        <div class="live-domains" id="current">—</div>
-      </div>
-
-      <div id="message" class="message"></div>
-    </section>
-
-    <section class="cf" id="cfPanel">
-      <strong>Cần bạn (Cloudflare / xác minh trình duyệt)</strong>
-      <ol>
-        <li>Cửa sổ Chrome của ứng dụng đã mở — hoàn thành kiểm tra một lần.</li>
-        <li>Quay lại đây → bấm <em>Tiếp tục</em> nếu việc đã dừng.</li>
-      </ol>
-      <p>Không tự vượt CAPTCHA. Không dùng bộ giải captcha.</p>
-    </section>
+    </div>
 
     <script type="module" src="./app.js"></script>
   </body>

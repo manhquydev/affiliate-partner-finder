@@ -1,4 +1,4 @@
-/** Renderer — preload bridge + dashboard UX. */
+/** Renderer: job workspace (list + preview) over the preload bridge. */
 
 const STORAGE_KEY = 'apf-last-query';
 
@@ -9,10 +9,20 @@ const STATE_LABELS = {
   running: 'Đang chạy',
   stopping: 'Đang dừng…',
   error: 'Lỗi',
+  done: 'Xong',
+  resume: 'Tiếp tục',
 };
+
+let cachedRuns = [];
+let lastStatus = null;
 
 function $(id) {
   return document.getElementById(id);
+}
+
+function friendlyError(e) {
+  const raw = e?.message || String(e);
+  return raw.replace(/^Error invoking remote method '[^']+':\s*(?:Error:\s*)?/i, '');
 }
 
 function saveLastQuery(q) {
@@ -57,6 +67,41 @@ function parseLimitInput(raw) {
 function pct(completed, total) {
   if (!total || total <= 0) return 0;
   return Math.min(100, Math.round((100 * completed) / total));
+}
+
+function formatRelative(mtime) {
+  if (!mtime) return '';
+  const delta = Date.now() - mtime;
+  if (delta < 45_000) return 'Vừa xong';
+  if (delta < 3_600_000) return `${Math.max(1, Math.round(delta / 60_000))} phút trước`;
+  const date = new Date(mtime);
+  const now = new Date();
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  if (sameDay) return `Hôm nay ${hh}:${mm}`;
+  if (delta < 86_400_000) return `${Math.max(1, Math.round(delta / 3_600_000))} giờ trước`;
+  return date.toLocaleDateString('vi-VN');
+}
+
+function runState(run, status) {
+  if (status?.outDir && status.outDir === run.path) {
+    if (status.state === 'running' || status.state === 'stopping' || status.state === 'error') {
+      return status.state;
+    }
+  }
+  if (run.total > 0 && run.completed >= run.total) return 'done';
+  if (run.canResume) return 'resume';
+  return 'idle';
+}
+
+function folderName(path) {
+  if (!path) return 'Job mới';
+  const parts = String(path).split(/[/\\]/).filter(Boolean);
+  return parts[parts.length - 1] || path;
 }
 
 function renderEta(eta, { running, completed, total }) {
@@ -113,38 +158,167 @@ function formatRunOption(run) {
   return `${run.name}${q}${prog}${tag}`;
 }
 
-async function refreshRunPicker(selectPath) {
-  if (!api?.listRuns) return;
-  const { runs } = await api.listRuns();
+let lastScrolledPath = '';
+
+function filterRuns(runs) {
+  const q = ($('jobFilter')?.value || '').trim().toLowerCase();
+  const list = Array.isArray(runs) ? runs.slice() : [];
+  if (!q) return list;
+  return list.filter((run) => {
+    const name = String(run.name || '').toLowerCase();
+    const query = String(run.query || '').toLowerCase();
+    return name.includes(q) || query.includes(q);
+  });
+}
+
+function renderJobTable() {
+  const tbody = $('jobTableBody');
+  const empty = $('jobListEmpty');
   const sel = $('runPicker');
-  const current = selectPath || $('out').value.trim();
-  sel.innerHTML = '<option value="">— Chọn job để tiếp tục —</option>';
-  for (const run of runs) {
+  const current = $('out').value.trim();
+  const visible = filterRuns(cachedRuns);
+
+  tbody.replaceChildren();
+  sel.innerHTML = '<option value="">Chọn job để tiếp tục</option>';
+
+  for (const run of cachedRuns) {
     const opt = document.createElement('option');
     opt.value = run.path;
     opt.textContent = formatRunOption(run);
     if (run.path === current) opt.selected = true;
     sel.appendChild(opt);
   }
+
+  empty.hidden = cachedRuns.length > 0;
+
+  if (current && !cachedRuns.some((r) => r.path === current)) {
+    const synthetic = {
+      path: current,
+      name: folderName(current),
+      query: $('query').value.trim(),
+      completed: lastStatus?.progress?.completed ?? 0,
+      total: lastStatus?.progress?.total ?? 0,
+      mtime: Date.now(),
+      canResume: false,
+    };
+    visible.unshift(synthetic);
+  }
+
+  for (const run of visible) {
+    const tr = document.createElement('tr');
+    tr.tabIndex = 0;
+    tr.dataset.path = run.path;
+    tr.setAttribute('aria-selected', run.path === current ? 'true' : 'false');
+
+    const state = runState(run, lastStatus);
+    const percent = pct(run.completed, run.total);
+
+    const nameTd = document.createElement('td');
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'job-name';
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'icon');
+    icon.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#i-folder');
+    icon.appendChild(use);
+    const nameText = document.createElement('span');
+    nameText.textContent = run.name || folderName(run.path);
+    nameWrap.append(icon, nameText);
+    nameTd.appendChild(nameWrap);
+
+    const queryTd = document.createElement('td');
+    queryTd.className = 'job-query-cell';
+    queryTd.textContent = run.query || '';
+    queryTd.title = run.query || '';
+
+    const progTd = document.createElement('td');
+    const mini = document.createElement('div');
+    mini.className = 'mini-progress';
+    const track = document.createElement('div');
+    track.className = 'mini-track';
+    const fill = document.createElement('div');
+    fill.className = 'mini-fill';
+    fill.style.width = `${percent}%`;
+    track.appendChild(fill);
+    const frac = document.createElement('span');
+    frac.className = 'mini-frac';
+    frac.textContent = run.total > 0 ? `${run.completed}/${run.total}` : '';
+    mini.append(track, frac);
+    progTd.appendChild(mini);
+
+    const stateTd = document.createElement('td');
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.dataset.state = state;
+    pill.textContent = STATE_LABELS[state] || state;
+    stateTd.appendChild(pill);
+
+    const timeTd = document.createElement('td');
+    timeTd.className = 'job-mtime';
+    timeTd.textContent = formatRelative(run.mtime);
+
+    tr.append(nameTd, queryTd, progTd, stateTd, timeTd);
+    tr.addEventListener('click', () => {
+      if ($('runPicker').disabled) return;
+      void applyOutPath(run.path);
+    });
+    tr.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        tr.click();
+      }
+    });
+    tbody.appendChild(tr);
+  }
+
+  const selected = tbody.querySelector('tr[aria-selected="true"]');
+  if (selected && current && current !== lastScrolledPath) {
+    lastScrolledPath = current;
+    selected.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+async function refreshRunPicker(selectPath) {
+  if (!api?.listRuns) return;
+  const { runs } = await api.listRuns();
+  cachedRuns = runs || [];
+  if (selectPath) setOutPath(selectPath);
+  renderJobTable();
+}
+
+function selectedRun() {
+  const path = $('out').value.trim();
+  if (!path) return null;
+  return cachedRuns.find((r) => r.path === path) || null;
 }
 
 function renderStatus(s) {
   if (!s) return;
+  lastStatus = s;
   const running = s.state === 'running' || s.state === 'stopping';
-  const p = s.progress;
+  const pathMatch = Boolean(s.outDir && s.outDir === $('out').value.trim());
+  const run = selectedRun();
+  const p = pathMatch && s.progress
+    ? s.progress
+    : run
+      ? { query: run.query, completed: run.completed, total: run.total }
+      : s.progress;
   const completed = p?.completed ?? 0;
   const total = p?.total ?? 0;
   const percent = pct(completed, total);
 
   const badge = $('stateBadge');
-  badge.textContent = STATE_LABELS[s.state] || s.state;
-  badge.dataset.state = s.state;
-  $('dashboard').dataset.running = running ? 'true' : 'false';
+  const badgeState = pathMatch && running ? s.state : run ? runState(run, s) : s.state;
+  badge.textContent = STATE_LABELS[badgeState] || badgeState;
+  badge.dataset.state = badgeState === 'done' || badgeState === 'resume' ? s.state : badgeState;
+  const liveDot = $('liveDot');
+  if (liveDot) liveDot.dataset.state = badgeState;
+  $('dashboard').dataset.running = running && pathMatch ? 'true' : 'false';
 
-  $('progressPct').textContent = `${percent}%`;
   $('progressFraction').textContent =
     total > 0 ? `${completed} / ${total} công ty` : '0 / 0 công ty';
-  $('progressFill').style.width = `${percent}%`;
+  $('progressFill').style.transform = `scaleX(${percent / 100})`;
   const track = $('progressTrack');
   track.setAttribute('aria-valuenow', String(percent));
   track.setAttribute('aria-valuetext', `${completed} trên ${total} công ty`);
@@ -170,50 +344,77 @@ function renderStatus(s) {
     $('progressFraction').textContent =
       cap > 0 ? `Đã lấy ${completed} / ${cap} từ Trustpilot` : 'Đang lấy danh sách Trustpilot…';
     $('progressHint').textContent = running
-      ? 'Đang lấy danh sách công ty trên Trustpilot — chưa quét website.'
+      ? 'Đang lấy danh sách công ty trên Trustpilot, chưa quét website.'
       : 'Đã dừng lúc lấy danh sách. Bấm Tiếp tục để quét phần đã có.';
   } else if (running && total > 0) {
     $('progressHint').textContent =
-      (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website — còn ${total - completed} công ty`) +
+      (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website, còn ${total - completed} công ty`) +
       shortNote;
   } else if (p && completed > 0) {
     $('progressHint').textContent =
-      `Đã xử lý ${completed} công ty — có thể Tiếp tục hoặc mở CSV.` + shortNote;
+      `Đã xử lý ${completed} công ty. Có thể Tiếp tục hoặc mở CSV.` + shortNote;
   } else {
     $('progressHint').textContent = 'Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.';
   }
 
-  renderEta(s.eta, { running, completed, total });
+  renderEta(pathMatch ? s.eta : null, {
+    running: running && pathMatch,
+    completed,
+    total,
+  });
 
-  const jobQuery = p?.query?.trim();
-  $('jobQuery').textContent = jobQuery ? `Từ khoá job: ${jobQuery}` : 'Từ khoá job: —';
+  const jobQuery = (p?.query || run?.query || $('query').value).trim();
+  const title = $('previewTitle');
+  const outPath = $('out').value.trim() || s.outDir || '';
+  title.textContent = outPath ? folderName(outPath) : 'Job mới';
+  $('jobQuery').textContent = jobQuery
+    ? `Từ khoá job: ${jobQuery}`
+    : outPath
+      ? 'Chưa có từ khoá trên job này. Nhập rồi Bắt đầu.'
+      : 'Chưa chọn job. Điền từ khoá rồi Bắt đầu.';
 
   if (running) setQueryInput($('query').value || jobQuery || '', { readonly: true });
-  else if (!running) {
+  else {
     setQueryInput($('query').value, { readonly: false });
     if (jobQuery && !$('query').value.trim()) $('query').value = jobQuery;
   }
 
-  const c = s.counts || { true: 0, false: 0, unknown: 0 };
+  const c =
+    pathMatch && s.counts ? s.counts : { true: 0, false: 0, unknown: 0 };
   $('statTrue').textContent = String(c.true);
   $('statFalse').textContent = String(c.false);
   $('statUnknown').textContent = String(c.unknown);
+  const showCounts = c.true + c.false + c.unknown > 0;
+  $('countRow').hidden = !showCounts;
 
-  const domains = s.currentDomains?.length ? s.currentDomains : [];
-  $('current').textContent = domains.length ? domains.join(', ') : '—';
+  const domains = pathMatch && s.currentDomains?.length ? s.currentDomains : [];
+  $('current').textContent = domains.length ? domains.join(', ') : '';
   $('current').classList.toggle('is-active', domains.length > 0);
 
-  $('message').textContent = s.message || '';
+  if (s.state !== 'error') {
+    $('query').classList.remove('is-error');
+    if (!$('message').classList.contains('is-error') || !s.message) {
+      $('message').classList.remove('is-error');
+    }
+  }
+  if (s.message) {
+    $('message').textContent = s.message;
+    $('message').classList.toggle('is-error', s.state === 'error');
+  } else if (!$('message').classList.contains('is-error')) {
+    $('message').textContent = '';
+  }
   $('btnStart').disabled = running;
   $('btnResume').disabled = running;
   $('btnStop').disabled = !running;
   $('btnPickOut').disabled = running;
   $('btnNewOut').disabled = running;
   $('runPicker').disabled = running;
+  $('jobFilter').disabled = false;
+  const csvMatchesSelection = Boolean(pathMatch || !s.outDir);
+  $('btnCsv').disabled = !csvMatchesSelection;
+  $('btnFolder').disabled = !csvMatchesSelection;
 
-  if (s.outDir && !running) {
-    setOutPath(s.outDir);
-  }
+  renderJobTable();
 }
 
 async function syncFromOutDir({ force = false } = {}) {
@@ -225,6 +426,10 @@ async function syncFromOutDir({ force = false } = {}) {
     if (info?.query && (force || !draft || info.canResume)) {
       setQueryInput(info.query);
     }
+    const requested = info?.progress?.requestedLimit;
+    if (typeof requested === 'number' && requested > 0 && !$('limit').matches(':focus')) {
+      $('limit').value = String(requested);
+    }
   } catch {
     /* giữ từ khoá người dùng */
   }
@@ -235,6 +440,10 @@ async function applyOutPath(path) {
   setOutPath(path);
   await refreshRunPicker(path);
   await syncFromOutDir({ force: true });
+  const name = folderName(path);
+  $('previewTitle').textContent = name;
+  if (lastStatus) renderStatus(lastStatus);
+  else if (api?.getStatus) renderStatus(await api.getStatus());
 }
 
 async function boot() {
@@ -264,7 +473,8 @@ async function boot() {
       if (picked?.canceled || !picked?.path) return;
       await applyOutPath(picked.path);
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
     }
   };
 
@@ -273,7 +483,8 @@ async function boot() {
       const created = await api.newOutDir();
       if (created?.path) await applyOutPath(created.path);
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
     }
   };
 
@@ -284,23 +495,46 @@ async function boot() {
 
   $('btnOpenRunsRoot').onclick = () => api.openRunsRoot?.();
 
+  $('jobFilter').addEventListener('input', () => renderJobTable());
+
   function scanOptFlags() {
     return {
       earlyExit: Boolean($('earlyExit')?.checked),
       networkEvidence: Boolean($('networkEvidence')?.checked),
       lazySettle: Boolean($('lazySettle')?.checked),
-      // "Tăng tốc" = 3 sites in parallel, otherwise the safe default of 2.
       concurrency: $('concurrencyRow')?.checked ? 3 : 2,
       virtualDisplay: $('hideChrome')?.checked !== false,
     };
   }
 
+  function lockLaunchControls() {
+    $('btnStart').disabled = true;
+    $('btnResume').disabled = true;
+    $('btnPickOut').disabled = true;
+    $('btnNewOut').disabled = true;
+    $('runPicker').disabled = true;
+  }
+
+  function unlockLaunchControlsIfIdle() {
+    if (lastStatus && (lastStatus.state === 'running' || lastStatus.state === 'stopping')) return;
+    $('btnStart').disabled = false;
+    $('btnResume').disabled = false;
+    $('btnPickOut').disabled = false;
+    $('btnNewOut').disabled = false;
+    $('runPicker').disabled = false;
+  }
+
   $('btnStart').onclick = async () => {
+    const outSnapshot = $('out').value;
+    lockLaunchControls();
     await syncFromOutDir();
     const query = $('query').value.trim();
     if (!query) {
       $('message').textContent = 'Nhập từ khoá Trustpilot trước khi bắt đầu.';
-      $('query').focus();
+      $('message').classList.add('is-error');
+      $('query').classList.add('is-error');
+      $('query').focus({ preventScroll: true });
+      unlockLaunchControlsIfIdle();
       return;
     }
     saveLastQuery(query);
@@ -308,21 +542,27 @@ async function boot() {
       await api.startJob({
         query,
         limit: parseLimitInput($('limit').value),
-        out: $('out').value,
+        out: outSnapshot,
         resume: false,
         ...scanOptFlags(),
       });
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
+      unlockLaunchControlsIfIdle();
     }
   };
 
   $('btnResume').onclick = async () => {
+    const outSnapshot = $('out').value;
+    lockLaunchControls();
     try {
       await syncFromOutDir({ force: true });
-      await api.startJob({ out: $('out').value, resume: true, ...scanOptFlags() });
+      await api.startJob({ out: outSnapshot, resume: true, ...scanOptFlags() });
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
+      unlockLaunchControlsIfIdle();
     }
   };
 
@@ -330,21 +570,24 @@ async function boot() {
     try {
       await api.stopJob();
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
     }
   };
   $('btnFolder').onclick = async () => {
     try {
       await api.openOutDir();
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
     }
   };
   $('btnCsv').onclick = async () => {
     try {
       await api.openCsv();
     } catch (e) {
-      $('message').textContent = e?.message || String(e);
+      $('message').textContent = friendlyError(e);
+      $('message').classList.add('is-error');
     }
   };
 }

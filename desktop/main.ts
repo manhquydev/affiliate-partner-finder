@@ -51,10 +51,11 @@ const supervisor = new JobSupervisor({
 
 function createWindow(): void {
   win = new BrowserWindow({
-    width: 920,
-    height: 820,
-    minWidth: 720,
+    width: 1180,
+    height: 780,
+    minWidth: 880,
     minHeight: 640,
+    title: 'Trình dò Affiliate/Partner',
     webPreferences: {
       preload: join(appDir, 'preload.cjs'),
       contextIsolation: true,
