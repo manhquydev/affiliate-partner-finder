@@ -8,6 +8,7 @@ import { resolve as resolveWebsite } from '../lib/resolve';
 import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
+import { shouldHideChromeWindows } from './hide-chrome-window';
 import { collectCli } from './collect';
 import { scanWithRetry } from './scan';
 import { isUnderVirtualDisplay, maybeReexecUnderXvfb } from './virtual-display';
@@ -50,7 +51,7 @@ Options:
   --profile <dir>     Chrome persistent profile (default ~/.cache/affiliate-partner-finder/chrome-profile)
   --headed-scan       Headed browser for site scans
   --scan-profile      Site scans use the same persistent profile (CF cookies); implies headed
-  --virtual-display   Re-exec under Xvfb (headed Chrome off primary screen; keeps CF quality)
+  --virtual-display   Hide headed Chrome off the primary screen (Linux: Xvfb; Windows/macOS: minimized)
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
   --lazy-settle       Replace fixed 1200ms settle with scroll+MutationObserver (≤1200ms; default OFF)
   --network-evidence  Observe request/response hosts for affiliate platforms (default OFF; method=network)
@@ -59,7 +60,7 @@ Options:
 
 Ethics: concurrency ≤3, delay ≥1000 recommended. No CAPTCHA bypass.
 After CF challenge: complete check once in the persistent profile window, re-run.
-For overnight UX: prefer --scan-profile --virtual-display (requires package xvfb).
+For overnight UX: prefer --scan-profile --virtual-display (Linux: package xvfb; Windows: off-screen headed Chrome).
 `);
 }
 
@@ -166,6 +167,11 @@ async function main(): Promise<number> {
     return 2;
   }
 
+  const hideWindows = shouldHideChromeWindows(args.virtualDisplay, process.platform);
+  if (hideWindows) {
+    console.log('[cli] hiding headed Chrome windows (off-screen / minimized)');
+  }
+
   const outDir = pathResolve(args.out);
   mkdirSync(outDir, { recursive: true });
   const companiesPath = join(outDir, 'companies.json');
@@ -211,7 +217,7 @@ async function main(): Promise<number> {
       return 2;
     }
     console.log(`[cli] collect query=${args.query} limit=${args.limit} maxPages=${args.maxPages} profile=${args.profile}`);
-    const collectHandle = await launchPersistentCollect(args.profile);
+    const collectHandle = await launchPersistentCollect(args.profile, { hideWindows });
     try {
       const skip = new Set(resultsMap.keys());
       const runCollect = () =>
@@ -284,6 +290,7 @@ async function main(): Promise<number> {
   const session = await launchScanSession({
     headed: args.headedScan,
     profileDir: args.scanProfile ? args.profile : undefined,
+    hideWindows,
   });
   let shuttingDown = false;
   let disconnectFatal = false;

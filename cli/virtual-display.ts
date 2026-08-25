@@ -2,6 +2,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { accessSync, constants } from 'node:fs';
+import { shouldReexecUnderXvfb } from './hide-chrome-window';
 
 export const XVFB_MARKER = 'AFFILIATE_FINDER_UNDER_XVFB';
 
@@ -48,9 +49,10 @@ export function buildXvfbChildArgs(opts: {
  * Does not return when re-exec starts (process.exit with child status).
  */
 export function maybeReexecUnderXvfb(enabled: boolean): void {
-  if (!enabled) return;
-  if (isUnderVirtualDisplay()) {
-    console.log(`[cli] virtual-display active DISPLAY=${process.env.DISPLAY ?? '(unset)'}`);
+  if (!shouldReexecUnderXvfb(enabled, process.platform, isUnderVirtualDisplay())) {
+    if (enabled && isUnderVirtualDisplay()) {
+      console.log(`[cli] virtual-display active DISPLAY=${process.env.DISPLAY ?? '(unset)'}`);
+    }
     return;
   }
 

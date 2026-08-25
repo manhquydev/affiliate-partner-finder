@@ -40,8 +40,8 @@ export type JobOptions = {
    */
   networkEvidence?: boolean;
   /**
-   * Linux only: run headed Chrome off the primary display via `--virtual-display`
-   * (Xvfb re-exec). Default ON — desktop must not seize the user's screen.
+   * Hide headed Chrome off the primary display via `--virtual-display`.
+   * Linux: Xvfb. Windows/macOS: minimized/off-screen window. Default ON.
    */
   virtualDisplay?: boolean;
   /** Test / override; default process.platform */

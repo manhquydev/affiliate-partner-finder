@@ -164,7 +164,7 @@ describe('desktop adapter', () => {
     expect(args).toContain('--network-evidence');
   });
 
-  it('win32 always has profile and never virtual-display', () => {
+  it('win32 always has profile and defaults to --virtual-display (hide Chrome)', () => {
     const args = buildScanArgv({
       query: 'design',
       out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
@@ -172,19 +172,28 @@ describe('desktop adapter', () => {
       platform: 'win32',
     });
     expect(args).toContain('--profile');
-    expect(args).not.toContain('--virtual-display');
+    expect(args).toContain('--virtual-display');
+    const visible = buildScanArgv({
+      query: 'design',
+      out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
+      profile: 'C:\\Users\\a\\AppData\\Local\\affiliate-partner-finder\\chrome-profile',
+      platform: 'win32',
+      virtualDisplay: false,
+    });
+    expect(visible).not.toContain('--virtual-display');
   });
 
-  it('resolveVirtualDisplay is linux-only and default ON there', () => {
+  it('resolveVirtualDisplay defaults ON on every platform', () => {
     expect(resolveVirtualDisplay('linux')).toBe(true);
     expect(resolveVirtualDisplay('linux', true)).toBe(true);
     expect(resolveVirtualDisplay('linux', false)).toBe(false);
-    expect(resolveVirtualDisplay('win32')).toBe(false);
-    expect(resolveVirtualDisplay('win32', true)).toBe(false);
-    expect(resolveVirtualDisplay('darwin', true)).toBe(false);
+    expect(resolveVirtualDisplay('win32')).toBe(true);
+    expect(resolveVirtualDisplay('win32', true)).toBe(true);
+    expect(resolveVirtualDisplay('win32', false)).toBe(false);
+    expect(resolveVirtualDisplay('darwin', true)).toBe(true);
   });
 
-  it('win32 ignores virtualDisplay true instead of throwing', () => {
+  it('win32 virtualDisplay true does not throw and passes --virtual-display', () => {
     const opts = {
       query: 'design',
       out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
@@ -193,7 +202,7 @@ describe('desktop adapter', () => {
       virtualDisplay: true,
     };
     expect(() => buildScanArgv(opts)).not.toThrow();
-    expect(buildScanArgv(opts)).not.toContain('--virtual-display');
+    expect(buildScanArgv(opts)).toContain('--virtual-display');
   });
 
   it('resume omits query requirement', () => {

@@ -224,7 +224,7 @@ ipcMain.handle(
       networkEvidence?: boolean;
       /** Parallel site scans 1..3 (GUI: 2 normal, 3 turbo). */
       concurrency?: number;
-      /** Linux: hide headed Chrome on a virtual display (Xvfb). Ignored elsewhere. */
+      /** Hide headed Chrome off the primary display. Default true. */
       virtualDisplay?: boolean;
     },
   ) => {

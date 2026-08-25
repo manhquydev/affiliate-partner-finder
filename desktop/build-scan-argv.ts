@@ -6,15 +6,14 @@ const MIN_DELAY_MS = 1000;
 const MAX_CONCURRENCY = 3;
 
 /**
- * Xvfb / --virtual-display is Linux-only.
- * Default ON on Linux so the desktop GUI does not seize the primary display.
- * Always off on Windows/macOS — even if a caller (or hidden checkbox) sends true.
+ * Hide headed Chrome off the primary display. Default ON.
+ * Linux: CLI re-execs under Xvfb. Windows/macOS: minimized/off-screen windows.
  */
 export function resolveVirtualDisplay(
-  platform: NodeJS.Platform,
+  _platform: NodeJS.Platform,
   requested?: boolean,
 ): boolean {
-  return platform === 'linux' && requested !== false;
+  return requested !== false;
 }
 
 export function clampConcurrency(n: number | undefined): number {

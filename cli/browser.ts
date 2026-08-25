@@ -4,6 +4,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from 'playwrig
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { hideChromeWindowArgs, hidePlaywrightWindows } from './hide-chrome-window';
 
 export const DEFAULT_PROFILE_DIR = join(homedir(), '.cache', 'affiliate-partner-finder', 'chrome-profile');
 
@@ -38,33 +39,49 @@ export async function closeQuietly(
 }
 
 /** Launch options: prefer system Chrome for Trustpilot CF; fall back to Chromium. */
-export async function launchPersistentCollect(profileDir = DEFAULT_PROFILE_DIR): Promise<BrowserHandle> {
+function headedContextOptions(hideWindows: boolean): {
+  headless: false;
+  viewport: { width: number; height: number };
+  args?: string[];
+} {
+  return {
+    headless: false,
+    viewport: { width: 1280, height: 800 },
+    ...(hideWindows ? { args: hideChromeWindowArgs() } : {}),
+  };
+}
+
+export async function launchPersistentCollect(
+  profileDir = DEFAULT_PROFILE_DIR,
+  opts?: { hideWindows?: boolean },
+): Promise<BrowserHandle> {
   mkdirSync(profileDir, { recursive: true });
+  const hideWindows = Boolean(opts?.hideWindows);
+  const common = headedContextOptions(hideWindows);
   try {
     const context = await chromium.launchPersistentContext(profileDir, {
       channel: 'chrome',
-      headless: false,
-      viewport: { width: 1280, height: 800 },
+      ...common,
     });
+    if (hideWindows) await hidePlaywrightWindows(context);
     return { browser: null, context, persistent: true };
   } catch (e) {
     console.warn(
       `[cli] system Chrome launch failed (${e instanceof Error ? e.message.split('\n')[0] : e}) — using bundled Chromium (CF pass-rate may be lower)`,
     );
-    const context = await chromium.launchPersistentContext(profileDir, {
-      headless: false,
-      viewport: { width: 1280, height: 800 },
-    });
+    const context = await chromium.launchPersistentContext(profileDir, common);
+    if (hideWindows) await hidePlaywrightWindows(context);
     return { browser: null, context, persistent: true };
   }
 }
 
 /** Shared browser for concurrent site scans (fresh contexts per company). */
-export async function launchScanBrowser(headed = false): Promise<Browser> {
+export async function launchScanBrowser(headed = false, hideWindows = false): Promise<Browser> {
+  const args = headed && hideWindows ? hideChromeWindowArgs() : undefined;
   try {
-    return await chromium.launch({ channel: 'chrome', headless: !headed });
+    return await chromium.launch({ channel: 'chrome', headless: !headed, args });
   } catch {
-    return await chromium.launch({ headless: !headed });
+    return await chromium.launch({ headless: !headed, args });
   }
 }
 
@@ -97,26 +114,31 @@ export async function launchScanSession(opts: {
   headed?: boolean;
   /** When set, use persistent Chrome profile (CF cookies) for site scans. */
   profileDir?: string;
+  /** Headed but off primary display (Windows/macOS). Linux uses Xvfb instead. */
+  hideWindows?: boolean;
 }): Promise<ScanSession> {
   const headed = Boolean(opts.headed);
+  const hideWindows = Boolean(headed && opts.hideWindows);
   if (opts.profileDir) {
     mkdirSync(opts.profileDir, { recursive: true });
     let context: BrowserContext;
+    const common = {
+      headless: !headed,
+      viewport: { width: 1280, height: 800 },
+      ...(hideWindows ? { args: hideChromeWindowArgs() } : {}),
+    };
     try {
       context = await chromium.launchPersistentContext(opts.profileDir, {
         channel: 'chrome',
-        headless: !headed,
-        viewport: { width: 1280, height: 800 },
+        ...common,
       });
     } catch (e) {
       console.warn(
         `[cli] system Chrome launch failed for scan-profile (${e instanceof Error ? e.message.split('\n')[0] : e}) — bundled Chromium`,
       );
-      context = await chromium.launchPersistentContext(opts.profileDir, {
-        headless: !headed,
-        viewport: { width: 1280, height: 800 },
-      });
+      context = await chromium.launchPersistentContext(opts.profileDir, common);
     }
+    if (hideWindows) await hidePlaywrightWindows(context);
     // Keep at least one window open — closing the last Chrome window exits the
     // persistent profile process and fires context 'close' (false disconnect).
     let keepAlive = context.pages()[0];
@@ -141,11 +163,12 @@ export async function launchScanSession(opts: {
     };
   }
 
-  const browser = await launchScanBrowser(headed);
+  const browser = await launchScanBrowser(headed, hideWindows);
   return {
     mode: 'ephemeral',
     openPage: async () => {
       const context = await newScanContext(browser);
+      if (hideWindows) await hidePlaywrightWindows(context);
       const page = await context.newPage();
       return { page, context };
     },

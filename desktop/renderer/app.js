@@ -4,9 +4,6 @@ const STORAGE_KEY = 'apf-last-query';
 
 const api = window.affiliateDesktop;
 
-/** Set from desktop:defaults — Xvfb is Linux-only. */
-let desktopPlatform = '';
-
 const STATE_LABELS = {
   idle: 'Chờ',
   running: 'Đang chạy',
@@ -214,20 +211,10 @@ async function boot() {
 
   setQueryInput(loadLastQuery());
   const defaults = await api.getDefaults();
-  desktopPlatform = defaults?.platform || '';
   if (defaults?.out) {
     setOutPath(defaults.out);
     await syncFromOutDir({ force: true });
     if (!$('query').value.trim()) setQueryInput(loadLastQuery());
-  }
-  // Xvfb is Linux-only — hide the toggle and uncheck so Start never sends true.
-  const hideChromeRow = $('hideChromeRow');
-  const hideChrome = $('hideChrome');
-  const hideChromeHint = $('hideChromeHint');
-  if (desktopPlatform && desktopPlatform !== 'linux') {
-    if (hideChromeRow) hideChromeRow.hidden = true;
-    if (hideChromeHint) hideChromeHint.hidden = true;
-    if (hideChrome) hideChrome.checked = false;
   }
   await refreshRunPicker($('out').value.trim());
 
@@ -270,7 +257,7 @@ async function boot() {
       lazySettle: Boolean($('lazySettle')?.checked),
       // "Tăng tốc" = 3 sites in parallel, otherwise the safe default of 2.
       concurrency: $('concurrencyRow')?.checked ? 3 : 2,
-      virtualDisplay: desktopPlatform === 'linux' && $('hideChrome')?.checked !== false,
+      virtualDisplay: $('hideChrome')?.checked !== false,
     };
   }
 
