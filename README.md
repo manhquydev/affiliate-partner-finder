@@ -51,7 +51,9 @@ npm install
 npm run desktop:dev
 ```
 
-**v1.0.6:** Windows **Bắt đầu / Tiếp tục** không còn lỗi `virtual-display is only supported on Linux` — ẩn Chrome (Xvfb) chỉ trên Linux; Windows luôn hiện cửa sổ Chrome (cần cho Cloudflare).
+**v1.0.7:** Windows **Ẩn cửa sổ Chrome khi quét** hoạt động — Chrome vẫn headed (Cloudflare), cửa sổ thu nhỏ / đưa ra ngoài màn hình. Linux vẫn dùng Xvfb. Tắt tùy chọn đó khi cần vượt kiểm tra một lần.
+
+**v1.0.6:** Windows **Bắt đầu / Tiếp tục** không còn lỗi `virtual-display is only supported on Linux`.
 
 **v1.0.5:** lỗi CLI không còn bị nuốt — dashboard hiện state **Lỗi** kèm nguyên nhân thật; bản đóng gói tự chứa đủ runtime (không còn chết ngay khi khởi động); nhận diện AWS WAF của Trustpilot + cửa sổ Chrome giữ 90s để vượt kiểm tra một lần rồi tự retry; trên Linux mặc định **Ẩn cửa sổ Chrome khi quét (Xvfb)** — không chiếm màn hình chính; tùy chọn quét viết lại bằng ngôn ngữ thường + nút **Tăng tốc** (3 trang web cùng lúc).
 
@@ -82,13 +84,13 @@ npm run scan -- --resume --out ./out/run1
   ```bash
   npm run scan -- --resume --out ./out/run1 --scan-profile --accept-failures --concurrency 2
   ```
-- **Không chiếm màn hình chính:** `--virtual-display` re-exec dưới Xvfb (cần `xvfb` / `xvfb-run`). Chrome vẫn *headed* với anti-bot nhưng không hiện trên desktop `:0`:
+- **Không chiếm màn hình chính:** `--virtual-display` giữ Chrome *headed* (anti-bot) nhưng không chiếm desktop. Linux: re-exec dưới Xvfb (`xvfb` / `xvfb-run`). Windows/macOS: cửa sổ thu nhỏ / đưa ra ngoài màn hình.
   ```bash
   npm run scan -- --resume --out ./out/run1 --scan-profile --virtual-display --accept-failures
-  # hoặc
+  # hoặc (Linux)
   npm run scan:xvfb -- --resume --out ./out/run1 --scan-profile --accept-failures
   ```
-  Khi gặp Cloudflare: vượt challenge một lần trên display thật (bỏ `--virtual-display` tạm) hoặc gắn VNC vào display ảo, rồi `--resume`.
+  Khi gặp Cloudflare: tạm tắt ẩn Chrome (bỏ `--virtual-display` / bỏ tick trên GUI), vượt challenge một lần, rồi `--resume`.
 - Artefacts: `companies.json`, `results.jsonl`, **`results.csv`** (end-user: `ten_cong_ty,website,ket_qua,huong_dan` với `true`/`false`/`unknown`), `results.full.csv` + `results.json` (kỹ thuật/audit).
 - `ket_qua=true` = có dấu hiệu affiliate **hoặc** partner → người vào xác nhận; `false` = đã mở trang, không thấy dấu hiệu; `unknown` = không mở được (không ghi false để tránh miss).
 - Kiểm tra live export kỹ thuật: `node test/verify-golden.mjs ./out/run1/results.json`
