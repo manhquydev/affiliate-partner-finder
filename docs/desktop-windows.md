@@ -2,7 +2,7 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản hiện tại:** `1.0.4` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
+**Phiên bản hiện tại:** `1.0.6` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
 
 ## Yêu cầu
 
@@ -13,7 +13,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag mới nhất (vd `v1.0.4`)
+2. Chọn tag mới nhất (vd `v1.0.6`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
@@ -36,9 +36,10 @@ npm run desktop:dev
    - **Network evidence** — bắt host affiliate từ request/response (`--network-evidence`)
    - **Lazy settle** — scroll + MutationObserver thay chờ cố định 1.2s (`--lazy-settle`)
    - Chỉ bật khi đo recall trên trang tải được; **không** kỳ vọng giảm `unknown` (unknown = blocked/timeout/error).
-5. Nếu Chrome hiện Cloudflare: hoàn thành **một lần** trong cửa sổ Chrome của app → **Tiếp tục** nếu việc đã dừng.
-6. **Dừng** = dừng an toàn (SIGINT) + xuất CSV từ kết quả đã có; lần sau **Tiếp tục** cùng thư mục.
-7. **Mở CSV** → `results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`.
+5. **Windows luôn hiện cửa sổ Chrome khi quét** (không có ẩn Xvfb). Linux mới có tùy chọn ẩn Chrome trên display ảo.
+6. Nếu Chrome hiện Cloudflare: hoàn thành **một lần** trong cửa sổ Chrome của app → **Tiếp tục** nếu việc đã dừng.
+7. **Dừng** = dừng an toàn (SIGINT) + xuất CSV từ kết quả đã có; lần sau **Tiếp tục** cùng thư mục.
+8. **Mở CSV** → `results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`.
 
 ## Quy tắc an toàn
 
@@ -55,7 +56,7 @@ npm run desktop:pack:win    # NSIS → dist-desktop/
 npm run desktop:pack:linux  # AppImage + deb
 ```
 
-CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.4`).
+CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.6`).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 
