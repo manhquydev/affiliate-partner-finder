@@ -2,7 +2,7 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản hiện tại:** `1.0.7` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
+**Phiên bản hiện tại:** `1.0.8` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
 
 ## Yêu cầu
 
@@ -13,7 +13,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag mới nhất (vd `v1.0.7`)
+2. Chọn tag mới nhất (vd `v1.0.8`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
@@ -28,7 +28,7 @@ npm run desktop:dev
 
 ## Cách dùng
 
-1. Nhập **từ khoá Trustpilot** (bắt buộc khi **Bắt đầu**) + số công ty.
+1. Nhập **từ khoá Trustpilot** + số công ty (`10000`, không gõ `10.000`). Lúc lấy danh sách thanh hiện **đã lấy / số yêu cầu**; lúc quét website mới hiện **đã quét / số đã lấy**. Nếu Trustpilot hết kết quả hoặc bị chặn, app không bịa thêm công ty.
 2. **Thư mục lưu:** dùng **Chọn thư mục…** / **Job mới** hoặc chọn job cũ trong danh sách — không cần gõ đường dẫn tay.
 3. Theo dõi **bảng tiến độ** (% + thống kê true/false/unknown) và dòng **ETA** (ẩn khi job tạm dừng >8 phút hoặc tốc độ quá thấp).
 4. **Tùy chọn quét** (mặc định **không** tick):
@@ -56,7 +56,7 @@ npm run desktop:pack:win    # NSIS → dist-desktop/
 npm run desktop:pack:linux  # AppImage + deb
 ```
 
-CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.7`).
+CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.8`).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 

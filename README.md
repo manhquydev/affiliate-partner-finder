@@ -51,6 +51,8 @@ npm install
 npm run desktop:dev
 ```
 
+**v1.0.8:** Collect 10k không còn cắt im lặng ~100 công ty — retry WAF, không tin `totalPages` khi trang vẫn đầy, tự `--max-pages` theo limit. Thanh lúc lấy danh sách hiện **đã lấy / số yêu cầu**; `10.000` = 10000. Ẩn Chrome + Cloudflare không chờ 90s cửa sổ đã ẩn.
+
 **v1.0.7:** Windows **Ẩn cửa sổ Chrome khi quét** hoạt động — Chrome vẫn headed (Cloudflare), cửa sổ thu nhỏ / đưa ra ngoài màn hình. Linux vẫn dùng Xvfb. Tắt tùy chọn đó khi cần vượt kiểm tra một lần.
 
 **v1.0.6:** Windows **Bắt đầu / Tiếp tục** không còn lỗi `virtual-display is only supported on Linux`.
