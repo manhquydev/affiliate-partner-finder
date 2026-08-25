@@ -117,6 +117,12 @@ export const CONFIG: DetectorConfig = {
   detectorVersion: DETECTOR_VERSION,
 };
 
+export {
+  clampCollectLimit,
+  maxPagesForLimit,
+  parseLimitInput,
+} from './collect-pagination.ts';
+
 /** Default run knobs — ethical guardrails (docs/08 §6). */
 export const DEFAULT_RUN_CONFIG: RunConfig = {
   query: 'design',

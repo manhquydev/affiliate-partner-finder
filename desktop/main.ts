@@ -6,6 +6,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { clampCollectLimit } from '../lib/config.ts';
 import {
   defaultDesktopProfileDir,
   defaultDesktopRunsDir,
@@ -78,7 +79,20 @@ function chromeInstalled(): boolean {
   return candidates.some((p) => p && existsSync(p));
 }
 
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+}
+
 app.whenReady().then(() => {
+  if (!gotLock) return;
   const orphan = readJobFile(jobFilePath);
   if (orphan?.pid) {
     let alive = false;
@@ -232,7 +246,7 @@ ipcMain.handle(
   const profile = profileRoot;
   await supervisor.start({
     query: opts.query,
-    limit: opts.limit,
+    limit: opts.resume ? undefined : clampCollectLimit(opts.limit),
     out,
     profile,
     resume: Boolean(opts.resume),

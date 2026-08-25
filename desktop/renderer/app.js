@@ -45,6 +45,15 @@ function setOutPath(path) {
   el.title = path || '';
 }
 
+function parseLimitInput(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return 20;
+  const grouped = /^\d{1,2}[.,]\d{3}$/.test(s) ? s.replace(/[.,]/g, '') : s.replace(/,/g, '');
+  const n = Number(grouped);
+  if (!Number.isFinite(n)) return 20;
+  return Math.min(10000, Math.max(1, Math.trunc(n)));
+}
+
 function pct(completed, total) {
   if (!total || total <= 0) return 0;
   return Math.min(100, Math.round((100 * completed) / total));
@@ -140,11 +149,36 @@ function renderStatus(s) {
   track.setAttribute('aria-valuenow', String(percent));
   track.setAttribute('aria-valuetext', `${completed} trên ${total} công ty`);
 
-  if (running && total > 0) {
+  const requested = typeof p?.requestedLimit === 'number' ? p.requestedLimit : 0;
+  const collecting = p?.phase === 'collect';
+  const stopReason = p?.collectStopReason || '';
+  const shortCollect = !collecting && requested > total && total > 0;
+  let shortNote = '';
+  if (shortCollect) {
+    if (stopReason === 'challenge-stop') {
+      shortNote =
+        ` Chỉ lấy được ${total}/${requested} vì Trustpilot chặn giữa chừng. Tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục.`;
+    } else if (stopReason === 'max-pages') {
+      shortNote = ` Chỉ lấy được ${total}/${requested} (hết số trang tìm).`;
+    } else {
+      shortNote = ` Trustpilot chỉ trả về ${total} công ty cho từ khoá này (bạn yêu cầu ${requested}).`;
+    }
+  }
+
+  if (collecting) {
+    const cap = requested || total;
+    $('progressFraction').textContent =
+      cap > 0 ? `Đã lấy ${completed} / ${cap} từ Trustpilot` : 'Đang lấy danh sách Trustpilot…';
+    $('progressHint').textContent = running
+      ? 'Đang lấy danh sách công ty trên Trustpilot — chưa quét website.'
+      : 'Đã dừng lúc lấy danh sách. Bấm Tiếp tục để quét phần đã có.';
+  } else if (running && total > 0) {
     $('progressHint').textContent =
-      percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét — còn ${total - completed} công ty`;
+      (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website — còn ${total - completed} công ty`) +
+      shortNote;
   } else if (p && completed > 0) {
-    $('progressHint').textContent = `Đã xử lý ${completed} công ty — có thể Tiếp tục hoặc mở CSV.`;
+    $('progressHint').textContent =
+      `Đã xử lý ${completed} công ty — có thể Tiếp tục hoặc mở CSV.` + shortNote;
   } else {
     $('progressHint').textContent = 'Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.';
   }
@@ -154,7 +188,7 @@ function renderStatus(s) {
   const jobQuery = p?.query?.trim();
   $('jobQuery').textContent = jobQuery ? `Từ khoá job: ${jobQuery}` : 'Từ khoá job: —';
 
-  if (jobQuery && running) setQueryInput(jobQuery, { readonly: true });
+  if (running) setQueryInput($('query').value || jobQuery || '', { readonly: true });
   else if (!running) {
     setQueryInput($('query').value, { readonly: false });
     if (jobQuery && !$('query').value.trim()) $('query').value = jobQuery;
@@ -273,7 +307,7 @@ async function boot() {
     try {
       await api.startJob({
         query,
-        limit: Number($('limit').value),
+        limit: parseLimitInput($('limit').value),
         out: $('out').value,
         resume: false,
         ...scanOptFlags(),
@@ -292,9 +326,27 @@ async function boot() {
     }
   };
 
-  $('btnStop').onclick = () => api.stopJob();
-  $('btnFolder').onclick = () => api.openOutDir();
-  $('btnCsv').onclick = () => api.openCsv();
+  $('btnStop').onclick = async () => {
+    try {
+      await api.stopJob();
+    } catch (e) {
+      $('message').textContent = e?.message || String(e);
+    }
+  };
+  $('btnFolder').onclick = async () => {
+    try {
+      await api.openOutDir();
+    } catch (e) {
+      $('message').textContent = e?.message || String(e);
+    }
+  };
+  $('btnCsv').onclick = async () => {
+    try {
+      await api.openCsv();
+    } catch (e) {
+      $('message').textContent = e?.message || String(e);
+    }
+  };
 }
 
 boot();

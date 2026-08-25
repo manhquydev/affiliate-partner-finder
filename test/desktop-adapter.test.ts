@@ -10,6 +10,7 @@ import {
   defaultDesktopRunsDir,
   resolveVirtualDisplay,
 } from '../desktop/build-scan-argv';
+import { maxPagesForLimit } from '../lib/config';
 import {
   assertOutJobLockFree,
   isProcessAlive,
@@ -46,6 +47,48 @@ function sample(partial: Partial<ScanResult> & Pick<ScanResult, 'domain' | 'load
 }
 
 describe('desktop adapter', () => {
+  it('maxPagesForLimit floors at 40 and scales 10k to 1000', () => {
+    expect(maxPagesForLimit(20)).toBe(40);
+    expect(maxPagesForLimit(200)).toBe(40);
+    expect(maxPagesForLimit(10000)).toBe(1000);
+    expect(maxPagesForLimit(99999)).toBe(1000);
+  });
+
+  it('buildScanArgv clamps NaN and oversized limits', () => {
+    const nan = buildScanArgv({
+      query: 'design',
+      limit: Number.NaN,
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(nan[nan.indexOf('--limit') + 1]).toBe('20');
+    const huge = buildScanArgv({
+      query: 'design',
+      limit: 99999,
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(huge[huge.indexOf('--limit') + 1]).toBe('10000');
+    expect(huge[huge.indexOf('--max-pages') + 1]).toBe('1000');
+  });
+
+  it('buildScanArgv passes --max-pages scaled from a 10k limit', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      limit: 10000,
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(args[args.indexOf('--limit') + 1]).toBe('10000');
+    expect(args[args.indexOf('--max-pages') + 1]).toBe('1000');
+  });
+
   it('clamps concurrency and delay', () => {
     expect(clampConcurrency(99)).toBe(3);
     expect(clampConcurrency(0)).toBe(1);

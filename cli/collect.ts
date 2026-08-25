@@ -1,6 +1,7 @@
 // Trustpilot collect via Playwright persistent/headed context.
 
 import type { BrowserContext, Page } from 'playwright';
+import { nextCollectAction, type CollectStopReason } from '../lib/collect-pagination.ts';
 import { readTrustpilotSearch, type SearchReadResult } from '../lib/trustpilot-reader';
 import type { Company } from '../lib/types';
 
@@ -50,6 +51,7 @@ export type CollectCliOptions = {
   onProgress?: (companies: Company[], pageNum: number, totalPagesHint: number | null) => void;
   /** When true, abort pagination and return partial results (soft stop). */
   shouldStop?: () => boolean;
+  onStopReason?: (reason: CollectStopReason) => void;
 };
 
 /**
@@ -70,11 +72,14 @@ export async function collectCli(
   const page = await context.newPage();
   let lastChallenged = false;
   let totalPagesHint: number | null = null;
+  let wafRetries = 0;
+  let stopReason: CollectStopReason = 'max-pages';
 
   try {
-    for (let pageNum = 1; pageNum <= maxPages && out.length < limit; pageNum++) {
+    for (let pageNum = 1; pageNum <= maxPages && out.length < limit; ) {
       if (opts.shouldStop?.()) {
         console.log('[cli] collect stop requested — returning partial checkpoint');
+        stopReason = 'empty';
         break;
       }
       const url = `${SEARCH_BASE}?query=${encodeURIComponent(query)}&page=${pageNum}`;
@@ -84,20 +89,13 @@ export async function collectCli(
       lastChallenged = Boolean(res?.challenged);
       if (res?.totalPages != null) totalPagesHint = res.totalPages;
 
-      if (!res || res.units.length === 0) {
-        if (out.length > 0) break;
-        if (res?.challenged || lastChallenged) {
-          throw new Error(
-            'Trustpilot Cloudflare challenge. Open trustpilot.com/search once in the persistent Chrome profile, pass the check, then re-run. No CAPTCHA bypass.',
-          );
-        }
-        console.error(
-          `[cli] collect page ${pageNum} returned no companies (title="${await page.title().catch(() => '?')}", challenged=${Boolean(res?.challenged)}) — page layout may have changed`,
+      if (out.length === 0 && (!res || res.units.length === 0) && (res?.challenged || lastChallenged)) {
+        throw new Error(
+          'Trustpilot Cloudflare challenge. Open trustpilot.com/search once in the persistent Chrome profile, pass the check, then re-run. No CAPTCHA bypass.',
         );
-        break;
       }
 
-      for (const u of res.units) {
+      for (const u of res?.units ?? []) {
         const domain = (u.domain || '').trim();
         if (!domain) continue;
         if (skip.has(domain) || seen.has(domain)) continue;
@@ -114,8 +112,38 @@ export async function collectCli(
 
       opts.onProgress?.(out.slice(), pageNum, totalPagesHint);
 
-      if (res.currentPage != null && res.totalPages != null && res.currentPage >= res.totalPages) break;
-      if (out.length < limit) {
+      const action = nextCollectAction({
+        rawOnPage: res?.units.length ?? 0,
+        collected: out.length,
+        limit,
+        pageNum,
+        maxPages,
+        currentPage: res?.currentPage ?? null,
+        totalPages: res?.totalPages ?? null,
+        challenged: Boolean(res?.challenged || lastChallenged),
+        wafRetries,
+      });
+
+      if (action === 'retry-waf') {
+        wafRetries += 1;
+        console.warn(
+          `[cli] collect page ${pageNum} challenged with ${out.length}/${limit} already — retry ${wafRetries}`,
+        );
+        await sleep(Math.max(delayMs, 2500));
+        continue;
+      }
+      wafRetries = 0;
+      stopReason = action === 'continue' ? 'max-pages' : action;
+      if (action !== 'continue' && action !== 'limit') {
+        console.log(
+          `[cli] collect stop reason=${action} page=${pageNum} collected=${out.length}/${limit}` +
+            (totalPagesHint != null ? ` tp=${totalPagesHint}` : ''),
+        );
+        break;
+      }
+      if (action === 'limit') break;
+      pageNum += 1;
+      if (out.length < limit && pageNum <= maxPages) {
         if (opts.shouldStop?.()) {
           console.log('[cli] collect stop requested — returning partial checkpoint');
           break;
@@ -133,5 +161,7 @@ export async function collectCli(
     );
   }
 
+  if (out.length >= limit) stopReason = 'limit';
+  opts.onStopReason?.(stopReason);
   return out.slice(0, limit);
 }

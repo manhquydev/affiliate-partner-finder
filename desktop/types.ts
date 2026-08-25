@@ -8,6 +8,10 @@ export type ProgressSnapshot = {
   completed: number;
   updatedAt: string;
   earlyExit: boolean;
+  /** User-requested collect cap (--limit). May be larger than `total` if Trustpilot ran out. */
+  requestedLimit?: number;
+  phase?: 'collect' | 'scan';
+  collectStopReason?: string;
 };
 
 export type { EtaSnapshot };

@@ -1,5 +1,6 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { clampCollectLimit, maxPagesForLimit } from '../lib/config.ts';
 import type { JobOptions } from './types.ts';
 
 const MIN_DELAY_MS = 1000;
@@ -46,10 +47,14 @@ export function buildScanArgv(opts: JobOptions): string[] {
       throw new Error('query is required when not resuming');
     }
     args.push('--query', opts.query.trim());
-    if (opts.limit != null) args.push('--limit', String(Math.max(1, Math.trunc(opts.limit))));
+    if (opts.limit != null) args.push('--limit', String(clampCollectLimit(opts.limit)));
   }
 
-  if (opts.maxPages != null) args.push('--max-pages', String(Math.max(1, Math.trunc(opts.maxPages))));
+  if (opts.maxPages != null && Number.isFinite(opts.maxPages)) {
+    args.push('--max-pages', String(Math.max(1, Math.trunc(opts.maxPages))));
+  } else if (!opts.resume && opts.limit != null) {
+    args.push('--max-pages', String(maxPagesForLimit(opts.limit)));
+  }
   args.push('--concurrency', String(concurrency));
   args.push('--delay-ms', String(delayMs));
 

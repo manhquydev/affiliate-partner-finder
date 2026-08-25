@@ -3,7 +3,8 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync, openSync, writeSync, fsyncSync, closeSync, renameSync, unlinkSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import pLimit from 'p-limit';
-import { CONFIG, DEFAULT_RUN_CONFIG } from '../lib/config';
+import { CONFIG, DEFAULT_RUN_CONFIG, maxPagesForLimit } from '../lib/config';
+import { clampCollectLimit, type CollectStopReason } from '../lib/collect-pagination.ts';
 import { resolve as resolveWebsite } from '../lib/resolve';
 import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
@@ -43,7 +44,7 @@ Usage:
 Options:
   --query <q>         Trustpilot search query (required)
   --limit <n>         Max companies to collect (default ${DEFAULT_RUN_CONFIG.limit})
-  --max-pages <n>     Max Trustpilot search pages to walk (default 40; design ≈1000)
+  --max-pages <n>     Max Trustpilot search pages (default: scale with --limit; 20→40, 10000→1000)
   --concurrency <n>   Parallel site scans 1..3 (default 2)
   --delay-ms <n>      Start-stagger / retry delay (default 1500)
   --out <dir>         Job directory (default ./out/run)
@@ -65,6 +66,7 @@ For overnight UX: prefer --scan-profile --virtual-display (Linux: package xvfb; 
 }
 
 function parseArgs(argv: string[]): Args {
+  let maxPagesExplicit = false;
   const args: Args = {
     query: '',
     limit: DEFAULT_RUN_CONFIG.limit,
@@ -88,8 +90,14 @@ function parseArgs(argv: string[]): Args {
     const next = () => argv[++i] ?? '';
     if (a === '--help' || a === '-h') args.help = true;
     else if (a === '--query') args.query = next();
-    else if (a === '--limit') args.limit = Math.max(1, Number(next()) || args.limit);
-    else if (a === '--max-pages') args.maxPages = Math.max(1, Number(next()) || args.maxPages);
+    else if (a === '--limit') args.limit = clampCollectLimit(Number(next()));
+    else if (a === '--max-pages') {
+      const n = Number(next());
+      if (Number.isFinite(n) && n >= 1) {
+        args.maxPages = Math.max(1, Math.trunc(n));
+        maxPagesExplicit = true;
+      }
+    }
     else if (a === '--concurrency') args.concurrency = Math.min(3, Math.max(1, Number(next()) || 2));
     else if (a === '--delay-ms') args.delayMs = Math.max(0, Number(next()) || args.delayMs);
     else if (a === '--out') args.out = next();
@@ -104,6 +112,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--accept-failures') args.acceptFailures = true;
   }
   if (args.scanProfile) args.headedScan = true;
+  if (!maxPagesExplicit) args.maxPages = maxPagesForLimit(args.limit);
   return args;
 }
 
@@ -204,6 +213,7 @@ async function main(): Promise<number> {
   };
 
   let companies: Company[] = [];
+  let collectStopReason: CollectStopReason | undefined;
   if (args.resume) {
     if (!existsSync(companiesPath)) {
       console.error('[cli] --resume requires companies.json in --out (snapshot). Do not re-collect.');
@@ -218,16 +228,33 @@ async function main(): Promise<number> {
     }
     console.log(`[cli] collect query=${args.query} limit=${args.limit} maxPages=${args.maxPages} profile=${args.profile}`);
     const collectHandle = await launchPersistentCollect(args.profile, { hideWindows });
+    const writeCollectProgress = (gathered: number) => {
+      atomicWriteJson(progressPath, {
+        query: args.query,
+        total: args.limit,
+        completed: gathered,
+        updatedAt: new Date().toISOString(),
+        earlyExit: false,
+        requestedLimit: args.limit,
+        phase: 'collect',
+        collectStopReason,
+      });
+    };
+    writeCollectProgress(0);
     try {
       const skip = new Set(resultsMap.keys());
       const runCollect = () =>
         collectCli(collectHandle.context, args.query, args.limit, skip, args.delayMs, args.maxPages, {
           onProgress: (partial, pageNum, totalPagesHint) => {
             atomicWriteJson(companiesPath, partial);
+            writeCollectProgress(partial.length);
             console.log(
               `[cli] checkpoint companies=${partial.length} after page ${pageNum}` +
                 (totalPagesHint != null ? ` (tp totalPages≈${totalPagesHint})` : ''),
             );
+          },
+          onStopReason: (reason) => {
+            collectStopReason = reason;
           },
           shouldStop: () => stopRequested,
         });
@@ -236,29 +263,29 @@ async function main(): Promise<number> {
       } catch (e) {
         console.error(`[cli] collect failed: ${e instanceof Error ? e.message : e}`);
       }
-      // Zero companies usually means a WAF/CF challenge. The persistent Chrome
-      // window is still open — give the user a chance to pass the check once,
-      // then retry collect before giving up. No CAPTCHA bypass.
+      // Zero companies usually means a WAF/CF challenge. Visible headed Chrome
+      // can wait 90s. Hidden Chrome (Xvfb or Windows off-screen) cannot — user
+      // must unhide and resume.
       if (companies.length === 0 && !stopRequested) {
-        if (isUnderVirtualDisplay()) {
+        if (isUnderVirtualDisplay() || hideWindows) {
           console.error(
-            '[cli] chưa lấy được công ty và đang chạy ẩn (Xvfb). Nếu Trustpilot chặn: tắt tùy chọn "Ẩn cửa sổ Chrome" trong app, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu lại), rồi bật lại để quét ẩn.',
+            '[cli] chưa lấy được công ty và đang chạy ẩn. Tắt tùy chọn "Ẩn cửa sổ Chrome" trong app, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu lại), rồi bật lại để quét ẩn.',
           );
         } else {
           console.error(
             '[cli] chưa lấy được công ty — cửa sổ Chrome đang mở: nếu thấy kiểm tra Trustpilot/Cloudflare, hãy hoàn thành ngay trong cửa sổ đó (90s).',
           );
-        }
-        const deadline = Date.now() + 90_000;
-        while (Date.now() < deadline && !stopRequested) {
-          await new Promise((r) => setTimeout(r, 1000));
-        }
-        if (!stopRequested) {
-          console.log('[cli] collect retry sau khi người dùng có thể vượt kiểm tra…');
-          try {
-            companies = await runCollect();
-          } catch (e) {
-            console.error(`[cli] collect retry failed: ${e instanceof Error ? e.message : e}`);
+          const deadline = Date.now() + 90_000;
+          while (Date.now() < deadline && !stopRequested) {
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+          if (!stopRequested) {
+            console.log('[cli] collect retry sau khi người dùng có thể vượt kiểm tra…');
+            try {
+              companies = await runCollect();
+            } catch (e) {
+              console.error(`[cli] collect retry failed: ${e instanceof Error ? e.message : e}`);
+            }
           }
         }
       }
@@ -302,6 +329,21 @@ async function main(): Promise<number> {
 
   const limit = pLimit(args.concurrency);
   const total = companies.length;
+  let requestedLimit = args.resume ? total : args.limit;
+  if (args.resume) {
+    try {
+      const prev = JSON.parse(readFileSync(progressPath, 'utf8')) as {
+        requestedLimit?: number;
+        collectStopReason?: CollectStopReason;
+      };
+      if (typeof prev.requestedLimit === 'number' && prev.requestedLimit > 0) {
+        requestedLimit = prev.requestedLimit;
+      }
+      if (prev.collectStopReason && !collectStopReason) collectStopReason = prev.collectStopReason;
+    } catch {
+      /* first progress write */
+    }
+  }
 
   const writeProgress = () => {
     atomicWriteJson(progressPath, {
@@ -310,6 +352,9 @@ async function main(): Promise<number> {
       completed: resultsMap.size,
       updatedAt: new Date().toISOString(),
       earlyExit: args.earlyExit,
+      requestedLimit,
+      phase: 'scan',
+      collectStopReason,
     });
   };
   writeProgress();
