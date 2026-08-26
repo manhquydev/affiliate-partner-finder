@@ -105,6 +105,69 @@
             <span class="state-badge" id="stateBadge" data-state="idle">Chờ</span>
           </header>
 
+          <p id="liveJobNote" class="live-job-note" hidden role="status">
+            Đang quét <strong id="liveJobName"></strong>. Có thể xem job khác. Dừng vẫn dừng việc đó, không chạy hai việc cùng lúc.
+          </p>
+
+          <section class="form" aria-label="Cấu hình quét">
+            <div class="field-grid">
+              <label>
+                Từ khoá Trustpilot
+                <input
+                  id="query"
+                  type="text"
+                  placeholder="vd: hosting, vpn, marketing…"
+                  autocomplete="off"
+                  aria-describedby="query-hint"
+                />
+                <span class="hint" id="query-hint">Từ khoá ngành trên Trustpilot, ví dụ hosting, vpn.</span>
+              </label>
+              <label>
+                Số công ty
+                <input id="limit" type="number" min="1" max="10000" value="20" />
+                <span class="hint">Số công ty cần lấy. Gõ 10000, không gõ 10.000.</span>
+              </label>
+            </div>
+
+            <div class="setting-list" role="group" aria-label="Cài đặt quét">
+              <label class="check setting" id="hideChromeRow">
+                <input id="hideChrome" type="checkbox" checked />
+                <span class="setting-text">
+                  <span class="setting-title">Ẩn cửa sổ Chrome khi quét</span>
+                  <span class="hint" id="hideChromeHint">Chrome vẫn chạy, không chiếm màn hình. Nếu bị chặn: tắt mục này, bấm Tiếp tục, vượt kiểm tra một lần, rồi bật lại.</span>
+                </span>
+              </label>
+              <label class="check setting">
+                <input id="concurrencyRow" type="checkbox" checked />
+                <span class="setting-text">
+                  <span class="setting-title">Tăng tốc (3 trang cùng lúc)</span>
+                  <span class="hint">Quét song song 3 website thay vì 2. Nhanh hơn; nếu nhiều site chặn thì bỏ tick.</span>
+                </span>
+              </label>
+              <label class="check setting">
+                <input id="earlyExit" type="checkbox" />
+                <span class="setting-text">
+                  <span class="setting-title">Dừng sớm ở trang chủ</span>
+                  <span class="hint">Khi đã thấy dấu hiệu affiliate/partner thì không mở trang con. Nhanh hơn, có thể sót chương trình nằm sâu.</span>
+                </span>
+              </label>
+              <label class="check setting">
+                <input id="networkEvidence" type="checkbox" />
+                <span class="setting-text">
+                  <span class="setting-title">Kiểm tra kết nối mạng của trang</span>
+                  <span class="hint">Bắt thêm host nền tảng affiliate (Awin, Impact…). Đầy đủ hơn, chậm hơn một chút. Không làm giảm “Chưa rõ”.</span>
+                </span>
+              </label>
+              <label class="check setting">
+                <input id="lazySettle" type="checkbox" />
+                <span class="setting-text">
+                  <span class="setting-title">Chờ trang tải linh hoạt</span>
+                  <span class="hint">Cuộn và đợi nội dung thay vì chờ cố định 1,2 giây. Có thể đổi kết quả; chỉ bật khi đo thử.</span>
+                </span>
+              </label>
+            </div>
+          </section>
+
           <div class="preview-actions" role="group" aria-label="Chạy job">
             <button id="btnStart" type="button" class="btn btn-primary">
               <svg class="icon"><use href="#i-play" /></svg>
@@ -158,64 +221,14 @@
             <span class="file-row-action">Mở CSV</span>
           </button>
 
-          <section class="form" aria-label="Cấu hình quét">
-            <div class="field-grid">
-              <label>
-                Từ khoá Trustpilot
-                <input
-                  id="query"
-                  type="text"
-                  placeholder="vd: hosting, vpn, marketing…"
-                  autocomplete="off"
-                  aria-describedby="query-hint"
-                />
-                <span class="hint" id="query-hint">Từ khoá tìm trên Trustpilot.</span>
-              </label>
-              <label>
-                Số công ty
-                <input id="limit" type="number" min="1" max="10000" value="20" />
-                <span class="hint">1–10000, không gõ 10.000.</span>
-              </label>
-            </div>
-
-            <div class="out-block">
-              <span class="field-label">Thư mục lưu job</span>
-              <input id="out" type="text" readonly title="" aria-readonly="true" />
-              <span class="hint">Chọn hoặc tạo job ở thanh lệnh. Không gõ đường dẫn tay.</span>
-            </div>
-
+          <div class="out-block">
+            <span class="field-label">Thư mục lưu job</span>
+            <input id="out" type="text" readonly title="" aria-readonly="true" />
             <button id="btnFolder" type="button" class="btn">
               <svg class="icon"><use href="#i-folder-open" /></svg>
               Mở thư mục job
             </button>
-
-            <label class="check" id="hideChromeRow">
-              <input id="hideChrome" type="checkbox" checked />
-              Ẩn cửa sổ Chrome khi quét, không chiếm màn hình chính
-            </label>
-            <span class="hint" id="hideChromeHint">Nếu bị Trustpilot chặn khi chạy ẩn: tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome, rồi bật lại.</span>
-
-            <details class="scan-opts">
-              <summary>Tùy chọn quét</summary>
-              <label class="check">
-                <input id="concurrencyRow" type="checkbox" checked />
-                Tăng tốc: quét 3 trang web cùng lúc (thay vì 2)
-              </label>
-              <label class="check">
-                <input id="earlyExit" type="checkbox" />
-                Dừng sớm khi tìm thấy dấu hiệu ngay ở trang chủ (nhanh hơn, bỏ qua trang con)
-              </label>
-              <label class="check">
-                <input id="networkEvidence" type="checkbox" />
-                Kiểm tra thêm kết nối mạng của trang web (đầy đủ hơn, chậm hơn một chút)
-              </label>
-              <label class="check">
-                <input id="lazySettle" type="checkbox" />
-                Chờ trang tải linh hoạt thay vì chờ cố định (nhanh hơn đôi chút, kết quả có thể thay đổi)
-              </label>
-              <span class="hint">Mặc định để nguyên là tốt nhất. Chỉ bật tùy chọn nâng cao khi được hướng dẫn.</span>
-            </details>
-          </section>
+          </div>
 
           <section class="cf" id="cfPanel">
             <strong>Cần bạn: Cloudflare / xác minh trình duyệt</strong>

@@ -51,7 +51,9 @@ npm install
 npm run desktop:dev
 ```
 
-**v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. **Mở CSV / Mở thư mục job** mở artefact của lần chạy trên máy (nút tắt nếu đang xem job khác).
+**v1.0.10:** Mở CSV / Mở thư mục job theo job đang chọn; xem job khác khi đang quét (banner live); Start/Resume đọc `#out` sau sync; idle không snap selection khi đã browse away.
+
+**v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. Khi đang quét vẫn xem job khác trên bảng; **Bắt đầu / Tiếp tục** khoá đến khi Dừng. **Mở CSV / Mở thư mục job** mở artefact của job đang chọn.
 
 **v1.0.8:** Collect 10k không còn cắt im lặng ~100 công ty — retry WAF, không tin `totalPages` khi trang vẫn đầy, tự `--max-pages` theo limit. Thanh lúc lấy danh sách hiện **đã lấy / số yêu cầu**; `10.000` = 10000. Ẩn Chrome + Cloudflare không chờ 90s cửa sổ đã ẩn.
 

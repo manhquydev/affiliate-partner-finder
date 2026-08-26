@@ -33,6 +33,7 @@ describe('desktop electron renderer e2e', () => {
   let page: Page | undefined;
   let userDataDir: string;
   let fixtureOut: string;
+  let otherFixtureOut: string;
 
   beforeAll(async () => {
     userDataDir = join(tmpdir(), `apf-e2e-${Date.now()}`);
@@ -52,6 +53,19 @@ describe('desktop electron renderer e2e', () => {
       }),
     );
     writeFileSync(join(fixtureOut, 'companies.json'), JSON.stringify([{ name: 'Acme', domain: 'acme.com' }]));
+
+    otherFixtureOut = join(runs, 'e2e-fixture-other-job');
+    mkdirSync(otherFixtureOut, { recursive: true });
+    writeFileSync(
+      join(otherFixtureOut, 'progress.json'),
+      JSON.stringify({
+        query: 'hosting',
+        total: 5,
+        completed: 5,
+        updatedAt: new Date().toISOString(),
+        earlyExit: false,
+      }),
+    );
 
     app = await electron.launch({
       cwd: repoRoot,
@@ -136,6 +150,98 @@ describe('desktop electron renderer e2e', () => {
     await expect.poll(async () => page!.locator('#out').inputValue()).not.toContain('e2e-fixture-query-sync');
     const out = await page!.locator('#out').inputValue();
     expect(out.length).toBeGreaterThan(0);
+  });
+
+  it('lets you select another job while a scan is running', async () => {
+    const liveRow = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
+    const otherRow = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-other-job' });
+    await liveRow.waitFor({ timeout: 10_000 });
+    await otherRow.waitFor({ timeout: 10_000 });
+    await liveRow.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
+
+    const runningStatus = {
+      state: 'running' as const,
+      progress: {
+        query: 'vpn',
+        total: 10,
+        completed: 3,
+        updatedAt: new Date().toISOString(),
+        earlyExit: false,
+      },
+      counts: { true: 0, false: 0, unknown: 0 },
+      currentDomains: ['acme.com'],
+      outDir: fixtureOut,
+      message: 'Đang khởi động…',
+    };
+    await app!.evaluate(({ BrowserWindow }, payload) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      win.webContents.send('desktop:status', payload);
+    }, runningStatus);
+
+    await expect.poll(async () => page!.locator('#btnStart').isDisabled()).toBe(true);
+    expect(await page!.locator('#btnStop').isDisabled()).toBe(false);
+    expect(await page!.locator('#btnNewOut').isDisabled()).toBe(false);
+    expect(await page!.locator('#btnPickOut').isDisabled()).toBe(false);
+    expect(await page!.locator('#liveJobNote').isHidden()).toBe(true);
+
+    await otherRow.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-other-job');
+    await expect.poll(async () => page!.locator('#query').inputValue()).toBe('hosting');
+    await expect.poll(async () => page!.locator('#liveJobNote').isHidden()).toBe(false);
+    expect(await page!.locator('#btnStart').isDisabled()).toBe(true);
+    expect(await page!.locator('#btnResume').isDisabled()).toBe(true);
+    expect(await page!.locator('#btnStop').isDisabled()).toBe(false);
+    expect(await page!.locator('#btnNewOut').isDisabled()).toBe(false);
+    expect(await page!.locator('#liveJobName').textContent()).toContain('e2e-fixture-query-sync');
+    expect(await page!.locator('#query').getAttribute('readonly')).toBeNull();
+    expect(await otherRow.getAttribute('aria-selected')).toBe('true');
+
+    await liveRow.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
+    await expect.poll(async () => page!.locator('#liveJobNote').isHidden()).toBe(true);
+    await expect.poll(async () => page!.locator('#query').getAttribute('readonly')).not.toBeNull();
+
+    await otherRow.click();
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-other-job');
+
+    await app!.evaluate(({ BrowserWindow }, payload) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      win.webContents.send('desktop:status', payload);
+    }, {
+      state: 'idle',
+      progress: null,
+      counts: { true: 0, false: 0, unknown: 0 },
+      currentDomains: [],
+      outDir: fixtureOut,
+    });
+    await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-other-job');
+  });
+
+  it('openCsv and openOutDir use explicit out path via IPC', async () => {
+    const csvPath = join(otherFixtureOut, 'results.csv');
+    writeFileSync(csvPath, 'ten_cong_ty,website,ket_qua,huong_dan\nAcme,https://acme.com,true,\n');
+    await app!.evaluate(({ shell }) => {
+      shell.openPath = async (p: string) => p;
+    });
+    await page!.evaluate((out) => {
+      const el = document.getElementById('out') as HTMLInputElement;
+      el.value = out;
+    }, otherFixtureOut);
+    const csvErr = await page!.evaluate(async (out) => {
+      try {
+        await window.affiliateDesktop!.openCsv(out);
+        return '';
+      } catch (e) {
+        return e instanceof Error ? e.message : String(e);
+      }
+    }, otherFixtureOut);
+    expect(csvErr).toBe('');
+    const folder = await page!.evaluate(async (out) => {
+      const res = await window.affiliateDesktop!.openOutDir(out);
+      return res?.ok === true;
+    }, otherFixtureOut);
+    expect(folder).toBe(true);
   });
 });
 
