@@ -10,7 +10,7 @@ Thin Electron shell around the existing Playwright CLI. Does **not** rewrite the
 - Opt-in Track A flags in the UI (default **unchecked**): `--network-evidence`, `--lazy-settle`, plus `--early-exit` — wired through IPC → `buildScanArgv`
 - End-user columns via `lib/export.ts` `simpleHit` / `toSimpleCSV`
 - Profile/out paths must stay under app-owned roots (never Chrome User Data)
-- Renderer (`desktop/renderer/`): job table + selected-job preview. Start/Resume read `#out` (the selected folder), not the last supervisor job unless it is still selected.
+- Renderer (`desktop/renderer/`): job table + selected-job preview. Start/Resume read `#out` (the selected folder), not the last supervisor job unless it is still selected. While a scan runs the table stays selectable; Start/Resume stay locked (one Chrome profile). Stop always stops the live scan. Open CSV / folder use the selected job path.
 - Dev: `npm run desktop:dev` (requires `electron`)
 - Linux overnight CLI jobs use separate `--out` / `--profile` — do not share with desktop smoke
 

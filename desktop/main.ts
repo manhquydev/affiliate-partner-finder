@@ -270,20 +270,26 @@ ipcMain.handle('desktop:stop', async () => {
   return supervisor.getStatus();
 });
 
-ipcMain.handle('desktop:open-out', async () => {
-  const out = supervisor.getStatus().outDir;
-  if (!out) return { ok: false };
-  const real = resolveExistingPath(out);
-  if (!isPathInside(runsRoot, real) && real !== resolve(runsRoot)) {
-    throw new Error('out path escape blocked');
+function requestedOutDir(outPath?: string): string {
+  if (typeof outPath === 'string') {
+    if (!outPath.trim()) return '';
+    return resolveSafeOutDir(outPath);
   }
-  await shell.openPath(real);
+  const live = supervisor.getStatus().outDir;
+  if (!live) return '';
+  return resolveSafeOutDir(live);
+}
+
+ipcMain.handle('desktop:open-out', async (_e, outPath?: string) => {
+  const out = requestedOutDir(outPath);
+  if (!out) return { ok: false };
+  await shell.openPath(out);
   return { ok: true };
 });
 
-ipcMain.handle('desktop:open-csv', async () => {
-  const st = supervisor.getStatus();
-  const csv = st.csvPath || (st.outDir ? join(st.outDir, 'results.csv') : '');
+ipcMain.handle('desktop:open-csv', async (_e, outPath?: string) => {
+  const out = requestedOutDir(outPath);
+  const csv = out ? join(out, 'results.csv') : '';
   if (!csv || !existsSync(csv)) {
     throw new Error('Chưa có results.csv — đợi chạy xong hoặc Dừng để xuất từ jsonl');
   }

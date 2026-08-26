@@ -260,7 +260,6 @@ function renderJobTable() {
 
     tr.append(nameTd, queryTd, progTd, stateTd, timeTd);
     tr.addEventListener('click', () => {
-      if ($('runPicker').disabled) return;
       void applyOutPath(run.path);
     });
     tr.addEventListener('keydown', (e) => {
@@ -279,11 +278,11 @@ function renderJobTable() {
   }
 }
 
-async function refreshRunPicker(selectPath) {
+async function refreshRunPicker(selectPath, { forceSelect = true } = {}) {
   if (!api?.listRuns) return;
   const { runs } = await api.listRuns();
   cachedRuns = runs || [];
-  if (selectPath) setOutPath(selectPath);
+  if (selectPath && forceSelect) setOutPath(selectPath);
   renderJobTable();
 }
 
@@ -373,7 +372,7 @@ function renderStatus(s) {
       ? 'Chưa có từ khoá trên job này. Nhập rồi Bắt đầu.'
       : 'Chưa chọn job. Điền từ khoá rồi Bắt đầu.';
 
-  if (running) setQueryInput($('query').value || jobQuery || '', { readonly: true });
+  if (running && pathMatch) setQueryInput($('query').value || jobQuery || '', { readonly: true });
   else {
     setQueryInput($('query').value, { readonly: false });
     if (jobQuery && !$('query').value.trim()) $('query').value = jobQuery;
@@ -406,13 +405,31 @@ function renderStatus(s) {
   $('btnStart').disabled = running;
   $('btnResume').disabled = running;
   $('btnStop').disabled = !running;
-  $('btnPickOut').disabled = running;
-  $('btnNewOut').disabled = running;
-  $('runPicker').disabled = running;
+  $('btnPickOut').disabled = false;
+  $('btnNewOut').disabled = false;
+  $('runPicker').disabled = false;
   $('jobFilter').disabled = false;
-  const csvMatchesSelection = Boolean(pathMatch || !s.outDir);
-  $('btnCsv').disabled = !csvMatchesSelection;
-  $('btnFolder').disabled = !csvMatchesSelection;
+  const selectedOut = $('out').value.trim();
+  $('btnCsv').disabled = !selectedOut;
+  $('btnFolder').disabled = !selectedOut;
+  $('btnStart').title = running
+    ? 'Một việc đang quét. Dừng trước khi bắt đầu job khác.'
+    : '';
+  $('btnResume').title = running
+    ? 'Một việc đang quét. Dừng trước khi tiếp tục job khác.'
+    : '';
+  $('btnStop').title =
+    running && s.outDir && !pathMatch ? `Dừng việc đang quét: ${folderName(s.outDir)}` : '';
+
+  const note = $('liveJobNote');
+  if (note) {
+    const away = Boolean(running && s.outDir && !pathMatch);
+    note.hidden = !away;
+    if (away) {
+      const nameEl = $('liveJobName');
+      if (nameEl) nameEl.textContent = folderName(s.outDir);
+    }
+  }
 
   renderJobTable();
 }
@@ -463,7 +480,13 @@ async function boot() {
 
   api.onStatus((s) => {
     renderStatus(s);
-    if (s.state === 'idle') void refreshRunPicker(s.outDir || $('out').value.trim());
+    if (s.state === 'idle') {
+      const currentOut = $('out').value.trim();
+      const browsedAway = Boolean(s.outDir && currentOut && currentOut !== s.outDir);
+      void refreshRunPicker(browsedAway ? currentOut : s.outDir || currentOut, {
+        forceSelect: !browsedAway,
+      });
+    }
   });
   renderStatus(await api.getStatus());
 
@@ -510,22 +533,15 @@ async function boot() {
   function lockLaunchControls() {
     $('btnStart').disabled = true;
     $('btnResume').disabled = true;
-    $('btnPickOut').disabled = true;
-    $('btnNewOut').disabled = true;
-    $('runPicker').disabled = true;
   }
 
   function unlockLaunchControlsIfIdle() {
     if (lastStatus && (lastStatus.state === 'running' || lastStatus.state === 'stopping')) return;
     $('btnStart').disabled = false;
     $('btnResume').disabled = false;
-    $('btnPickOut').disabled = false;
-    $('btnNewOut').disabled = false;
-    $('runPicker').disabled = false;
   }
 
   $('btnStart').onclick = async () => {
-    const outSnapshot = $('out').value;
     lockLaunchControls();
     await syncFromOutDir();
     const query = $('query').value.trim();
@@ -539,10 +555,11 @@ async function boot() {
     }
     saveLastQuery(query);
     try {
+      const outForStart = $('out').value.trim();
       await api.startJob({
         query,
         limit: parseLimitInput($('limit').value),
-        out: outSnapshot,
+        out: outForStart,
         resume: false,
         ...scanOptFlags(),
       });
@@ -554,11 +571,11 @@ async function boot() {
   };
 
   $('btnResume').onclick = async () => {
-    const outSnapshot = $('out').value;
     lockLaunchControls();
     try {
       await syncFromOutDir({ force: true });
-      await api.startJob({ out: outSnapshot, resume: true, ...scanOptFlags() });
+      const outForResume = $('out').value.trim();
+      await api.startJob({ out: outForResume, resume: true, ...scanOptFlags() });
     } catch (e) {
       $('message').textContent = friendlyError(e);
       $('message').classList.add('is-error');
@@ -576,7 +593,11 @@ async function boot() {
   };
   $('btnFolder').onclick = async () => {
     try {
-      await api.openOutDir();
+      const opened = await api.openOutDir($('out').value.trim());
+      if (opened && opened.ok === false) {
+        $('message').textContent = 'Chưa có thư mục job để mở.';
+        $('message').classList.add('is-error');
+      }
     } catch (e) {
       $('message').textContent = friendlyError(e);
       $('message').classList.add('is-error');
@@ -584,7 +605,7 @@ async function boot() {
   };
   $('btnCsv').onclick = async () => {
     try {
-      await api.openCsv();
+      await api.openCsv($('out').value.trim());
     } catch (e) {
       $('message').textContent = friendlyError(e);
       $('message').classList.add('is-error');
