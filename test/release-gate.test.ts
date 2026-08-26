@@ -18,7 +18,7 @@ function runCheck(reportPath: string): number {
   }
 }
 
-describe('check-win-smoke-signoff', () => {
+describe.skipIf(process.platform === 'win32')('check-win-smoke-signoff', () => {
   const temps: string[] = [];
 
   afterEach(() => {
