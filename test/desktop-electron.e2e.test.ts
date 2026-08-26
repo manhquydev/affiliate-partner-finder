@@ -2,7 +2,7 @@
  * Electron renderer E2E — Playwright _electron (no full Trustpilot scan).
  * Requires: DISPLAY, Google Chrome (warning dialog if missing), Linux --no-sandbox via env.
  */
-import { mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync, existsSync, readdirSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -28,6 +28,23 @@ async function waitForRenderer(page: Page): Promise<void> {
   });
 }
 
+async function clearJobFilter(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const f = document.getElementById('jobFilter') as HTMLInputElement | null;
+    if (f) {
+      f.value = '';
+      f.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+}
+
+async function jobRow(page: Page, namePart: string) {
+  await clearJobFilter(page);
+  const row = page.locator('.job-table tbody tr', { hasText: namePart });
+  await row.waitFor({ timeout: 15_000 });
+  return row;
+}
+
 describe('desktop electron renderer e2e', () => {
   let app: ElectronApplication | undefined;
   let page: Page | undefined;
@@ -40,6 +57,12 @@ describe('desktop electron renderer e2e', () => {
     mkdirSync(userDataDir, { recursive: true });
 
     const runs = defaultDesktopRunsDir();
+    mkdirSync(runs, { recursive: true });
+    for (const name of readdirSync(runs)) {
+      if (name.startsWith('e2e-fixture-') || name.startsWith('run-')) {
+        rmSync(join(runs, name), { recursive: true, force: true });
+      }
+    }
     fixtureOut = join(runs, 'e2e-fixture-query-sync');
     mkdirSync(fixtureOut, { recursive: true });
     writeFileSync(
@@ -66,6 +89,9 @@ describe('desktop electron renderer e2e', () => {
         earlyExit: false,
       }),
     );
+    const now = Date.now() / 1000;
+    utimesSync(fixtureOut, now, now);
+    utimesSync(otherFixtureOut, now, now);
 
     app = await electron.launch({
       cwd: repoRoot,
@@ -77,6 +103,11 @@ describe('desktop electron renderer e2e', () => {
     });
     page = await app.firstWindow();
     await waitForRenderer(page);
+    await page.waitForFunction(
+      () => document.querySelectorAll('.job-table tbody tr').length >= 2,
+      undefined,
+      { timeout: 15_000 },
+    );
   }, E2E_TIMEOUT_MS);
 
   afterAll(async () => {
@@ -131,8 +162,7 @@ describe('desktop electron renderer e2e', () => {
   });
 
   it('selecting a listed job keeps that folder as Start target', async () => {
-    const row = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
-    await row.waitFor({ timeout: 10_000 });
+    const row = await jobRow(page!, 'e2e-fixture-query-sync');
     await row.click();
     await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
     expect(await page!.locator('#query').inputValue()).toBe('vpn');
@@ -142,8 +172,7 @@ describe('desktop electron renderer e2e', () => {
   });
 
   it('Job mới changes the Start target away from the selected run', async () => {
-    const row = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
-    await row.waitFor({ timeout: 10_000 });
+    const row = await jobRow(page!, 'e2e-fixture-query-sync');
     await row.click();
     await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
     await page!.locator('#btnNewOut').click();
@@ -153,10 +182,8 @@ describe('desktop electron renderer e2e', () => {
   });
 
   it('lets you select another job while a scan is running', async () => {
-    const liveRow = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-query-sync' });
-    const otherRow = page!.locator('.job-table tbody tr', { hasText: 'e2e-fixture-other-job' });
-    await liveRow.waitFor({ timeout: 10_000 });
-    await otherRow.waitFor({ timeout: 10_000 });
+    const liveRow = await jobRow(page!, 'e2e-fixture-query-sync');
+    const otherRow = await jobRow(page!, 'e2e-fixture-other-job');
     await liveRow.click();
     await expect.poll(async () => page!.locator('#out').inputValue()).toContain('e2e-fixture-query-sync');
 

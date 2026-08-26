@@ -47,7 +47,7 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 |---|-------|--------|---------|
 | 1 | [Desktop 1.0.10 ship](./phase-01-desktop-110-ship.md) | Done (merged #7; tag pending smoke) | — |
 | 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | In progress | 1 |
-| 3 | [Track A A/B evidence](./phase-03-track-a-ab-evidence.md) | Pending | 1, 2 |
+| 3 | [Track A A/B evidence](./phase-03-track-a-ab-evidence.md) | Deferred (preflight) | 1, 2 |
 | 4 | [Track B access (optional slug)](./phase-04-track-b-access-optional.md) | Pending | 2, 3 |
 
 ## Success Criteria
@@ -58,7 +58,7 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 - [ ] **Win VM smoke PASS before tag** (Start → Stop → Resume → Mở CSV on **selected** job) — documented checklist
 - [ ] Tag `v1.0.10` pushed → CI `release-desktop.yml` produces Win NSIS (>50MB); no local wine pack required on Linux dev host
 - [x] Plan `260812-0939` marked completed
-- [ ] Track A: metrics report with A2 numbers OR written "deferred" with reason
+- [x] Track A: metrics report with A2 numbers OR written "deferred" with reason → `metrics-260826-track-a-ab-deferred.md`
 - [ ] No marketing claim that Track A reduced unknown%
 
 ## Risks
