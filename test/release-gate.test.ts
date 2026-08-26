@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CHECK = path.join(ROOT, 'scripts/check-win-smoke-signoff.sh');
-const FIXTURE = path.join(ROOT, 'plans/reports/test-260826-win-smoke-110.md');
 
 function runCheck(reportPath: string): number {
   try {
@@ -34,8 +33,9 @@ describe('check-win-smoke-signoff', () => {
     return f;
   }
 
-  it('rejects the live pending checklist on main', () => {
-    expect(runCheck(FIXTURE)).toBe(1);
+  it('rejects a pending checklist file', () => {
+    const f = writeTemp(`## Sign-off\n- Result: _pending_\n`);
+    expect(runCheck(f)).toBe(1);
   });
 
   it('rejects template placeholder PASS / FAIL wording', () => {
