@@ -1,7 +1,8 @@
 ---
 title: "Windows desktop GUI Electron shell"
 description: "Thin Electron UI wrapping Playwright CLI for non-dev Windows customers; live progress + HITL CSV."
-status: in-progress
+status: completed
+note: "Delivered desktop v1.0.10 on main (PR #7). See plans/260826-0909-next-deployment-scope/phase-01."
 priority: P1
 effort: "3-5d"
 tags: [desktop, electron, windows, gui, customer]

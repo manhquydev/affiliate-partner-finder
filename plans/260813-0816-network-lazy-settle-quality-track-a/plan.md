@@ -1,7 +1,8 @@
 ---
 title: "Network lazy settle quality track A"
 description: "CLI-first network host evidence + budgeted MutationObserver settle to lift false-none / platform recall on loadStatus=ok. Track B (blocked/timeout) is parallel ops only."
-status: pending
+status: completed
+note: "Code on main (PR #1). A/B measurement deferred to plans/260826-0909 phase-03."
 priority: P1
 effort: "2-4d"
 tags: [quality, network, mutationobserver, playwright, cli]
