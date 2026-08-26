@@ -1,10 +1,8 @@
 ---
 phase: 4
 title: "Track B access (optional slug)"
-status: pending
-priority: P3
-effort: "TBD"
-dependencies: [2, 3]
+status: deferred
+note: "See decision-260826-track-b-deferred.md"
 ---
 
 # Phase 4: Track B access (optional slug)
