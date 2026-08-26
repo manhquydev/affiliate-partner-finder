@@ -4,7 +4,7 @@
 
 **Phiên bản mã nguồn (`main`):** `1.0.10`.
 
-**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** hiện **`v1.0.9`** (Latest) — `v1.0.10` sẽ xuất hiện sau Win VM smoke PASS và push tag. Dev từ repo hoặc `npm run desktop:pack:win` trên Windows có thể dùng 1.0.10 trước khi release.
+**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** **`v1.0.10`** (Latest) — NSIS ~91 MB.
 
 ## Yêu cầu
 
@@ -15,7 +15,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag **Latest** (hiện `v1.0.9`; sau release gate: `v1.0.10`)
+2. Chọn tag **Latest** (`v1.0.10`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
