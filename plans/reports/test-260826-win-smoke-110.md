@@ -9,7 +9,9 @@ status: pending-manual
 
 **Gate:** Required before `git tag v1.0.10 && git push origin v1.0.10`
 
-**Artefact:** Install from CI release after tag, or dev build from `main` @ `5de372e+`.
+**Artefact (pre-tag):** Dev build on Windows — `git checkout main && npm ci && npm run desktop:pack:win` → install NSIS under `dist-desktop/`.
+
+**Artefact (post-tag):** GitHub Release `v1.0.10` NSIS from CI after smoke PASS + tag push.
 
 ## Environment
 
