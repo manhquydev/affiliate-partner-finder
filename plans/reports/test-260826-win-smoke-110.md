@@ -11,6 +11,8 @@ status: pending-manual
 
 **Artefact (pre-tag):** Dev build on Windows — `git checkout main && npm ci && npm run desktop:pack:win` → install NSIS under `dist-desktop/`.
 
+**Artefact (CI preview):** Actions → **Desktop Pack Preview** → artifact `desktop-win-preview` (sau CI xanh trên `main`).
+
 **Artefact (post-tag):** GitHub Release `v1.0.10` NSIS from CI after smoke PASS + tag push.
 
 ## Environment

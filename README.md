@@ -53,7 +53,7 @@ npm run desktop:dev
 
 **v1.0.10:** Mở CSV / Mở thư mục job theo job đang chọn; xem job khác khi đang quét (banner live); Start/Resume đọc `#out` sau sync; idle không snap selection khi đã browse away.
 
-**v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. Khi đang quét vẫn xem job khác trên bảng; **Bắt đầu / Tiếp tục** khoá đến khi Dừng. **Mở CSV / Mở thư mục job** mở artefact của job đang chọn.
+**v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. Khi đang quét vẫn xem job khác trên bảng; **Bắt đầu / Tiếp tục** khoá đến khi Dừng. **Mở CSV / Mở thư mục job** mở artefact của **job đang quét** (supervisor), không phải job đang chọn trên bảng — sửa ở 1.0.10.
 
 **v1.0.8:** Collect 10k không còn cắt im lặng ~100 công ty — retry WAF, không tin `totalPages` khi trang vẫn đầy, tự `--max-pages` theo limit. Thanh lúc lấy danh sách hiện **đã lấy / số yêu cầu**; `10.000` = 10000. Ẩn Chrome + Cloudflare không chờ 90s cửa sổ đã ẩn.
 
@@ -66,7 +66,8 @@ npm run desktop:dev
 **v1.0.4:** bảng tiến độ có ETA lăn; tùy chọn quét (mặc định **tắt**): early-exit, `--network-evidence`, `--lazy-settle` — chỉ bật khi đo A/B / cần thêm tín hiệu trang `ok`, **không** dùng để “giảm unknown”.
 
 Hướng dẫn khách / đóng gói / tải bản phát hành: [`docs/desktop-windows.md`](./docs/desktop-windows.md).  
-Releases: https://github.com/manhquydev/affiliate-partner-finder/releases
+Releases: https://github.com/manhquydev/affiliate-partner-finder/releases  
+CI: mỗi merge `main` chạy workflow **CI**; bản cài preview (trước tag) ở Actions → **Desktop Pack Preview** → Artifacts.
 
 Adapter + test: `desktop/`, `test/desktop-adapter.test.ts`.
 

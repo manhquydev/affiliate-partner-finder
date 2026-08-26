@@ -2,7 +2,9 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản hiện tại:** `1.0.10` (xem [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases)).
+**Phiên bản mã nguồn (`main`):** `1.0.10`.
+
+**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** hiện **`v1.0.9`** (Latest) — `v1.0.10` sẽ xuất hiện sau Win VM smoke PASS và push tag. Dev từ repo hoặc `npm run desktop:pack:win` trên Windows có thể dùng 1.0.10 trước khi release.
 
 ## Yêu cầu
 
@@ -13,11 +15,19 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag mới nhất (vd `v1.0.10`)
+2. Chọn tag **Latest** (hiện `v1.0.9`; sau release gate: `v1.0.10`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
 4. Windows có thể hiện SmartScreen (bản chưa ký) — “More info” → Run anyway (internal / tự chịu rủi ro).
+
+### Bản preview trước release (Win smoke)
+
+Trước khi có tag trên Releases, tải installer từ **GitHub Actions**:
+
+1. [Actions](https://github.com/manhquydev/affiliate-partner-finder/actions) → workflow **Desktop Pack Preview** (chạy tự sau **CI** xanh trên `main`, hoặc **Run workflow** thủ công).
+2. Mở run → **Artifacts** → `desktop-win-preview` (NSIS `.exe`).
+3. Dùng file này cho checklist `plans/reports/test-260826-win-smoke-110.md`. **Không** thay thế tag/release chính thức.
 
 ## Dev (máy lập trình)
 
@@ -52,7 +62,15 @@ npm run desktop:pack:win    # NSIS → dist-desktop/
 npm run desktop:pack:linux  # AppImage + deb
 ```
 
-CI: workflow `.github/workflows/release-desktop.yml` — push tag `v*` hoặc `workflow_dispatch` với tag (vd `v1.0.10`).
+CI: ba workflow GitHub Actions:
+
+| Workflow | Khi nào chạy | Mục đích |
+|----------|--------------|----------|
+| **CI** | Mỗi push/PR `main` | `npm test` + e2e Linux |
+| **Desktop Pack Preview** | Sau CI xanh trên `main`, hoặc dispatch | NSIS/AppImage **artifact** (14 ngày) — dùng Win smoke **trước** tag |
+| **Release Desktop** | Push tag `v*` (sau smoke PASS) | Test Win+Linux → publish [Releases](https://github.com/manhquydev/affiliate-partner-finder/releases) |
+
+Release `v1.0.10` yêu cầu sign-off smoke (`scripts/release-v1.0.10-gate.sh`) trước khi push tag.
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 

@@ -1,0 +1,123 @@
+name: Desktop Pack Preview
+
+# Pre-release installers for Win VM smoke — no GitHub Release, no tag required.
+# Runs after green CI on main, or manually via workflow_dispatch.
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-pack-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Electron renderer E2E (Linux / xvfb)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run -a npm run test:desktop:e2e
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          ELECTRON_DISABLE_SANDBOX: '1'
+
+  build-win:
+    needs: test
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && needs.test.result == 'success')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Prepare desktop pack
+        run: npm run desktop:prepare-pack
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Build NSIS installer
+        run: npx electron-builder --config desktop/electron-builder.yml --win --publish never
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Upload Windows preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-win-preview
+          retention-days: 14
+          path: |
+            dist-desktop/*.exe
+            dist-desktop/*.exe.blockmap
+
+  build-linux:
+    needs: test
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && needs.test.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Prepare desktop pack
+        run: npm run desktop:prepare-pack
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Build AppImage and deb
+        run: npx electron-builder --config desktop/electron-builder.yml --linux --publish never
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Upload Linux preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-preview
+          retention-days: 14
+          path: |
+            dist-desktop/*.AppImage
+            dist-desktop/*.deb
