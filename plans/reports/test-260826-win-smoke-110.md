@@ -36,5 +36,7 @@ status: pending-manual
 
 - Tester: ___________
 - Date: ___________
-- Result: PASS / FAIL
+- Result: _pending_ (replace with exactly `PASS` or `FAIL` after test)
 - Notes:
+
+After testing, change the Result line to exactly: `- Result: PASS` or `- Result: FAIL`

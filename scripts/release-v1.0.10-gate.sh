@@ -8,8 +8,9 @@ cd "$ROOT"
 SMOKE_REPORT="$ROOT/plans/reports/test-260826-win-smoke-110.md"
 TAG="v1.0.10"
 
-if ! grep -q 'Result: PASS' "$SMOKE_REPORT" 2>/dev/null; then
-  echo "REFUSE: $SMOKE_REPORT must contain 'Result: PASS' before tagging." >&2
+# Require explicit sign-off line (not the template "PASS / FAIL" placeholder).
+if ! grep -qE '^- Result: PASS$' "$SMOKE_REPORT" 2>/dev/null; then
+  echo "REFUSE: $SMOKE_REPORT must contain '- Result: PASS' sign-off before tagging." >&2
   echo "Run Win VM checklist first: docs/desktop-windows.md" >&2
   exit 1
 fi

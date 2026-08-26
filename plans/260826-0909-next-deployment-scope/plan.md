@@ -46,7 +46,7 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 | # | Phase | Status | Depends |
 |---|-------|--------|---------|
 | 1 | [Desktop 1.0.10 ship](./phase-01-desktop-110-ship.md) | Done (merged #7; tag pending smoke) | — |
-| 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | In progress | 1 |
+| 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | Done (PR #8) | 1 |
 | 3 | [Track A A/B evidence](./phase-03-track-a-ab-evidence.md) | Deferred (preflight) | 1, 2 |
 | 4 | [Track B access (optional slug)](./phase-04-track-b-access-optional.md) | Deferred | 2, 3 |
 

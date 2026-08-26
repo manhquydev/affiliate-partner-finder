@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Plan hygiene + extension gate"
-status: pending
+status: done
 priority: P2
 effort: "2-4h"
 dependencies: [1]
