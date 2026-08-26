@@ -18,7 +18,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    steps:
+      - run: echo "preview gate ok"
+
   test:
+    needs: gate
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
@@ -47,10 +56,12 @@ jobs:
           ELECTRON_DISABLE_SANDBOX: '1'
 
   build-win:
-    needs: test
+    needs: [gate, test]
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && needs.test.result == 'success')
+      always() &&
+      needs.gate.result == 'success' &&
+      (github.event_name == 'workflow_run' ||
+        (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,10 +96,12 @@ jobs:
             dist-desktop/*.exe.blockmap
 
   build-linux:
-    needs: test
+    needs: [gate, test]
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && needs.test.result == 'success')
+      always() &&
+      needs.gate.result == 'success' &&
+      (github.event_name == 'workflow_run' ||
+        (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
