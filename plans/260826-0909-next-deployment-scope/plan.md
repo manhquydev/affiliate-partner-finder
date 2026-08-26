@@ -45,21 +45,19 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 
 | # | Phase | Status | Depends |
 |---|-------|--------|---------|
-| 1 | [Desktop 1.0.10 ship](./phase-01-desktop-110-ship.md) | Pending | — |
-| 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | Pending | 1 |
+| 1 | [Desktop 1.0.10 ship](./phase-01-desktop-110-ship.md) | Done (merged #7; tag pending smoke) | — |
+| 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | In progress | 1 |
 | 3 | [Track A A/B evidence](./phase-03-track-a-ab-evidence.md) | Pending | 1, 2 |
 | 4 | [Track B access (optional slug)](./phase-04-track-b-access-optional.md) | Pending | 2, 3 |
 
 ## Success Criteria
 
-- [ ] Desktop delta **merged on main** (not merely uncommitted); `package.json` = `1.0.10`
-- [ ] `npm test` 152 pass; e2e 10+ pass **including IPC openCsv/openOutDir on selected `#out`**
-- [ ] `desktop:open-csv` / `desktop:open-out` use selected `#out`; idle handler must **not** snap `#out` back to supervisor when user browsed away
-- [ ] Start/Resume re-read `$('out')` immediately before IPC (no stale snapshot after row click during `syncFromOutDir`)
-- [ ] User can select another job row while scan runs; `liveJobNote` visible; Stop stops live job
+- [x] Desktop delta **merged on main**; `package.json` = `1.0.10` (commit `5de372e`)
+- [x] `npm test` 152 pass; e2e 10 pass including IPC openCsv/openOutDir
+- [x] IPC + browse-while-running behavior (see PR #7)
 - [ ] **Win VM smoke PASS before tag** (Start → Stop → Resume → Mở CSV on **selected** job) — documented checklist
 - [ ] Tag `v1.0.10` pushed → CI `release-desktop.yml` produces Win NSIS (>50MB); no local wine pack required on Linux dev host
-- [ ] Plan `260812-0939` marked completed
+- [x] Plan `260812-0939` marked completed
 - [ ] Track A: metrics report with A2 numbers OR written "deferred" with reason
 - [ ] No marketing claim that Track A reduced unknown%
 

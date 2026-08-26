@@ -34,9 +34,9 @@ Close stale plan slugs; run one manual extension golden verification so v1 plan 
 
 ## Success Criteria
 
-- [ ] Plan 260812 frontmatter `status: completed`
-- [ ] Extension golden report exists with verify-golden output or explicit defer reason
-- [ ] No contradictory `in-progress` desktop plan on main after 1.0.10 ship
+- [x] Plan 260812 frontmatter `status: completed`
+- [x] Extension golden report exists (PARTIAL — unit/build PASS; live deferred)
+- [x] No contradictory `in-progress` desktop plan on main after 1.0.10 ship
 
 ## Risk Assessment
 
