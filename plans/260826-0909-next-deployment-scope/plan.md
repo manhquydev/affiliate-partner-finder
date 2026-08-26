@@ -1,8 +1,8 @@
 ---
 title: "Next deployment scope — desktop complete then quality evidence"
 description: "Ship desktop 1.0.10 UI/IPC polish; customer smoke; bounded Track A A/B; defer Track B to separate slug."
-status: pending
-priority: P0
+status: in-progress
+note: "Blocked on human Win smoke + tag. Audit: plans/reports/audit-260826-plan-completion.md"
 effort: "2-4d"
 tags: [desktop, release, track-a, customer, scope]
 created: 2026-08-26
@@ -48,7 +48,7 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 | 1 | [Desktop 1.0.10 ship](./phase-01-desktop-110-ship.md) | Done (merged #7; tag pending smoke) | — |
 | 2 | [Plan hygiene + extension gate](./phase-02-plan-hygiene-extension-gate.md) | In progress | 1 |
 | 3 | [Track A A/B evidence](./phase-03-track-a-ab-evidence.md) | Deferred (preflight) | 1, 2 |
-| 4 | [Track B access (optional slug)](./phase-04-track-b-access-optional.md) | Pending | 2, 3 |
+| 4 | [Track B access (optional slug)](./phase-04-track-b-access-optional.md) | Deferred | 2, 3 |
 
 ## Success Criteria
 
@@ -59,7 +59,8 @@ Sau brainstorm 2026-08-26: dự án **functionally mature** trên desktop/CLI; g
 - [ ] Tag `v1.0.10` pushed → CI `release-desktop.yml` produces Win NSIS (>50MB); no local wine pack required on Linux dev host
 - [x] Plan `260812-0939` marked completed
 - [x] Track A: metrics report with A2 numbers OR written "deferred" with reason → `metrics-260826-track-a-ab-deferred.md`
-- [ ] No marketing claim that Track A reduced unknown%
+- [x] No marketing claim that Track A reduced unknown%
+- [x] Phase 4 Track B decision documented → `decision-260826-track-b-deferred.md`
 
 ## Risks
 

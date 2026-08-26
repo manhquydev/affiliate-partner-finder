@@ -52,8 +52,8 @@ Parallel safe now:
 
 1. **Hold tag** until `test-260826-win-smoke-110.md` signed PASS
 2. **Track A deferred** with written evidence — not blocking desktop release
-3. **Fix e2e flake** (runs dir cleanup + jobFilter clear) before any release claim
-4. Herdr OMP `--wait` unreliable at 120–180s — prefer **Task subagents** for test/review
+3. **Track B deferred** — no fresh merge KPI; separate slug when ops ready
+4. **Release script:** `scripts/release-v1.0.10-gate.sh` enforces smoke PASS before tag
 
 ---
 

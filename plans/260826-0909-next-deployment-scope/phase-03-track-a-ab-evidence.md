@@ -1,10 +1,8 @@
 ---
 phase: 3
 title: "Track A A/B evidence"
-status: pending
-priority: P1
-effort: "1-2d"
-dependencies: [1, 2]
+status: deferred
+note: "Preflight fail on dev: no merge CSV. See metrics-260826-track-a-ab-deferred.md"
 ---
 
 # Phase 3: Track A A/B evidence
