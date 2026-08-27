@@ -525,6 +525,7 @@ async function boot() {
       earlyExit: Boolean($('earlyExit')?.checked),
       networkEvidence: Boolean($('networkEvidence')?.checked),
       lazySettle: Boolean($('lazySettle')?.checked),
+      probeParallel: Boolean($('probeParallel')?.checked),
       concurrency: $('concurrencyRow')?.checked ? 3 : 2,
       virtualDisplay: $('hideChrome')?.checked !== false,
     };

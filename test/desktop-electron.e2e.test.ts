@@ -152,6 +152,11 @@ describe('desktop electron renderer e2e', () => {
     expect(await page!.locator('#hideChromeHint').isVisible()).toBe(true);
   });
 
+  it('keeps probe-parallel toggle visible and unchecked by default', async () => {
+    expect(await page!.locator('#probeParallel').isVisible()).toBe(true);
+    expect(await page!.locator('#probeParallel').isChecked()).toBe(false);
+  });
+
   it('syncs query from existing out dir progress.json', async () => {
     await page!.evaluate(async (path) => {
       const info = await window.affiliateDesktop.inspectOutDir(path);

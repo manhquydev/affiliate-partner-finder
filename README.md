@@ -51,6 +51,8 @@ npm install
 npm run desktop:dev
 ```
 
+**v1.0.11:** **Quét đường dẫn song song** (opt-in, mặc định tắt) — fetch path-probe theo lô ≤3; sửa isolation profile (`newPage` mỗi công ty); CLI từ chối `--profile` trỏ User Data Chrome; goto `domcontentloaded` tránh treo Xvfb. Throughput directional A/B: **+37.6%** trên cohort n=61, 0 regression — xem `plans/reports/metrics-track-s-ab.md`.
+
 **v1.0.10:** Mở CSV / Mở thư mục job theo job đang chọn; xem job khác khi đang quét (banner live); Start/Resume đọc `#out` sau sync; idle không snap selection khi đã browse away.
 
 **v1.0.9:** Cửa sổ desktop là workspace (bảng job + preview), không còn form xếp chồng. **Bắt đầu / Tiếp tục** dùng job đang chọn. Khi đang quét vẫn xem job khác trên bảng; **Bắt đầu / Tiếp tục** khoá đến khi Dừng. **Mở CSV / Mở thư mục job** mở artefact của **job đang quét** (supervisor), không phải job đang chọn trên bảng — sửa ở 1.0.10.
@@ -87,6 +89,9 @@ npm run scan -- --resume --out ./out/run1
 - Chống treo batch: `page`/`context` close bị giới hạn ~3s (`closeQuietly`) — site kẹt không chặn cả job.
 - **Lazy settle (opt-in):** `--lazy-settle` thay fixed `waitForTimeout(1200)` bằng scroll + MutationObserver trong budget ≤1200ms (không cộng thêm). **Default OFF** — giữ throughput; bật chỉ khi đo A/B recall trên trang `ok`. Extension vẫn `sleep(700)` (parity riêng).
 - **Network evidence (opt-in):** `--network-evidence` lắng nghe `request`/`response` host (allowlist platform/CDN, không `page.route`), merge `networkHits` / `method=network`. **Default OFF** — không bật trên job 10k đang chạy trừ khi đo A/B có chủ đích.
+- **Profile timing (opt-in):** `--profile-timing` ghi `timingsMs` (`goto`, `settle`, `detector`, `probe`, `total`) vào JSONL / `results.json` — **không** thêm cột CSV end-user. **Default OFF.** Phân tích: `node scripts/analyze-track-s-timings.mjs <out>/results.jsonl`.
+- **Quét đường dẫn song song (opt-in):** `--probe-parallel` fetch path-probe theo lô ≤3 trên cùng trang. **Default OFF** (desktop: checkbox tắt). Không đổi ethics `blocked≠none`; không giảm Chưa rõ.
+- **Goto hang-fix (1.0.11):** site scan dùng `waitUntil: domcontentloaded` thay `load` để tránh treo trên Xvfb/headless — tách khỏi probe-parallel; không thêm flag CLI.
 - **Golden / CF:** thêm `--scan-profile` (kéo theo headed) để site scan dùng cùng profile cookies; khuyến nghị:
   ```bash
   npm run scan -- --resume --out ./out/run1 --scan-profile --accept-failures --concurrency 2

@@ -237,6 +237,7 @@ ipcMain.handle(
       earlyExit?: boolean;
       lazySettle?: boolean;
       networkEvidence?: boolean;
+      probeParallel?: boolean;
       /** Parallel site scans 1..3 (GUI: 2 normal, 3 turbo). */
       concurrency?: number;
       /** Hide headed Chrome off the primary display. Default true. */
@@ -258,6 +259,7 @@ ipcMain.handle(
     // Track A opt-in — default OFF unless UI/operator explicitly sets true.
     lazySettle: Boolean(opts.lazySettle),
     networkEvidence: Boolean(opts.networkEvidence),
+    probeParallel: Boolean(opts.probeParallel),
     virtualDisplay: resolveVirtualDisplay(process.platform, opts.virtualDisplay),
     allowedOutRoot: runsRoot,
     allowedProfileRoot: profileRoot,

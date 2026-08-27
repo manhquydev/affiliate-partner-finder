@@ -86,6 +86,14 @@ export interface ScanResult {
   name?: string;
   trustScore?: number | null;
   reviews?: number | null;
+  /** Opt-in CLI phase timings (--profile-timing); omitted from end-user CSV. */
+  timingsMs?: {
+    goto: number;
+    settle: number;
+    detector: number;
+    probe: number;
+    total: number;
+  };
 }
 
 /** Raw output of the injected in-page detector (before path-probe merge). */

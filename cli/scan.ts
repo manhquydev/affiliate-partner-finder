@@ -13,6 +13,7 @@ import {
   type ScanSession,
 } from './browser';
 import { evaluateInjectable } from './injectable';
+import { attachProfileTimings } from './profile-timing';
 import type {
   Company,
   ScanResult,
@@ -69,6 +70,10 @@ export type ScanCliOptions = {
    * Observe-only — never uses page.route.
    */
   networkEvidence?: boolean;
+  /** Write timingsMs on ScanResult (JSONL and results.json). Default OFF. */
+  profileTiming?: boolean;
+  /** Parallel path-probe batch (1=sequential, max 3). Default 1. */
+  probeParallelBatch?: number;
 };
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -112,33 +117,50 @@ async function scanOnPage(
   const scanStarted = Date.now();
   const scanBudgetMs = opts.scanBudgetMs ?? DEFAULT_SCAN_BUDGET_MS;
   const networkEvidence = Boolean(opts.networkEvidence);
+  const profileTiming = Boolean(opts.profileTiming);
+  const probeParallelBatch = opts.probeParallelBatch ?? 1;
+  let tGoto = 0;
+  let tSettle = 0;
+  let tDetector = 0;
+  let tProbe = 0;
+  const mark = () => (profileTiming ? Date.now() : 0);
+  const remainingScanBudgetMs = () => Math.max(0, scanBudgetMs - (Date.now() - scanStarted));
 
   // Listeners MUST be attached before goto so pixels during navigation are seen.
   const collector = networkEvidence ? new NetworkHostCollector(cfg.platforms) : null;
   const detachNetwork = collector ? attachNetworkObservers(page, collector) : null;
 
   try {
+    const t0 = mark();
     try {
-      await page.goto(websiteUrl, { waitUntil: 'load', timeout: run.tabTimeoutMs });
+      await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: run.tabTimeoutMs });
     } catch {
       result.loadStatus = 'timeout';
       Object.assign(result, classify({ loadStatus: 'timeout' }));
       return result;
+    } finally {
+      if (profileTiming) tGoto = Date.now() - t0;
     }
 
-    // Single settle path — lazySettle replaces fixed 1200ms; never stacks both.
-    const remainingScanBudgetMs = Math.max(0, scanBudgetMs - (Date.now() - scanStarted));
-    await settleForScan(page, {
-      lazySettle: Boolean(opts.lazySettle),
-      lazySettleBudgetMs: opts.lazySettleBudgetMs,
-      remainingScanBudgetMs,
-    });
+    const tSettle0 = mark();
+    try {
+      await settleForScan(page, {
+        lazySettle: Boolean(opts.lazySettle),
+        lazySettleBudgetMs: opts.lazySettleBudgetMs,
+        remainingScanBudgetMs: remainingScanBudgetMs(),
+      });
+    } finally {
+      if (profileTiming) tSettle = Date.now() - tSettle0;
+    }
 
     let det: DetectorResult | undefined;
+    const tDet0 = mark();
     try {
       det = await evaluateInjectable(page, runDetector as (...args: never[]) => DetectorResult, cfg);
     } catch {
       det = undefined;
+    } finally {
+      if (profileTiming) tDetector = Date.now() - tDet0;
     }
     if (!det) {
       result.loadStatus = 'error';
@@ -165,18 +187,31 @@ async function scanOnPage(
       if (!skipProbe) {
         try {
           const origin = new URL(finalUrl).origin;
-          const probeBudget = Math.min(cfg.paths.length * probeFetchTimeoutMs + probeFetchTimeoutMs, 90_000);
-          probe = await withTimeout(
-            evaluateInjectable(
-              page,
-              pathProbe as (...args: never[]) => Promise<PathProbeResult>,
-              origin,
-              cfg.paths,
-              probeFetchTimeoutMs,
-            ),
-            probeBudget,
-            'pathProbe',
+          const probeBudget = Math.min(
+            cfg.paths.length * probeFetchTimeoutMs + probeFetchTimeoutMs,
+            90_000,
+            remainingScanBudgetMs(),
           );
+          const tProbe0 = mark();
+          try {
+            probe = await withTimeout(
+              evaluateInjectable(
+                page,
+                pathProbe as (...args: never[]) => Promise<PathProbeResult>,
+                origin,
+                cfg.paths,
+                probeFetchTimeoutMs,
+                probeParallelBatch,
+              ),
+              probeBudget,
+              'pathProbe',
+            );
+          } catch {
+            probe = undefined;
+            probeIncomplete = true;
+          } finally {
+            if (profileTiming) tProbe = Date.now() - tProbe0;
+          }
         } catch {
           probe = undefined;
           probeIncomplete = true;
@@ -220,6 +255,12 @@ async function scanOnPage(
     return result;
   } finally {
     detachNetwork?.();
+    attachProfileTimings(result, profileTiming, scanStarted, {
+      goto: tGoto,
+      settle: tSettle,
+      detector: tDetector,
+      probe: tProbe,
+    });
   }
 }
 
@@ -233,6 +274,8 @@ export async function scanOneCli(
 ): Promise<ScanResult> {
   const budget = opts.scanBudgetMs ?? DEFAULT_SCAN_BUDGET_MS;
   const closeMs = opts.closeTimeoutMs ?? DEFAULT_CLOSE_TIMEOUT_MS;
+  const profileTiming = Boolean(opts.profileTiming);
+  const startedAt = profileTiming ? Date.now() : 0;
   let page: Page | undefined;
   let ownedContext: { close: () => Promise<unknown> } | undefined;
   try {
@@ -244,9 +287,14 @@ export async function scanOneCli(
     const result = baseResult(company, websiteUrl, cfg.detectorVersion);
     result.loadStatus = 'timeout';
     Object.assign(result, classify({ loadStatus: 'timeout' }));
+    attachProfileTimings(result, profileTiming, startedAt, {
+      goto: 0,
+      settle: 0,
+      detector: 0,
+      probe: 0,
+    });
     return result;
   } finally {
-    // Bounded close — hung page.close must not stall the whole batch for hours.
     await closeQuietly(page, closeMs);
     await closeQuietly(ownedContext, closeMs);
   }

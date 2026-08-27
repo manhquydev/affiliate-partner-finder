@@ -207,6 +207,27 @@ describe('desktop adapter', () => {
     expect(args).toContain('--network-evidence');
   });
 
+  it('buildScanArgv omits --probe-parallel by default', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      platform: 'linux',
+    });
+    expect(args).not.toContain('--probe-parallel');
+  });
+
+  it('buildScanArgv passes --probe-parallel when enabled', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      probeParallel: true,
+      platform: 'linux',
+    });
+    expect(args).toContain('--probe-parallel');
+  });
+
   it('win32 always has profile and defaults to --virtual-display (hide Chrome)', () => {
     const args = buildScanArgv({
       query: 'design',

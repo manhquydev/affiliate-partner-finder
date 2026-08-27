@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { toInjectableSource } from '../cli/injectable';
 import { pathProbe } from '../lib/path-probe';
+
+function injectPathProbe(): typeof pathProbe {
+  const src = toInjectableSource(pathProbe as (...args: never[]) => unknown);
+  expect(src.includes('__name')).toBe(false);
+  expect(src.includes('import')).toBe(false);
+  expect(src.includes('require(')).toBe(false);
+  return new Function(`return (${src})`)() as typeof pathProbe;
+}
 
 /** Mock fetch: junk path returns `junkStatus`; each real path returns its map value (default 404). */
 function mockFetch(junkStatus: number, pathStatus: Record<string, number> = {}) {
@@ -55,10 +64,24 @@ describe('pathProbe() — anti-hallucination (docs/05 §C1)', () => {
     expect(r.pathHits).toHaveLength(1);
   });
 
-  it('is self-contained — survives reconstruction from toString() (criterion 4 / L2)', async () => {
+  it('is self-contained — survives toInjectableSource (Playwright inject path)', async () => {
     vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200 }));
-    const rebuilt = new Function(`return (${pathProbe.toString()})`)() as typeof pathProbe;
+    const rebuilt = injectPathProbe();
     const r = await rebuilt(ORIGIN, ['/affiliate']);
+    expect(r.pathHits).toHaveLength(1);
+  });
+
+  it('parallel batch 3 returns same hits as sequential', async () => {
+    vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200, '/partner': 200 }));
+    const seq = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 1);
+    const par = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 3);
+    expect(par.pathHits.map((h) => h.path).sort()).toEqual(seq.pathHits.map((h) => h.path).sort());
+  });
+
+  it('parallel inject self-contained with batch arg via toInjectableSource', async () => {
+    vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200 }));
+    const rebuilt = injectPathProbe();
+    const r = await rebuilt(ORIGIN, ['/affiliate'], 8000, 3);
     expect(r.pathHits).toHaveLength(1);
   });
 });

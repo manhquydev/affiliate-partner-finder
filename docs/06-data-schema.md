@@ -33,6 +33,8 @@
 }
 ```
 
+`timingsMs` (optional, CLI `--profile-timing`): `{ goto, settle, detector, probe, total }` milliseconds. Absent when the flag is off. Omitted from end-user CSV (`toSimpleCSV`).
+
 ## 3. Quy tắc verdict (deterministic — chống ảo giác)
 ```
 if loadStatus != ok            → verdict=unknown, confidence=blocked

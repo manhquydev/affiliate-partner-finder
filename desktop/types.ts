@@ -43,6 +43,8 @@ export type JobOptions = {
    * Opt-in CLI `--network-evidence`. Default OFF — observe request/response platform hosts.
    */
   networkEvidence?: boolean;
+  /** Opt-in CLI `--probe-parallel`. Default OFF — parallel path-probe batches (max 3). */
+  probeParallel?: boolean;
   /**
    * Hide headed Chrome off the primary display via `--virtual-display`.
    * Linux: Xvfb. Windows/macOS: minimized/off-screen window. Default ON.

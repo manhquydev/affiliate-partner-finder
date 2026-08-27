@@ -1,0 +1,125 @@
+version: 1
+workspace: w15
+cwd: /home/manhquy/Downloads/affiliate-partner-finder
+report_dir: plans/reports/orchestrate-260827-apf-eval
+
+tabs:
+  - id: eval-arch
+    label: apf-eval-arch
+    agents:
+      - name: ev-arch-scout
+        skill: ak:scout
+        report: scout-architecture.md
+        prompt: |
+          /ak:scout affiliate-partner-finder architecture
+          Map lib/, cli/, desktop/, extension/ boundaries. Read PRODUCT.md, README.md, docs/.
+          Output: plans/reports/orchestrate-260827-apf-eval/scout-architecture.md
+          Include: module map, data flow scan→CSV, shared lib usage, extension vs CLI vs desktop parity gaps.
+
+      - name: ev-scan-pipe
+        skill: ak:scout
+        report: scout-scan-pipeline.md
+        prompt: |
+          /ak:scout scan pipeline path-probe browser
+          Deep-read cli/scan.ts, cli/browser.ts, lib/path-probe.ts, lib/probe-batch.ts.
+          Reference plans/reports/metrics-track-s-ab.md and brainstorm-260827-track-s-status.md.
+          Output: plans/reports/orchestrate-260827-apf-eval/scout-scan-pipeline.md
+          Include: bottleneck map, isolation fixes done, remaining risks, probe-parallel semantics.
+
+      - name: ev-data-art
+        skill: ak:scout
+        report: scout-data-artifacts.md
+        prompt: |
+          /ak:scout data artifacts cohort reports
+          Inventory out/, plans/reports/, cohort JSON, A/B artifacts (track-s-ab-control/treatment).
+          Output: plans/reports/orchestrate-260827-apf-eval/scout-data-artifacts.md
+          Include: what data exists for n=200 gate, golden verify, 10k shard status, recoverability.
+
+      - name: ev-status-rsr
+        skill: ak:research
+        report: research-project-status.md
+        prompt: |
+          /ak:research affiliate-partner-finder current status
+          Read plans/reports/brainstorm-260826-0909-project-status-next-scope.md,
+          brainstorm-260827-track-s-status.md, metrics-track-s-ab.md.
+          Output: plans/reports/orchestrate-260827-apf-eval/research-project-status.md
+          Include: shipped vs unmeasured matrix update, Track S directional PASS implications, blockers.
+
+  - id: eval-quality
+    label: apf-eval-quality
+    agents:
+      - name: ev-test-audit
+        skill: ak:test
+        report: test-audit.md
+        prompt: |
+          /ak:test track-s and full suite
+          Run npm run test:track-s and npm test. Note compile errors (npm run compile).
+          Output: plans/reports/orchestrate-260827-apf-eval/test-audit.md
+          Include: pass/fail counts, missing coverage areas, recommended tests for isolation regression.
+
+      - name: ev-code-rev
+        skill: ak:code-review
+        report: code-review-track-s.md
+        prompt: |
+          /ak:code-review track-s diff
+          Review git diff for cli/, lib/, desktop/, test/ track-s changes.
+          Output: plans/reports/orchestrate-260827-apf-eval/code-review-track-s.md
+          Severity + evidence + recommendation per finding. Focus isolation, probe-parallel, desktop mirror.
+
+      - name: ev-security
+        skill: ak:security-scan
+        report: security-ethics-audit.md
+        prompt: |
+          /ak:security scan ethics data handling
+          Audit: blocked≠none, concurrency≤3, no CF bypass, CSV PII, Chrome profile sharing.
+          Output: plans/reports/orchestrate-260827-apf-eval/security-ethics-audit.md
+          Read-only; no code changes.
+
+      - name: ev-golden
+        skill: ak:test
+        report: golden-gate-status.md
+        prompt: |
+          /ak:test golden verify
+          Run test/verify-golden.mjs if present; read golden failures (vecteezy, mohd.it).
+          Output: plans/reports/orchestrate-260827-apf-eval/golden-gate-status.md
+          Separate golden lane from throughput gate; recommend next actions.
+
+  - id: eval-roadmap
+    label: apf-eval-roadmap
+    agents:
+      - name: ev-deploy-gap
+        skill: ak:research
+        report: research-deploy-readiness.md
+        prompt: |
+          /ak:research desktop deployment readiness
+          Read plans/reports/brainstorm-260826-ci-and-release-gap.md, package.json, desktop/.
+          Output: plans/reports/orchestrate-260827-apf-eval/research-deploy-readiness.md
+          Waves: 1.0.10 polish, customer smoke, release blockers, compile debt.
+
+      - name: ev-perf-next
+        skill: ak:research
+        report: research-next-optimizations.md
+        prompt: |
+          /ak:research next scan optimizations after track-s
+          Read research-260826-scan-performance-optimization.md, metrics-track-s-ab.md.
+          Output: plans/reports/orchestrate-260827-apf-eval/research-next-optimizations.md
+          Rank Track B access, domcontentloaded default, early-exit, n=200 cohort — with gates.
+
+      - name: ev-product-ux
+        skill: ak:scout
+        report: scout-desktop-ux.md
+        prompt: |
+          /ak:scout desktop UX Vietnamese
+          Read desktop/renderer/, PRODUCT.md probe-parallel checkbox (phase 5).
+          Output: plans/reports/orchestrate-260827-apf-eval/scout-desktop-ux.md
+          Customer-facing gaps, i18n, job workspace, docs/desktop-windows.md needs.
+
+      - name: ev-advise-rd
+        skill: ak:advise
+        report: advise-deployment-roadmap.md
+        prompt: |
+          /ak:advise deployment roadmap affiliate-partner-finder
+          Synthesize all reports in plans/reports/orchestrate-260827-apf-eval/ when available;
+          else use brainstorm reports + metrics-track-s-ab.md.
+          Output: plans/reports/orchestrate-260827-apf-eval/advise-deployment-roadmap.md
+          Honest prioritized roadmap: ship, measure, improve. Work checklist + success metrics.

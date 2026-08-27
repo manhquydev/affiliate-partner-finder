@@ -1,0 +1,31 @@
+{
+  "created": "2026-08-26T13:11:28.374Z",
+  "source": "slice:/home/manhquy/Downloads/affiliate-partner-finder/plans/reports/track-s-benchmark-cohort-200.json:0..3",
+  "n": 3,
+  "target": 3,
+  "directional": true,
+  "micro": true,
+  "companies": [
+    {
+      "name": "Lezze Design",
+      "domain": "lezzedesign.com",
+      "trustScore": 3.3,
+      "reviews": 48,
+      "trustpilotUrl": "https://www.trustpilot.com/review/lezzedesign.com"
+    },
+    {
+      "name": "Design Guy Studio",
+      "domain": "designguystudio.com",
+      "trustScore": 4.6,
+      "reviews": 18,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designguystudio.com"
+    },
+    {
+      "name": "Design People LLC",
+      "domain": "designpple.com",
+      "trustScore": 4,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designpple.com"
+    }
+  ]
+}

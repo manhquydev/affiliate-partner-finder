@@ -5,9 +5,11 @@ import { join, resolve as pathResolve } from 'node:path';
 import pLimit from 'p-limit';
 import { CONFIG, DEFAULT_RUN_CONFIG, maxPagesForLimit } from '../lib/config';
 import { clampCollectLimit, type CollectStopReason } from '../lib/collect-pagination.ts';
+import { clampProbeBatchSize } from '../lib/probe-batch';
 import { resolve as resolveWebsite } from '../lib/resolve';
 import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
+import { assertSafeProfilePath } from '../lib/safe-paths';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
 import { shouldHideChromeWindows } from './hide-chrome-window';
 import { collectCli } from './collect';
@@ -32,6 +34,10 @@ type Args = {
   lazySettle: boolean;
   /** Opt-in network host evidence (observe request/response). Default OFF. */
   networkEvidence: boolean;
+  /** Opt-in phase timings in JSONL/results.json. Default OFF. */
+  profileTiming: boolean;
+  probeParallel: boolean;
+  probeBatchSize: number;
   help: boolean;
 };
 
@@ -56,6 +62,9 @@ Options:
   --early-exit        Skip path-probe when homepage already has strong affiliate evidence (default OFF)
   --lazy-settle       Replace fixed 1200ms settle with scroll+MutationObserver (≤1200ms; default OFF)
   --network-evidence  Observe request/response hosts for affiliate platforms (default OFF; method=network)
+  --profile-timing    Record per-phase timingsMs in JSONL (default OFF)
+  --probe-parallel    Path-probe fetches in parallel batches (default OFF; batch size 3)
+  --probe-batch-size  Parallel batch size 1..3 when --probe-parallel (default 3)
   --accept-failures   Treat timeout/error rows as terminal on --resume (do not requeue)
   --help              Show help
 
@@ -83,6 +92,9 @@ function parseArgs(argv: string[]): Args {
     acceptFailures: false,
     lazySettle: false,
     networkEvidence: false,
+    profileTiming: false,
+    probeParallel: false,
+    probeBatchSize: 3,
     help: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -109,6 +121,9 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--early-exit') args.earlyExit = true;
     else if (a === '--lazy-settle') args.lazySettle = true;
     else if (a === '--network-evidence') args.networkEvidence = true;
+    else if (a === '--profile-timing') args.profileTiming = true;
+    else if (a === '--probe-parallel') args.probeParallel = true;
+    else if (a === '--probe-batch-size') args.probeBatchSize = clampProbeBatchSize(Number(next()));
     else if (a === '--accept-failures') args.acceptFailures = true;
   }
   if (args.scanProfile) args.headedScan = true;
@@ -173,6 +188,13 @@ async function main(): Promise<number> {
   if (!args.query && !args.resume) {
     console.error('Missing --query (or use --resume with existing companies.json)');
     printHelp();
+    return 2;
+  }
+
+  try {
+    args.profile = assertSafeProfilePath(args.profile);
+  } catch (e) {
+    console.error(`[cli] ${e instanceof Error ? e.message : e}`);
     return 2;
   }
 
@@ -311,7 +333,7 @@ async function main(): Promise<number> {
     return !prev || !isTerminal(prev, args.acceptFailures);
   });
   console.log(
-    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} lazySettle=${args.lazySettle} networkEvidence=${args.networkEvidence} acceptFailures=${args.acceptFailures} scanProfile=${args.scanProfile}`,
+    `[cli] scan pending=${pending.length} concurrency=${args.concurrency} earlyExit=${args.earlyExit} lazySettle=${args.lazySettle} networkEvidence=${args.networkEvidence} profileTiming=${args.profileTiming} probeParallel=${args.probeParallel} acceptFailures=${args.acceptFailures} scanProfile=${args.scanProfile}`,
   );
 
   const session = await launchScanSession({
@@ -389,6 +411,8 @@ async function main(): Promise<number> {
             earlyExit: args.earlyExit,
             lazySettle: args.lazySettle,
             networkEvidence: args.networkEvidence,
+            profileTiming: args.profileTiming,
+            probeParallelBatch: args.probeParallel ? args.probeBatchSize : 1,
           });
           await enqueueWrite(result);
           console.log(`[cli] done ${company.domain} ${result.verdict}/${result.confidence} (${result.loadStatus})`);

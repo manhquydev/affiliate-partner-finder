@@ -12,13 +12,14 @@
 import type { PathProbeResult, PathHit } from './types';
 
 /**
- * @param fetchTimeoutMs per-request abort (default 8s). Prevents hung fetches from
- * stalling CLI workers forever; Chrome inject can rely on the same default.
+ * @param fetchTimeoutMs per-request abort (default 8s).
+ * @param parallelBatch when >1, probe paths in parallel batches (default 1 = sequential).
  */
 export async function pathProbe(
   origin: string,
   paths: string[],
   fetchTimeoutMs = 8000,
+  parallelBatch = 1,
 ): Promise<PathProbeResult> {
   async function timedFetch(url: string): Promise<Response> {
     const ac = new AbortController();
@@ -38,25 +39,42 @@ export async function pathProbe(
     junk = 'err';
   }
 
-  // Soft-404: everything returns 200 → cannot distinguish real pages.
   if (junk === 200) {
     return { junkBaselineStatus: junk, pathHits: [] };
   }
 
   const hits: PathHit[] = [];
-  for (const p of paths) {
+  const batch = Math.max(1, Math.min(3, Math.trunc(parallelBatch) || 1));
+
+  async function probeOne(p: string): Promise<PathHit | null> {
     try {
       const r = await timedFetch(`${origin}${p}`);
       if (r.status !== junk && [200, 301, 302].includes(r.status)) {
-        hits.push({
+        return {
           path: p,
           status: r.status,
           finalUrl: r.url,
           isStrong: /affiliat/.test(p),
-        });
+        };
       }
     } catch {
-      // network/abort on a single path — ignore, keep probing others.
+      /* single path fail */
+    }
+    return null;
+  }
+
+  if (batch === 1) {
+    for (const p of paths) {
+      const hit = await probeOne(p);
+      if (hit) hits.push(hit);
+    }
+  } else {
+    for (let i = 0; i < paths.length; i += batch) {
+      const chunk = paths.slice(i, i + batch);
+      const chunkHits = await Promise.all(chunk.map((p) => probeOne(p)));
+      for (const h of chunkHits) {
+        if (h) hits.push(h);
+      }
     }
   }
 

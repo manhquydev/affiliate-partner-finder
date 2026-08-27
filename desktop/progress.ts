@@ -1,9 +1,7 @@
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
+import { FORBIDDEN_PROFILE_RE } from '../lib/safe-paths.ts';
 import type { ProgressSnapshot } from './types.ts';
-
-const FORBIDDEN_PROFILE_RE =
-  /(Google[/\\]Chrome[/\\]User Data|google-chrome[/\\]User Data|Chromium[/\\]User Data|Microsoft[/\\]Edge[/\\]User Data)/i;
 
 function normalizePath(p: string): string {
   return resolve(p);

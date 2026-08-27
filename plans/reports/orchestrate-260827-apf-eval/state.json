@@ -1,0 +1,14 @@
+{
+  "startedAt": "2026-08-27T09:33:48+07:00",
+  "workspace": "w15",
+  "tabs": {
+    "apf-eval-arch": "w15:t6",
+    "apf-eval-quality": "w15:t7",
+    "apf-eval-roadmap": "w15:t8"
+  },
+  "agents": [
+    "ev-arch-scout", "ev-scan-pipe", "ev-data-art", "ev-status-rsr",
+    "ev-test-audit", "ev-code-rev", "ev-security", "ev-golden",
+    "ev-deploy-gap", "ev-perf-next", "ev-product-ux", "ev-advise-rd"
+  ]
+}

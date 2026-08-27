@@ -65,6 +65,7 @@ export function buildScanArgv(opts: JobOptions): string[] {
   if (opts.lazySettle) args.push('--lazy-settle');
   // Default OFF — network classify behind flag until operator opts in.
   if (opts.networkEvidence) args.push('--network-evidence');
+  if (opts.probeParallel) args.push('--probe-parallel');
 
   if (resolveVirtualDisplay(platform, opts.virtualDisplay)) {
     args.push('--virtual-display');
