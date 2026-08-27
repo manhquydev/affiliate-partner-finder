@@ -156,4 +156,36 @@ describe('pathProbe() — anti-hallucination (docs/05 §C1)', () => {
     const r = await pathProbe(ORIGIN, ['/partner', '/affiliate'], 30, 2);
     expect(r.pathHits.map((h) => h.path)).toContain('/affiliate');
   });
+
+  it('budget 0 after junk ⇒ incomplete, empty hits, junk-only fetch', async () => {
+    const f = mockFetch(404, { '/affiliate': 200, '/partner': 200 });
+    vi.stubGlobal('fetch', f);
+    const r = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 1, 0);
+    expect(r.incomplete).toBe(true);
+    expect(r.pathHits).toEqual([]);
+    expect(f.mock.calls).toHaveLength(1);
+  });
+
+  it('inner deadline keeps prefix hits and does not start later chunks', async () => {
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const f = vi.fn(async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path.startsWith('/zzq-')) return { status: 404, url } as Response;
+      now += 100;
+      return { status: 200, url } as Response;
+    });
+    vi.stubGlobal('fetch', f);
+    const r = await pathProbe(ORIGIN, ['/a', '/b', '/c'], 50, 1, 120);
+    expect(r.pathHits.map((h) => h.path)).toEqual(['/a']);
+    expect(r.incomplete).toBe(true);
+  });
+
+  it('injectable 5th budget arg still self-contained', async () => {
+    vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200 }));
+    const rebuilt = injectPathProbe();
+    const r = await rebuilt(ORIGIN, ['/affiliate'], 8000, 1, 90_000);
+    expect(r.pathHits).toHaveLength(1);
+    expect(r.incomplete).toBe(false);
+  });
 });

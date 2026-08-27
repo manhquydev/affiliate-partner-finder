@@ -62,6 +62,22 @@ describe('classify() — decision table (docs/05 §6)', () => {
   it('row 6: load ok, no hits ⇒ none/high', () => {
     expect(classify({ loadStatus: 'ok', linkHits: [], platformHits: [], pathHits: [] })).toEqual({ verdict: 'none', confidence: 'high' });
   });
+
+  it('incomplete empty probe (timeout) never classifies none', () => {
+    expect(classify({ loadStatus: 'timeout', pathHits: [] })).toEqual({
+      verdict: 'unknown',
+      confidence: 'blocked',
+    });
+  });
+
+  it('ok + prefix pathHits classify as hits, not none', () => {
+    expect(
+      classify({
+        loadStatus: 'ok',
+        pathHits: [{ path: '/pages/trade', status: 200, finalUrl: '', isStrong: false }],
+      }),
+    ).toEqual({ verdict: 'partner_trade', confidence: 'low' });
+  });
 });
 
 describe('classify() — anti-hallucination invariants', () => {
