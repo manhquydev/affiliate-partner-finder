@@ -341,12 +341,14 @@ Largest remaining probe defect: Node `withTimeout` throw → discard **all** lan
 npx vitest run test/path-probe.test.ts test/classify.test.ts test/cli-browser-isolation.test.ts
 ```
 
-- [ ] Inner deadline returns prefix; does not start next chunk (not stop-on-hit)
-- [ ] `incomplete && pathHits.length===0 && !homepage` → timeout, never `none`
-- [ ] `incomplete && pathHits.length>0` → classify hits (recall); `simpleHit` still `true` if weak-only
-- [ ] Per-fetch abort unchanged
-- [ ] CLI/desktop `--probe-parallel` default still OFF
-- [ ] Both future A/B arms get this code (shared) — **not** a treatment flag
+- [x] Inner deadline returns prefix; does not start next chunk (not stop-on-hit)
+- [x] `incomplete && pathHits.length===0 && !homepage` → timeout, never `none`
+- [x] `incomplete && pathHits.length>0` → classify hits (recall); `simpleHit` still `true` if weak-only
+- [x] Per-fetch abort unchanged
+- [x] CLI/desktop `--probe-parallel` default still OFF
+- [x] Both future A/B arms get this code (shared) — **not** a treatment flag
+
+**P4 evidence 2026-08-27:** path-probe 16/16; classify 32/32; isolation 3/3; `npm test` 199/199. 5th positional `budgetMs`; CLI `withTimeout(budget+1000)`; empty incomplete remaps timeout; prefix hits stay `ok` and classify.
 
 **Fail →** do not start P6 with discard-all still in place unless explicitly waived (n=61 showed 0 aborts; waiver must be written).
 
