@@ -75,6 +75,8 @@ describe('pathProbe() — anti-hallucination (docs/05 §C1)', () => {
     vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200, '/partner': 200 }));
     const seq = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 1);
     const par = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 3);
+    expect(seq.pathHits).toHaveLength(2);
+    expect(par.pathHits).toHaveLength(2);
     expect(par.pathHits.map((h) => h.path).sort()).toEqual(seq.pathHits.map((h) => h.path).sort());
   });
 
@@ -83,5 +85,75 @@ describe('pathProbe() — anti-hallucination (docs/05 §C1)', () => {
     const rebuilt = injectPathProbe();
     const r = await rebuilt(ORIGIN, ['/affiliate'], 8000, 3);
     expect(r.pathHits).toHaveLength(1);
+  });
+
+  it('does not stop on first 200 — later path still recorded', async () => {
+    vi.stubGlobal('fetch', mockFetch(404, { '/affiliate': 200, '/partner': 200 }));
+    const seq = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 1);
+    const par = await pathProbe(ORIGIN, ['/affiliate', '/partner'], 8000, 3);
+    expect(seq.pathHits.map((h) => h.path).sort()).toEqual(['/affiliate', '/partner']);
+    expect(par.pathHits.map((h) => h.path).sort()).toEqual(['/affiliate', '/partner']);
+    expect(seq.pathHits).toHaveLength(2);
+    expect(par.pathHits).toHaveLength(2);
+  });
+
+  it('records a later-chunk 200 after an earlier-chunk 200 (no stop-on-hit)', async () => {
+    vi.stubGlobal('fetch', mockFetch(404, { '/a': 200, '/d': 200 }));
+    const r = await pathProbe(ORIGIN, ['/a', '/b', '/c', '/d'], 8000, 3);
+    expect(r.pathHits.map((h) => h.path).sort()).toEqual(['/a', '/d']);
+    expect(r.pathHits).toHaveLength(2);
+  });
+
+  it('parallelBatch 4 clamps to 3 in-flight fetches', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const f = vi.fn(async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path.startsWith('/zzq-')) return { status: 404, url } as Response;
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await Promise.resolve();
+      inFlight -= 1;
+      return { status: 200, url } as Response;
+    });
+    vi.stubGlobal('fetch', f);
+    const r = await pathProbe(ORIGIN, ['/a', '/b', '/c', '/d'], 8000, 4);
+    expect(r.pathHits).toHaveLength(4);
+    expect(maxInFlight).toBe(3);
+    expect(maxInFlight).toBeLessThanOrEqual(3);
+  });
+
+  it('junk-first: first fetch is /zzq-; junk 200 skips all path fetches', async () => {
+    const order: string[] = [];
+    const f = vi.fn(async (url: string) => {
+      const path = new URL(url).pathname;
+      order.push(path.startsWith('/zzq-') ? '/zzq-' : path);
+      if (path.startsWith('/zzq-')) return { status: 200, url } as Response;
+      return { status: 200, url } as Response;
+    });
+    vi.stubGlobal('fetch', f);
+    const r = await pathProbe(ORIGIN, ['/affiliate', '/partner']);
+    expect(order[0]).toBe('/zzq-');
+    expect(f.mock.calls).toHaveLength(1);
+    expect(r.pathHits).toEqual([]);
+  });
+
+  it('sibling abort does not drop later 200 in the same batch', async () => {
+    const f = vi.fn(async (url: string, init?: RequestInit) => {
+      const path = new URL(url).pathname;
+      if (path.startsWith('/zzq-')) return { status: 404, url } as Response;
+      if (path === '/partner') {
+        const { promise, reject } = Promise.withResolvers<Response>();
+        const fail = () =>
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        if (init?.signal?.aborted) fail();
+        else init?.signal?.addEventListener('abort', fail, { once: true });
+        return await promise;
+      }
+      return { status: 200, url } as Response;
+    });
+    vi.stubGlobal('fetch', f);
+    const r = await pathProbe(ORIGIN, ['/partner', '/affiliate'], 30, 2);
+    expect(r.pathHits.map((h) => h.path)).toContain('/affiliate');
   });
 });

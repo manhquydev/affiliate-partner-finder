@@ -45,4 +45,21 @@ describe('compare-track-s-ab.mjs', () => {
     expect(out).toMatch(/TRIAL: PASS/);
     rmSync(dir, { recursive: true, force: true });
   });
+
+  it('emits TRIAL FAIL when affiliate@ok flips to none@ok', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'track-s-cmp-fail-'));
+    const control = join(dir, 'c.jsonl');
+    const treatment = join(dir, 't.jsonl');
+    writeFileSync(control, `${JSON.stringify(row('a.com', 'affiliate'))}\n`);
+    writeFileSync(treatment, `${JSON.stringify(row('a.com', 'none'))}\n`);
+    const out = execFileSync(
+      process.execPath,
+      [join(root, 'scripts/compare-track-s-ab.mjs'), control, treatment],
+      { encoding: 'utf8' },
+    );
+    expect(out).toMatch(/\*\*true→false \(regression\):\*\* 1/);
+    expect(out).toMatch(/TRIAL: FAIL/);
+    expect(out).not.toMatch(/TRIAL: PASS/);
+    rmSync(dir, { recursive: true, force: true });
+  });
 });

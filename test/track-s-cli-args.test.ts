@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { clampProbeBatchSize } from '../lib/probe-batch';
 import { execCliHelp } from './helpers/cli-exec';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,5 +21,14 @@ describe('CLI probe flags (--help)', () => {
     const out = execCliHelp(root);
     expect(out).toMatch(/--probe-parallel\s+Path-probe fetches in parallel batches \(default OFF/);
     expect(out).toMatch(/--probe-batch-size\s+Parallel batch size 1\.\.3/);
+  });
+});
+
+describe('desktop probe-parallel GUI default OFF', () => {
+  it('#probeParallel exists and is not checked', () => {
+    const html = readFileSync(join(root, 'desktop/renderer/index.html'), 'utf8');
+    expect(html).toMatch(/id=["']probeParallel["']/);
+    expect(html).not.toMatch(/id=["']probeParallel["'][^>]*\bchecked\b/);
+    expect(html).not.toMatch(/<input[^>]*\bchecked\b[^>]*id=["']probeParallel["']/);
   });
 });
