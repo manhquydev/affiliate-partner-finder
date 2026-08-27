@@ -252,11 +252,13 @@ node test/verify-golden.mjs out/track-s-ab-treatment/results.json
 # expect: mohd.it OK; vecteezy still XX blocked (Track B, not this phase)
 ```
 
-- [ ] Unit: mohd.it `partner_trade/low`; ozdesign low; williamwood medium
-- [ ] Unit: 4 remaining none@ok empty-hit stay `none/high`
-- [ ] 0 blocked→none; weak-only never affiliate
-- [ ] Isolation still green
-- [ ] probe-parallel default still OFF
+- [x] Unit: mohd.it `partner_trade/low`; ozdesign low; williamwood medium
+- [x] Unit: 4 remaining none@ok empty-hit stay `none/high`
+- [x] 0 blocked→none; weak-only never affiliate
+- [x] Isolation still green
+- [x] probe-parallel default still OFF
+
+**P2 evidence 2026-08-27:** vitest 50/50 on P2 files; full `npm test` 194/194. `verify-golden.mjs` treatment: mohd.it OK partner_trade/low; affiliate-high still 3/4 (vecteezy blocked — Track B). No `WEAK_KEYWORDS` / classify / probe-default edits.
 
 **Fail →** do not rewrite mohd.it to `none` to green the matrix.
 

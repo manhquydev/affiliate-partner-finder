@@ -213,13 +213,19 @@
       "domain": "mohd.it",
       "load": "OK",
       "finalUrl": "https://www.mohd.it/en/",
-      "linkHits": [],
+      "linkHits": [
+        {
+          "text": "Trade & Professionals",
+          "href": "https://www.mohd.it/en/trade-and-professionals/",
+          "kw": ["trade"]
+        }
+      ],
       "pathHits": [],
       "junkBaseline": 404,
       "platform": null,
-      "verdict": "none",
-      "confidence": "medium_negative",
-      "note": "redirect /en/ - locale limitation"
+      "verdict": "partner_trade",
+      "confidence": "low",
+      "note": "2026-08-27: English /en/ Trade Program is real B2B; not affiliate. Prior 2026-08-10 empty-hit none retired."
     },
     {
       "domain": "pazzodesign.it",

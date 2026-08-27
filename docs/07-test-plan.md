@@ -16,7 +16,7 @@ Test theo 4 vòng như đã thực hiện thủ công, dùng chính các site đ
 | namly.dk | none/high | không hit, junk 404 |
 | finnishdesignshop.com | none/high | không hit |
 | thorvalddesign.com | none/high | redirect .co.uk, không hit |
-| mohd.it | none/medium | redirect /en/, không hit (giới hạn: có thể sót trang IT) |
+| mohd.it | partner_trade/low | "Trade & Professionals" → /en/trade-and-professionals/ (canonical trade-program). Date 2026-08-27. Not affiliate. |
 | pazzodesign.it | none/high | không hit |
 | flinders.nl | unknown/blocked | Cloudflare chặn |
 
@@ -39,7 +39,7 @@ Test theo 4 vòng như đã thực hiện thủ công, dùng chính các site đ
 ## 5. Tiêu chí pass
 - 4/4 ca affiliate-high khớp verdict.
 - 0 ca blocked bị gán none.
-- 0 false-affiliate trên 5 ca none.
+- 0 false-affiliate trên 4 ca none.
 - Mọi `confirmed` có evidenceUrl mở được (HTTP < 400).
 
 ## 6. Regression

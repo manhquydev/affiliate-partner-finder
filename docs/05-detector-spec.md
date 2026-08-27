@@ -70,10 +70,10 @@ function detect():
 ⇒ KHÔNG bao giờ trả `none` khi `blocked`.
 
 ## 8. Edge cases đã gặp (thật)
-- **Redirect đổi TLD/ngôn ngữ** (thorvald.com→.co.uk, mohd.it→/en/): ghi finalUrl; path-probe theo origin sau redirect.
+- **Redirect đổi TLD/ngôn ngữ** (thorvald.com→.co.uk, mohd.it→/en/): ghi finalUrl; path-probe theo origin sau redirect. English `/en/` on mohd.it (2026-08-27) exposes a real Trade Program → `partner_trade/low`; still not affiliate.
 - **404 body nặng** (namly 695KB): CHỈ dùng HTTP status, không dùng độ dài.
 - **Affiliate nested path** (nordicnest /om-oss/affiliate/): link-scan bắt, path-probe generic không → cần cả hai.
-- **Weak-only** (ozdesign trade, williamwood trade+partner): giữ ở partner_trade, đừng nâng affiliate.
+- **Weak-only** (ozdesign trade, williamwood trade+partner, mohd.it trade): giữ ở partner_trade, đừng nâng affiliate.
 
 ## 9. Phiên bản
 `detectorVersion` gắn vào mỗi result để so sánh khi nâng bộ config.
