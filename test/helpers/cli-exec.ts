@@ -1,32 +1,17 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** Cross-platform path to the local tsx CLI (Windows uses .cmd shim). */
-export function localTsxBin(root: string): string {
-  const unix = join(root, 'node_modules', '.bin', 'tsx');
-  if (process.platform === 'win32') {
-    const cmd = `${unix}.cmd`;
-    if (existsSync(cmd)) return cmd;
-  }
-  return unix;
+function tsxCli(root: string): string {
+  return join(root, 'node_modules', 'tsx', 'dist', 'cli.mjs');
 }
 
 function runTsx(root: string, args: string[], stdio: 'pipe' | 'inherit' = 'pipe'): string {
-  if (process.platform === 'win32') {
-    const r = spawnSync('npx', ['tsx', ...args], {
-      cwd: root,
-      encoding: 'utf8',
-      shell: true,
-      stdio,
-    });
-    if (r.error) throw r.error;
-    if (r.status !== 0) {
-      throw new Error((r.stderr || r.stdout || `tsx exit ${r.status}`).trim());
-    }
-    return r.stdout ?? '';
+  const cli = tsxCli(root);
+  if (!existsSync(cli)) {
+    throw new Error(`tsx CLI not found at ${cli}`);
   }
-  return execFileSync(localTsxBin(root), args, {
+  return execFileSync(process.execPath, [cli, ...args], {
     encoding: 'utf8',
     cwd: root,
     stdio,
