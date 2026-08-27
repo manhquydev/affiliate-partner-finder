@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { attachProfileTimings } from '../cli/profile-timing';
+import { execCliHelp } from './helpers/cli-exec';
 import { toCSV, toSimpleCSV } from '../lib/export';
 import type { ScanResult } from '../lib/types';
 
@@ -82,11 +83,7 @@ describe('toSimpleCSV unchanged', () => {
 
 describe('CLI --profile-timing', () => {
   it('appears in --help as default OFF', () => {
-    const tsx = join(root, 'node_modules', '.bin', 'tsx');
-    const out = execFileSync(tsx, ['cli/index.ts', '--help'], {
-      encoding: 'utf8',
-      cwd: root,
-    });
+    const out = execCliHelp(root);
     expect(out).toMatch(/--profile-timing\s+Record per-phase timingsMs in JSONL \(default OFF\)/);
   });
 });

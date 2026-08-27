@@ -1,11 +1,10 @@
-import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { assertSafeProfilePath } from '../lib/safe-paths';
+import { execCli } from './helpers/cli-exec';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tsx = join(root, 'node_modules', '.bin', 'tsx');
 
 describe('assertSafeProfilePath', () => {
   it('rejects Chrome User Data', () => {
@@ -21,21 +20,18 @@ describe('assertSafeProfilePath', () => {
 });
 
 describe('CLI --profile guard', () => {
-  it('exits 2 when profile points at User Data', () => {
+  it('exits non-zero when profile points at User Data', () => {
     expect(() =>
-      execFileSync(
-        tsx,
-        [
-          'cli/index.ts',
-          '--query',
-          'test',
-          '--out',
-          '/tmp/apf-cli-guard-out',
-          '--profile',
-          '/home/u/.config/google-chrome/User Data',
-        ],
-        { encoding: 'utf8', cwd: root, stdio: 'pipe' },
-      ),
+      execCli(root, [
+        '--query',
+        'test',
+        '--out',
+        process.platform === 'win32' ? 'C:\\Temp\\apf-cli-guard-out' : '/tmp/apf-cli-guard-out',
+        '--profile',
+        process.platform === 'win32'
+          ? 'C:\\Users\\u\\AppData\\Local\\Google\\Chrome\\User Data'
+          : '/home/u/.config/google-chrome/User Data',
+      ]),
     ).toThrow();
   });
 });

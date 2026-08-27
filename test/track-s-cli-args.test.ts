@@ -1,11 +1,10 @@
-import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { clampProbeBatchSize } from '../lib/probe-batch';
+import { execCliHelp } from './helpers/cli-exec';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tsx = join(root, 'node_modules', '.bin', 'tsx');
 
 describe('clampProbeBatchSize', () => {
   it('clamps to 1..3', () => {
@@ -18,7 +17,7 @@ describe('clampProbeBatchSize', () => {
 
 describe('CLI probe flags (--help)', () => {
   it('documents probe-parallel default OFF', () => {
-    const out = execFileSync(tsx, ['cli/index.ts', '--help'], { encoding: 'utf8', cwd: root });
+    const out = execCliHelp(root);
     expect(out).toMatch(/--probe-parallel\s+Path-probe fetches in parallel batches \(default OFF/);
     expect(out).toMatch(/--probe-batch-size\s+Parallel batch size 1\.\.3/);
   });
