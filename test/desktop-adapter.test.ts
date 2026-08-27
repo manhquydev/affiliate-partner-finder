@@ -228,6 +228,30 @@ describe('desktop adapter', () => {
     expect(args).toContain('--probe-parallel');
   });
 
+  it('win32 omits --probe-parallel by default (desktop checkbox off)', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
+      profile: 'C:\\Users\\a\\AppData\\Local\\affiliate-partner-finder\\chrome-profile',
+      platform: 'win32',
+    });
+    expect(args).not.toContain('--probe-parallel');
+    expect(args).toContain('--scan-profile');
+    expect(args).toContain('--virtual-display');
+  });
+
+  it('win32 passes --probe-parallel when desktop opts in', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
+      profile: 'C:\\Users\\a\\AppData\\Local\\affiliate-partner-finder\\chrome-profile',
+      platform: 'win32',
+      probeParallel: true,
+    });
+    expect(args).toContain('--probe-parallel');
+    expect(args.indexOf('--probe-parallel')).toBeGreaterThan(args.indexOf('--profile'));
+  });
+
   it('win32 always has profile and defaults to --virtual-display (hide Chrome)', () => {
     const args = buildScanArgv({
       query: 'design',

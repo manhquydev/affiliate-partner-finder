@@ -70,7 +70,7 @@ CI: ba workflow GitHub Actions:
 | **Desktop Pack Preview** | Sau CI xanh trên `main`, hoặc dispatch | NSIS/AppImage **artifact** (14 ngày) — dùng Win smoke **trước** tag |
 | **Release Desktop** | Push tag `v*` (sau smoke PASS) | Test Win+Linux → publish [Releases](https://github.com/manhquydev/affiliate-partner-finder/releases) |
 
-Release `v1.0.11` dùng workflow **Release Desktop** (tag `v*`). Release `v1.0.10` đã đóng; smoke sign-off v1.0.10 không áp dụng cho tag mới trừ khi thêm gate tương tự.
+Release `v1.0.11` dùng workflow **Release Desktop** (tag `v*`). Quy trình 3 lớp (automated + CI + Win HITL): [`docs/desktop-release-workflow.md`](./desktop-release-workflow.md). Checklist HITL: [`plans/reports/test-260827-win-smoke-111.md`](../plans/reports/test-260827-win-smoke-111.md).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 

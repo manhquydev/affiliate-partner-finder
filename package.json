@@ -17,6 +17,7 @@
     "track-s:trial": "bash scripts/track-s-trial.sh",
     "track-s:ab": "bash scripts/track-s-ab.sh",
     "test:desktop:e2e": "vitest run --config vitest.e2e.config.ts",
+    "desktop:validate": "bash scripts/desktop-validate.sh",
     "scan": "tsx cli/index.ts",
     "scan:xvfb": "tsx cli/index.ts --virtual-display",
     "cli": "tsx cli/index.ts",

@@ -157,6 +157,14 @@ describe('desktop electron renderer e2e', () => {
     expect(await page!.locator('#probeParallel').isChecked()).toBe(false);
   });
 
+  it('allows toggling probe-parallel independently of hide-chrome', async () => {
+    await page!.locator('#probeParallel').check();
+    expect(await page!.locator('#probeParallel').isChecked()).toBe(true);
+    expect(await page!.locator('#hideChrome').isChecked()).toBe(true);
+    await page!.locator('#probeParallel').uncheck();
+    expect(await page!.locator('#probeParallel').isChecked()).toBe(false);
+  });
+
   it('syncs query from existing out dir progress.json', async () => {
     await page!.evaluate(async (path) => {
       const info = await window.affiliateDesktop.inspectOutDir(path);
