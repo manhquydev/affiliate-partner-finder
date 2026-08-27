@@ -36,12 +36,12 @@ const GOLDEN = {
   'namly.dk': 'none',
   'finnishdesignshop.com': 'none',
   'thorvalddesign.com': 'none',
-  'mohd.it': 'none',
+  'mohd.it': 'partner_trade',
   'pazzodesign.it': 'none',
   'flinders.nl': 'unknown',
 };
 const AFFILIATE_HIGH = ['vecteezy.com', 'nordicnest.se', 'designbyamor.com', 'design-bestseller.de'];
-const NONE_CASES = ['namly.dk', 'finnishdesignshop.com', 'thorvalddesign.com', 'mohd.it', 'pazzodesign.it'];
+const NONE_CASES = ['namly.dk', 'finnishdesignshop.com', 'thorvalddesign.com', 'pazzodesign.it'];
 
 function domainKey(d) {
   return d.replace(/^www\./, '').toLowerCase();

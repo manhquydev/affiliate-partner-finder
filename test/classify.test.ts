@@ -104,9 +104,9 @@ describe('classify() — golden set (docs/07 §2)', () => {
     }
   });
 
-  it('acceptance: 0 false-affiliate on the 5 none cases', () => {
+  it('acceptance: 0 false-affiliate on the 4 none cases', () => {
     const noneCases = GOLDEN_CASES.filter((c) => c.expected.verdict === 'none');
-    expect(noneCases).toHaveLength(5);
+    expect(noneCases).toHaveLength(4);
     for (const c of noneCases) {
       expect(classify(c.input as ClassifyInput).verdict).not.toBe('affiliate');
     }

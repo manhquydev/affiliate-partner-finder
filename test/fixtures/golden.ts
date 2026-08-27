@@ -3,9 +3,10 @@
 //
 // NOTE: test-results.json uses the original manual-testing labels
 // (partner_b2b, confidence "negative"/"medium_negative"). The v1 schema
-// normalizes those to: partner_trade, and 'none' with confidence 'high'
-// (medium/soft cases still resolve to none — see mohd.it). These fixtures encode
-// the AUTHORITATIVE v1 decision-table outcome, not the legacy labels.
+// normalizes those to: partner_trade, and 'none' with confidence 'high'.
+// mohd.it live 2026-08-27 is partner_trade/low (weak trade on /en/); empty-hit
+// none remains namly/finnishdesignshop/thorvald/pazzo. These fixtures encode
+// the AUTHORITATIVE v1 decision-table outcome, not the 2026-08-10 empty-hit capture.
 
 import type { ClassifyInput, Classification } from '../../lib/types';
 
@@ -70,7 +71,7 @@ export const GOLDEN_CASES: GoldenCase[] = [
     expected: { verdict: 'affiliate', confidence: 'high' },
   },
 
-  // --- partner_trade (3) ---
+  // --- partner_trade (4) ---
   {
     domain: 'madeindesign.com', // weak link (professionnel) + weak path
     input: {
@@ -111,9 +112,28 @@ export const GOLDEN_CASES: GoldenCase[] = [
     },
     expected: { verdict: 'partner_trade', confidence: 'low' },
   },
+  {
+    domain: 'mohd.it', // live 2026-08-27: weak trade on English /en/, no path hit
+    input: {
+      loadStatus: 'ok',
+      linkHits: [
+        {
+          text: 'Trade & Professionals',
+          href: 'https://www.mohd.it/en/trade-and-professionals/',
+          kw: ['trade'],
+          platform: [],
+          isStrong: false,
+        },
+      ],
+      platformHits: [],
+      pathHits: [],
+      junkBaselineStatus: 404,
+    },
+    expected: { verdict: 'partner_trade', confidence: 'low' },
+  },
 
-  // --- none (5) ---
-  ...['namly.dk', 'finnishdesignshop.com', 'thorvalddesign.com', 'mohd.it', 'pazzodesign.it'].map(
+  // --- none (4) ---
+  ...['namly.dk', 'finnishdesignshop.com', 'thorvalddesign.com', 'pazzodesign.it'].map(
     (domain): GoldenCase => ({
       domain,
       input: { loadStatus: 'ok', linkHits: [], platformHits: [], pathHits: [], junkBaselineStatus: 404 },
