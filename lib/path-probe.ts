@@ -14,13 +14,18 @@ import type { PathProbeResult, PathHit } from './types';
 /**
  * @param fetchTimeoutMs per-request abort (default 8s).
  * @param parallelBatch when >1, probe paths in parallel batches (default 1 = sequential).
+ * @param budgetMs inner deadline (default 90s). Do not start a new chunk past it.
  */
 export async function pathProbe(
   origin: string,
   paths: string[],
   fetchTimeoutMs = 8000,
   parallelBatch = 1,
+  budgetMs = 90_000,
 ): Promise<PathProbeResult> {
+  const started = Date.now();
+  const slack = Math.min(500, fetchTimeoutMs);
+
   async function timedFetch(url: string): Promise<Response> {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), fetchTimeoutMs);
@@ -44,6 +49,7 @@ export async function pathProbe(
   }
 
   const hits: PathHit[] = [];
+  let incomplete = false;
   const batch = Math.max(1, Math.min(3, Math.trunc(parallelBatch) || 1));
 
   async function probeOne(p: string): Promise<PathHit | null> {
@@ -63,20 +69,17 @@ export async function pathProbe(
     return null;
   }
 
-  if (batch === 1) {
-    for (const p of paths) {
-      const hit = await probeOne(p);
-      if (hit) hits.push(hit);
+  for (let i = 0; i < paths.length; i += batch) {
+    if (Date.now() + slack >= started + budgetMs) {
+      incomplete = true;
+      break;
     }
-  } else {
-    for (let i = 0; i < paths.length; i += batch) {
-      const chunk = paths.slice(i, i + batch);
-      const chunkHits = await Promise.all(chunk.map((p) => probeOne(p)));
-      for (const h of chunkHits) {
-        if (h) hits.push(h);
-      }
+    const chunk = paths.slice(i, i + batch);
+    const chunkHits = await Promise.all(chunk.map((p) => probeOne(p)));
+    for (const h of chunkHits) {
+      if (h) hits.push(h);
     }
   }
 
-  return { junkBaselineStatus: junk, pathHits: hits };
+  return { junkBaselineStatus: junk, pathHits: hits, incomplete };
 }

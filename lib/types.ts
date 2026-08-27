@@ -108,6 +108,8 @@ export interface DetectorResult {
 export interface PathProbeResult {
   junkBaselineStatus: number | 'err';
   pathHits: PathHit[];
+  /** True when inner deadline skipped remaining chunks. Omit/false = full walk. */
+  incomplete?: boolean;
 }
 
 /** Only the fields classify() needs — keeps it a pure function. */

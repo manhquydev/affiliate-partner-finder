@@ -202,10 +202,12 @@ async function scanOnPage(
                 cfg.paths,
                 probeFetchTimeoutMs,
                 probeParallelBatch,
+                probeBudget,
               ),
-              probeBudget,
+              probeBudget + 1000,
               'pathProbe',
             );
+            probeIncomplete = probe.incomplete === true;
           } catch {
             probe = undefined;
             probeIncomplete = true;
@@ -228,14 +230,15 @@ async function scanOnPage(
       ...(networkEvidence ? { networkHits } : {}),
     };
 
-    // Incomplete probe + no homepage signals ⇒ unknown (not confident false).
-    // Otherwise path-only programs become ket_qua=false when the probe times out.
+    // Incomplete + empty pathHits + no homepage ⇒ unknown (not confident none).
+    // Incomplete with pathHits: keep hits and classify (recall). Not stop-on-hit.
     const hasHomepageSignal =
       (evidence.linkHits?.length ?? 0) > 0 ||
       (evidence.platformHits?.length ?? 0) > 0 ||
       (networkEvidence && networkHits.length > 0);
+    const emptyIncomplete = probeIncomplete && (evidence.pathHits?.length ?? 0) === 0;
     const loadStatus =
-      probeIncomplete && !hasHomepageSignal && det.loadStatus === 'ok' ? 'timeout' : det.loadStatus;
+      emptyIncomplete && !hasHomepageSignal && det.loadStatus === 'ok' ? 'timeout' : det.loadStatus;
 
     const cls = classify({
       loadStatus,
