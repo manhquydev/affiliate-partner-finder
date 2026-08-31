@@ -1,6 +1,6 @@
 {
   "name": "affiliate-partner-finder",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Chrome MV3 extension: find affiliate/partner programs of Trustpilot companies with evidence.",
   "private": true,
   "type": "module",
@@ -11,7 +11,8 @@
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
     "test": "vitest run",
-    "test:track-s": "vitest run test/profile-timing.test.ts test/path-probe.test.ts test/track-s-cli-args.test.ts test/track-s-ab-guard.test.ts test/track-s-cohort.test.ts test/track-s-compare.test.ts",
+    "test:track-s": "vitest run test/cli-browser-isolation.test.ts test/profile-timing.test.ts test/path-probe.test.ts test/track-s-cli-args.test.ts test/track-s-ab-guard.test.ts test/track-s-cohort.test.ts test/track-s-compare.test.ts test/cli-scan-stagger.test.ts test/cli-nav-failure.test.ts test/detector-precision-trade.test.ts test/cli-profile-lock.test.ts test/windows-parity.test.ts test/hide-chrome-window.test.ts",
+    "test:windows-parity": "bash scripts/windows-parity.sh",
     "track-s:build-cohort": "node scripts/build-track-s-cohort.mjs",
     "track-s:build-micro": "node scripts/build-track-s-micro.mjs",
     "track-s:trial": "bash scripts/track-s-trial.sh",

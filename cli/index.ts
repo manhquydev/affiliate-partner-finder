@@ -14,6 +14,8 @@ import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSe
 import { shouldHideChromeWindows } from './hide-chrome-window';
 import { collectCli } from './collect';
 import { scanWithRetry } from './scan';
+import { firstWaveStaggerMs } from './scan-stagger';
+import { BrowserDeadError } from './nav-failure';
 import { isUnderVirtualDisplay, maybeReexecUnderXvfb } from './virtual-display';
 
 type Args = {
@@ -402,20 +404,29 @@ async function main(): Promise<number> {
       pending.map((company, i) =>
         limit(async () => {
           if (disconnectFatal || stopRequested) return;
-          // Start stagger so first wave doesn't blast all navigations at t=0
-          await sleep(i * Math.min(args.delayMs, 500));
+          // First wave only — i * delay over pending=200 was STAGGER_WALL (~5000s).
+          await sleep(firstWaveStaggerMs(i, args.concurrency, args.delayMs));
           if (disconnectFatal || stopRequested) return;
           const websiteUrl = await resolveWebsite(company.domain, run.resolveViaReviewPage);
           console.log(`[cli] scan ${company.domain} → ${websiteUrl}`);
-          const result = await scanWithRetry(session, company, websiteUrl, run, CONFIG, {
-            earlyExit: args.earlyExit,
-            lazySettle: args.lazySettle,
-            networkEvidence: args.networkEvidence,
-            profileTiming: args.profileTiming,
-            probeParallelBatch: args.probeParallel ? args.probeBatchSize : 1,
-          });
-          await enqueueWrite(result);
-          console.log(`[cli] done ${company.domain} ${result.verdict}/${result.confidence} (${result.loadStatus})`);
+          try {
+            const result = await scanWithRetry(session, company, websiteUrl, run, CONFIG, {
+              earlyExit: args.earlyExit,
+              lazySettle: args.lazySettle,
+              networkEvidence: args.networkEvidence,
+              profileTiming: args.profileTiming,
+              probeParallelBatch: args.probeParallel ? args.probeBatchSize : 1,
+            });
+            await enqueueWrite(result);
+            console.log(`[cli] done ${company.domain} ${result.verdict}/${result.confidence} (${result.loadStatus})`);
+          } catch (e) {
+            if (e instanceof BrowserDeadError) {
+              disconnectFatal = true;
+              console.error('[cli] scan browser disconnected');
+              return;
+            }
+            throw e;
+          }
         }),
       ),
     );

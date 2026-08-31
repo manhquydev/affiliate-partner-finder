@@ -7,6 +7,7 @@ Quy trình **3 lớp** trước khi giao NSIS/AppImage cho khách hoặc đánh 
 | Lớp | Ai chạy | Mục tiêu | Pass khi |
 |-----|---------|----------|----------|
 | **A — Automated** | Dev / CI | Regression unit + e2e + argv win32 | `npm run desktop:validate` exit 0 |
+| **A2 — Windows-parity** | Dev / CI `windows-latest` | Hợp đồng sát NSIS: hide-chrome, LOCALAPPDATA, `shell:false`, e2e Win | `npm run test:windows-parity` exit 0 |
 | **B — CI Release** | GitHub Actions | Build Win+Linux, e2e trên runner | Workflow `Release Desktop` success |
 | **C — HITL Win VM** | Người vận hành | UX thật, SmartScreen, CSV, probe-parallel | Checklist `- Result: PASS` |
 
@@ -26,9 +27,11 @@ Chạy:
 2. `npm run test:track-s`
 3. `npm run test:desktop:e2e` (xvfb trên Linux nếu có)
 4. Invariant: `#probeParallel` **không** `checked` trong HTML
-5. Subset `win32` argv tests
+5. `scripts/windows-parity.sh` (compile cứng + hide-chrome win32 + đường dẫn / argv)
 
 **Khi nào chạy:** sau mỗi thay đổi desktop/CLI scan; trước PR; trước Lớp C.
+
+Chi tiết A2: [`docs/windows-parity.md`](./windows-parity.md).
 
 ---
 

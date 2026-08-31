@@ -31,15 +31,8 @@ if ! grep -q 'id="probeParallel"' desktop/renderer/index.html; then
   exit 1
 fi
 
-echo "-- win32 argv simulation --"
-npm test -- test/desktop-adapter.test.ts -t "win32"
-
-echo "-- compile (advisory) --"
-if npm run compile 2>/dev/null; then
-  echo "tsc: green"
-else
-  echo "WARN: npm run compile failed (known debt — not a desktop-validate blocker)" >&2
-fi
+echo "-- windows-parity (win32 contracts) --"
+bash "$ROOT/scripts/windows-parity.sh"
 
 echo ""
 echo "PASS desktop-validate — safe for CI pack preview / Win HITL checklist"

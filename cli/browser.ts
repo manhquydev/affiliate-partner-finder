@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { hideChromeWindowArgs, hidePlaywrightWindows } from './hide-chrome-window';
+import { waitUntilProfileUnlocked } from './profile-lock';
 
 export const DEFAULT_PROFILE_DIR = join(homedir(), '.cache', 'affiliate-partner-finder', 'chrome-profile');
 
@@ -56,6 +57,10 @@ export async function launchPersistentCollect(
   opts?: { hideWindows?: boolean },
 ): Promise<BrowserHandle> {
   mkdirSync(profileDir, { recursive: true });
+  const unlocked = await waitUntilProfileUnlocked(profileDir);
+  if (!unlocked) {
+    console.warn(`[cli] profile still locked after wait: ${profileDir}`);
+  }
   const hideWindows = Boolean(opts?.hideWindows);
   const common = headedContextOptions(hideWindows);
   try {
@@ -120,7 +125,12 @@ export async function launchScanSession(opts: {
   const headed = Boolean(opts.headed);
   const hideWindows = Boolean(headed && opts.hideWindows);
   if (opts.profileDir) {
-    mkdirSync(opts.profileDir, { recursive: true });
+    const profileDir = opts.profileDir;
+    mkdirSync(profileDir, { recursive: true });
+    const unlocked = await waitUntilProfileUnlocked(profileDir);
+    if (!unlocked) {
+      console.warn(`[cli] scan-profile still locked after wait: ${profileDir}`);
+    }
     let context: BrowserContext;
     const common = {
       headless: !headed,
@@ -128,7 +138,7 @@ export async function launchScanSession(opts: {
       ...(hideWindows ? { args: hideChromeWindowArgs() } : {}),
     };
     try {
-      context = await chromium.launchPersistentContext(opts.profileDir, {
+      context = await chromium.launchPersistentContext(profileDir, {
         channel: 'chrome',
         ...common,
       });
@@ -136,7 +146,7 @@ export async function launchScanSession(opts: {
       console.warn(
         `[cli] system Chrome launch failed for scan-profile (${e instanceof Error ? e.message.split('\n')[0] : e}) — bundled Chromium`,
       );
-      context = await chromium.launchPersistentContext(opts.profileDir, common);
+      context = await chromium.launchPersistentContext(profileDir, common);
     }
     if (hideWindows) await hidePlaywrightWindows(context);
     // Keep at least one window open — closing the last Chrome window exits the
@@ -149,7 +159,7 @@ export async function launchScanSession(opts: {
     }
     return {
       mode: 'profile',
-      profileDir: opts.profileDir,
+      profileDir,
       openPage: async () => ({ page: await context.newPage() }),
       bindDisconnect: (fn) => {
         context.on('close', fn);
@@ -159,6 +169,8 @@ export async function launchScanSession(opts: {
           await closeQuietly(p, DEFAULT_CLOSE_TIMEOUT_MS);
         }
         await closeQuietly(context, DEFAULT_CLOSE_TIMEOUT_MS);
+        const idle = await waitUntilProfileUnlocked(profileDir, 15_000);
+        if (!idle) console.warn(`[cli] profile handoff: lock still present ${profileDir}`);
       },
     };
   }

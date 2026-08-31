@@ -2,9 +2,9 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản mã nguồn (`main`):** `1.0.11`.
+**Phiên bản mã nguồn (`main`):** `1.0.12`.
 
-**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** **`v1.0.11`** (Latest) — NSIS + AppImage + `.deb`.
+**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** **`v1.0.12`** (Latest) — NSIS + AppImage + `.deb`.
 
 ## Yêu cầu
 
@@ -15,7 +15,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag **Latest** (`v1.0.11`)
+2. Chọn tag **Latest** (`v1.0.12`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
@@ -27,7 +27,7 @@ Trước khi có tag trên Releases, tải installer từ **GitHub Actions**:
 
 1. [Actions](https://github.com/manhquydev/affiliate-partner-finder/actions) → workflow **Desktop Pack Preview** (chạy tự sau **CI** xanh trên `main`, hoặc **Run workflow** thủ công).
 2. Mở run → **Artifacts** → `desktop-win-preview` (NSIS `.exe`).
-3. Dùng file này cho checklist `plans/reports/test-260826-win-smoke-110.md`. **Không** thay thế tag/release chính thức.
+3. Dùng file này cho checklist `plans/reports/test-260831-win-smoke-112.md`. **Không** thay thế tag/release chính thức.
 
 ## Dev (máy lập trình)
 
@@ -70,7 +70,7 @@ CI: ba workflow GitHub Actions:
 | **Desktop Pack Preview** | Sau CI xanh trên `main`, hoặc dispatch | NSIS/AppImage **artifact** (14 ngày) — dùng Win smoke **trước** tag |
 | **Release Desktop** | Push tag `v*` (sau smoke PASS) | Test Win+Linux → publish [Releases](https://github.com/manhquydev/affiliate-partner-finder/releases) |
 
-Release `v1.0.11` dùng workflow **Release Desktop** (tag `v*`). Quy trình 3 lớp (automated + CI + Win HITL): [`docs/desktop-release-workflow.md`](./desktop-release-workflow.md). Checklist HITL: [`plans/reports/test-260827-win-smoke-111.md`](../plans/reports/test-260827-win-smoke-111.md).
+Release `v1.0.12` dùng workflow **Release Desktop** (tag `v*`). Quy trình: A + **A2 Windows-parity** + B + C — [`docs/desktop-release-workflow.md`](./desktop-release-workflow.md), [`docs/windows-parity.md`](./windows-parity.md). Checklist HITL: [`plans/reports/test-260831-win-smoke-112.md`](../plans/reports/test-260831-win-smoke-112.md).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 

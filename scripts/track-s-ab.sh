@@ -45,6 +45,8 @@ npm run scan -- --resume --out "$CONTROL_OUT" --query track-s-benchmark --scan-p
   --accept-failures --concurrency 2 "${SCAN_EXTRA[@]}"
 CONTROL_SEC=$(( $(date +%s) - CONTROL_START ))
 echo "[track-s] CONTROL done in ${CONTROL_SEC}s"
+echo "[track-s] profile handoff wait (same --scan-profile after control close)"
+sleep 5
 
 node scripts/seed-track-s-companies.mjs "$COHORT" "$TREATMENT_OUT"
 echo "[track-s] TREATMENT (--probe-parallel) → $TREATMENT_OUT"

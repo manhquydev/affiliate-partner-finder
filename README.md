@@ -51,6 +51,8 @@ npm install
 npm run desktop:dev
 ```
 
+**v1.0.12:** Windows-parity gate (`npm run test:windows-parity` + CI `windows-latest`); stagger/nav-failure/profile-lock; `trade` word-boundary. **Quét đường dẫn song song** vẫn mặc định tắt. Xem `docs/windows-parity.md`.
+
 **v1.0.11:** **Quét đường dẫn song song** (opt-in, mặc định tắt) — fetch path-probe theo lô ≤3; sửa isolation profile (`newPage` mỗi công ty); CLI từ chối `--profile` trỏ User Data Chrome; goto `domcontentloaded` tránh treo Xvfb. Throughput directional A/B: **+37.6%** trên cohort n=61, 0 regression — xem `plans/reports/metrics-track-s-ab.md`.
 
 **v1.0.10:** Mở CSV / Mở thư mục job theo job đang chọn; xem job khác khi đang quét (banner live); Start/Resume đọc `#out` sau sync; idle không snap selection khi đã browse away.

@@ -6,7 +6,6 @@ describe('shouldSkipPathProbe', () => {
     expect(
       shouldSkipPathProbe({
         loadStatus: 'ok',
-        totalLinks: 10,
         linkHits: [{ text: 'Affiliate', href: '/aff', kw: ['affiliate'], platform: [], isStrong: true }],
         platformHits: [],
       }),
@@ -17,7 +16,6 @@ describe('shouldSkipPathProbe', () => {
     expect(
       shouldSkipPathProbe({
         loadStatus: 'ok',
-        totalLinks: 10,
         linkHits: [],
         platformHits: ['shareasale.com'],
       }),
@@ -28,7 +26,6 @@ describe('shouldSkipPathProbe', () => {
     expect(
       shouldSkipPathProbe({
         loadStatus: 'ok',
-        totalLinks: 10,
         linkHits: [{ text: 'Partner', href: '/p', kw: ['partner'], platform: [], isStrong: false }],
         platformHits: [],
       }),
@@ -36,7 +33,6 @@ describe('shouldSkipPathProbe', () => {
     expect(
       shouldSkipPathProbe({
         loadStatus: 'blocked',
-        totalLinks: 0,
         linkHits: [],
         platformHits: [],
       }),

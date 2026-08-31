@@ -82,7 +82,12 @@ export function runDetector(cfg: DetectorConfig): DetectorResult {
     const lh = a.h.toLowerCase();
     const host = hostOf(a.h);
     const ks = strong.filter((k) => lt.includes(k) || lh.includes(k));
-    const kw = weak.filter((k) => lt.includes(k) || lh.includes(k));
+    // `trade` is word-bounded so href `...trader.register` (EU ODR) is not a hit.
+    // Hyphen/slash still match: /pages/trade, /trade-commercial/, trade-and-professionals.
+    const kw = weak.filter((k) => {
+      if (k === 'trade') return /\btrade\b/i.test(lt) || /\btrade\b/i.test(lh);
+      return lt.includes(k) || lh.includes(k);
+    });
     const plat = platforms.filter((p) => isPlatformHost(host, p));
 
     for (const p of plat) {

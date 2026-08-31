@@ -10,6 +10,16 @@ import { _electron as electron } from 'playwright';
 import type { ElectronApplication, Page } from 'playwright';
 import { defaultDesktopRunsDir } from '../desktop/build-scan-argv.ts';
 
+declare global {
+  interface Window {
+    affiliateDesktop: {
+      inspectOutDir: (path: string) => Promise<{ query?: string } | null>;
+      openCsv: (out: string) => Promise<unknown>;
+      openOutDir: (out: string) => Promise<{ ok?: boolean } | null>;
+    };
+  }
+}
+
 const repoRoot = join(import.meta.dirname, '..');
 const E2E_TIMEOUT_MS = 120_000;
 
@@ -168,8 +178,8 @@ describe('desktop electron renderer e2e', () => {
   it('syncs query from existing out dir progress.json', async () => {
     await page!.evaluate(async (path) => {
       const info = await window.affiliateDesktop.inspectOutDir(path);
-      document.getElementById('out').value = path;
-      if (info?.query) document.getElementById('query').value = info.query;
+      (document.getElementById('out') as HTMLInputElement).value = path;
+      if (info?.query) (document.getElementById('query') as HTMLInputElement).value = info.query;
     }, fixtureOut);
     expect(await page!.locator('#query').inputValue()).toBe('vpn');
   });
@@ -216,6 +226,7 @@ describe('desktop electron renderer e2e', () => {
     };
     await app!.evaluate(({ BrowserWindow }, payload) => {
       const win = BrowserWindow.getAllWindows()[0];
+      if (!win) throw new Error('no BrowserWindow');
       win.webContents.send('desktop:status', payload);
     }, runningStatus);
 
@@ -247,6 +258,7 @@ describe('desktop electron renderer e2e', () => {
 
     await app!.evaluate(({ BrowserWindow }, payload) => {
       const win = BrowserWindow.getAllWindows()[0];
+      if (!win) throw new Error('no BrowserWindow');
       win.webContents.send('desktop:status', payload);
     }, {
       state: 'idle',

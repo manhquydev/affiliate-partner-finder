@@ -38,7 +38,7 @@ function sample(partial: Partial<ScanResult> & Pick<ScanResult, 'domain' | 'load
     websiteUrl: `https://${partial.domain}`,
     finalUrl: `https://${partial.domain}`,
     confidence: 'high',
-    evidence: { linkHits: [], platformHits: [], pathHits: [] },
+    evidence: { linkHits: [], platformHits: [], pathHits: [], junkBaselineStatus: null },
     scannedAt: new Date().toISOString(),
     detectorVersion: 'test',
     name: partial.domain,
@@ -352,6 +352,15 @@ describe('desktop adapter', () => {
     ).toThrow(/User Data/);
   });
 
+  it('assertSafeJobPaths rejects Windows Chrome User Data', () => {
+    expect(() =>
+      assertSafeJobPaths({
+        out: 'C:\\Users\\a\\Documents\\AffiliatePartnerFinder\\runs\\r1',
+        profile: 'C:\\Users\\a\\AppData\\Local\\Google\\Chrome\\User Data',
+      }),
+    ).toThrow(/User Data/);
+  });
+
   it('assertSafeJobPaths enforces out root', () => {
     expect(() =>
       assertSafeJobPaths({
@@ -391,9 +400,10 @@ describe('desktop adapter', () => {
       loadStatus: 'ok',
       verdict: 'affiliate',
       evidence: {
-        linkHits: [{ href: 'https://x', text: 'affiliate', kw: ['affiliate'] }],
+        linkHits: [{ href: 'https://x', text: 'affiliate', kw: ['affiliate'], platform: [], isStrong: true }],
         platformHits: [],
         pathHits: [],
+        junkBaselineStatus: null,
       },
     });
     writeFileSync(
@@ -509,7 +519,7 @@ describe('JobSupervisor failure surfacing', () => {
       fs.writeFileSync(out + '/results.jsonl', JSON.stringify({
         domain: 'acme.com', name: 'Acme', websiteUrl: 'https://acme.com', finalUrl: 'https://acme.com',
         loadStatus: 'ok', verdict: 'none', confidence: 'high',
-        evidence: { linkHits: [], platformHits: [], pathHits: [] },
+        evidence: { linkHits: [], platformHits: [], pathHits: [], junkBaselineStatus: null },
         scannedAt: new Date().toISOString(), detectorVersion: 'test',
       }) + '\\n');
     `);

@@ -34,7 +34,7 @@ export function readTrustpilotSearch(): SearchReadResult {
       'captcha',
       'verification',
     ].some((s) => title.includes(s));
-  if (!hasNextData) return { challenged, currentPage: null, totalPages: null, units: [] };
+  if (!hasNextData || !el?.textContent) return { challenged, currentPage: null, totalPages: null, units: [] };
   try {
     const data = JSON.parse(el.textContent) as {
       props?: {

@@ -14,6 +14,7 @@ import {
 } from './browser';
 import { evaluateInjectable } from './injectable';
 import { attachProfileTimings } from './profile-timing';
+import { BrowserDeadError, classifyNavFailure } from './nav-failure';
 import type {
   Company,
   ScanResult,
@@ -134,9 +135,13 @@ async function scanOnPage(
     const t0 = mark();
     try {
       await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: run.tabTimeoutMs });
-    } catch {
-      result.loadStatus = 'timeout';
-      Object.assign(result, classify({ loadStatus: 'timeout' }));
+    } catch (e) {
+      const kind = classifyNavFailure(e);
+      if (kind === 'dead') {
+        throw new BrowserDeadError(e instanceof Error ? e.message : String(e));
+      }
+      result.loadStatus = kind === 'timeout' ? 'timeout' : 'error';
+      Object.assign(result, classify({ loadStatus: result.loadStatus }));
       return result;
     } finally {
       if (profileTiming) tGoto = Date.now() - t0;
@@ -286,10 +291,11 @@ export async function scanOneCli(
     page = opened.page;
     ownedContext = opened.context;
     return await withTimeout(scanOnPage(page, company, websiteUrl, run, cfg, opts), budget, `scanOne(${company.domain})`);
-  } catch {
+  } catch (e) {
+    if (e instanceof BrowserDeadError) throw e;
     const result = baseResult(company, websiteUrl, cfg.detectorVersion);
-    result.loadStatus = 'timeout';
-    Object.assign(result, classify({ loadStatus: 'timeout' }));
+    result.loadStatus = classifyNavFailure(e) === 'timeout' ? 'timeout' : 'error';
+    Object.assign(result, classify({ loadStatus: result.loadStatus }));
     attachProfileTimings(result, profileTiming, startedAt, {
       goto: 0,
       settle: 0,

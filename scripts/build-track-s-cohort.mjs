@@ -62,8 +62,7 @@ function loadSources() {
     }
   }
 
-  // Golden domains from fixtures (static list aligned with test/fixtures/golden.ts)
-  for (const domain of [
+  const GOLDEN_DOMAINS = [
     'vecteezy.com',
     'nordicnest.se',
     'designbyamor.com',
@@ -74,10 +73,11 @@ function loadSources() {
     'flinders.nl',
     'mohd.it',
     'finnishdesignshop.com',
-    'lehtodesign.com',
     'namly.dk',
-    'nordicnest.com',
-  ]) {
+    'thorvalddesign.com',
+    'pazzodesign.it',
+  ];
+  for (const domain of GOLDEN_DOMAINS) {
     merged.push(companyFromPartial({ domain, name: domain }, merged.length));
   }
 
@@ -86,8 +86,40 @@ function loadSources() {
   return { companies, source };
 }
 
+function isPadDomain(domain) {
+  return /\.invalid$/i.test(domain) || /track-s-pad-/i.test(domain);
+}
+
 const { companies: raw, source } = loadSources();
-let companies = dedupeCompanies(raw).slice(0, TARGET);
+let companies = dedupeCompanies(raw).filter((c) => !isPadDomain(c.domain));
+
+const goldenDomains = new Set([
+  'vecteezy.com',
+  'nordicnest.se',
+  'designbyamor.com',
+  'design-bestseller.de',
+  'madeindesign.com',
+  'williamwoodmirrors.co.uk',
+  'ozdesignfurniture.com.au',
+  'flinders.nl',
+  'mohd.it',
+  'finnishdesignshop.com',
+  'namly.dk',
+  'thorvalddesign.com',
+  'pazzodesign.it',
+]);
+for (const domain of goldenDomains) {
+  if (!companies.some((c) => c.domain.toLowerCase() === domain)) {
+    companies.unshift(companyFromPartial({ domain, name: domain }, companies.length));
+  }
+}
+companies = dedupeCompanies(companies);
+while (companies.length > TARGET) {
+  const idx = companies.findLastIndex((c) => !goldenDomains.has(c.domain.toLowerCase()));
+  if (idx < 0) break;
+  companies.splice(idx, 1);
+}
+companies = companies.slice(0, TARGET);
 const directional = companies.length < TARGET;
 
 const manifest = {
@@ -101,7 +133,11 @@ const manifest = {
 
 writeFileSync(OUT, JSON.stringify(manifest, null, 2));
 console.log(JSON.stringify({ out: OUT, n: companies.length, directional, source }, null, 2));
+if (companies.some((c) => isPadDomain(c.domain))) {
+  console.error(`ERROR: cohort contains padded domains — reject`);
+  process.exit(1);
+}
 if (directional) {
   console.warn(`WARN: cohort has ${companies.length}<${TARGET} — metrics must banner DIRECTIONAL`);
-  process.exit(0);
+  process.exit(1);
 }

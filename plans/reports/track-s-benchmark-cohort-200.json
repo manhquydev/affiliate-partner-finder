@@ -1,394 +1,16 @@
 {
-  "created": "2026-08-26T12:22:30.161Z",
-  "source": "track-a-ab + track-a-none-ok + golden domains",
-  "n": 61,
+  "created": "2026-08-27T10:09:49.945Z",
+  "source": "out/design-pilot-200/companies.json",
+  "n": 200,
   "target": 200,
-  "directional": true,
+  "directional": false,
   "companies": [
     {
-      "name": "Lezze Design",
-      "domain": "lezzedesign.com",
-      "trustScore": 3.3,
-      "reviews": 48,
-      "trustpilotUrl": "https://www.trustpilot.com/review/lezzedesign.com"
-    },
-    {
-      "name": "Design Guy Studio",
-      "domain": "designguystudio.com",
-      "trustScore": 4.6,
-      "reviews": 18,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designguystudio.com"
-    },
-    {
-      "name": "Design People LLC",
-      "domain": "designpple.com",
-      "trustScore": 4,
-      "reviews": 3,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designpple.com"
-    },
-    {
-      "name": "LM Design",
-      "domain": "lm-design-solutions.de",
-      "trustScore": 4,
-      "reviews": 3,
-      "trustpilotUrl": "https://www.trustpilot.com/review/lm-design-solutions.de"
-    },
-    {
-      "name": "Ela Design",
-      "domain": "eladesign.io",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/eladesign.io"
-    },
-    {
-      "name": "OLCO Design",
-      "domain": "olcodesign.com",
-      "trustScore": 4.6,
-      "reviews": 19,
-      "trustpilotUrl": "https://www.trustpilot.com/review/olcodesign.com"
-    },
-    {
-      "name": "Design for change",
-      "domain": "learn.thedesignforchange.com",
-      "trustScore": 3.7,
-      "reviews": 31,
-      "trustpilotUrl": "https://www.trustpilot.com/review/learn.thedesignforchange.com"
-    },
-    {
-      "name": "Jerry Castillo - Web Design",
-      "domain": "jerrycastillo.net",
-      "trustScore": 4,
-      "reviews": 4,
-      "trustpilotUrl": "https://www.trustpilot.com/review/jerrycastillo.net"
-    },
-    {
-      "name": "Reboot Repairs and Design",
-      "domain": "www.rebootrepairs.co.uk",
-      "trustScore": 4.8,
-      "reviews": 41,
-      "trustpilotUrl": "https://www.trustpilot.com/review/www.rebootrepairs.co.uk"
-    },
-    {
-      "name": "WebSwift USA",
-      "domain": "webswiftusa.com",
-      "trustScore": 4.2,
-      "reviews": 6,
-      "trustpilotUrl": "https://www.trustpilot.com/review/webswiftusa.com"
-    },
-    {
-      "name": "JMSPlanet Design and Creative IT Solution",
-      "domain": "www.jmsplanet.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/www.jmsplanet.com"
-    },
-    {
-      "name": "Risom Design",
-      "domain": "www.risomdesign.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/www.risomdesign.com"
-    },
-    {
-      "name": "fulupdesign",
-      "domain": "design.filipccz.eu",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/design.filipccz.eu"
-    },
-    {
-      "name": "Designkoti.com",
-      "domain": "designkoti.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designkoti.com"
-    },
-    {
-      "name": "DesignsOutlet",
-      "domain": "designsoutlet.co.uk",
-      "trustScore": 4.4,
-      "reviews": 11,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designsoutlet.co.uk"
-    },
-    {
-      "name": "Andreas Jonsson Böcker",
-      "domain": "designbyandreas.se",
-      "trustScore": 4.8,
-      "reviews": 55,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designbyandreas.se"
-    },
-    {
-      "name": "Modeplan Designer Boutique",
-      "domain": "modeplan.eu",
-      "trustScore": 4.9,
-      "reviews": 191,
-      "trustpilotUrl": "https://www.trustpilot.com/review/modeplan.eu"
-    },
-    {
-      "name": "Dentist Web Designs",
-      "domain": "dentistwebdesigns.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/dentistwebdesigns.com"
-    },
-    {
-      "name": "Wall Designers",
-      "domain": "walldesigners.fr",
-      "trustScore": 1.4,
-      "reviews": 74,
-      "trustpilotUrl": "https://www.trustpilot.com/review/walldesigners.fr"
-    },
-    {
-      "name": "$149 Website Design",
-      "domain": "149websitedesign.com",
-      "trustScore": 4.8,
-      "reviews": 65,
-      "trustpilotUrl": "https://www.trustpilot.com/review/149websitedesign.com"
-    },
-    {
-      "name": "Thackeray Design",
-      "domain": "thackeraydesign.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/thackeraydesign.com"
-    },
-    {
-      "name": "Nobound Design",
-      "domain": "nobound.design",
-      "trustScore": 4.1,
-      "reviews": 5,
-      "trustpilotUrl": "https://www.trustpilot.com/review/nobound.design"
-    },
-    {
-      "name": "Hakonsen Design",
-      "domain": "hakonsen-design.dk",
-      "trustScore": 3.8,
-      "reviews": 2,
-      "trustpilotUrl": "https://www.trustpilot.com/review/hakonsen-design.dk"
-    },
-    {
-      "name": "Design Print Shop",
-      "domain": "designprintshop.co.uk",
-      "trustScore": 4.3,
-      "reviews": 12,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designprintshop.co.uk"
-    },
-    {
-      "name": "1079 Design Studio",
-      "domain": "1079designstudio.ie",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/1079designstudio.ie"
-    },
-    {
-      "name": "Designwarm",
-      "domain": "www.designwarm.com",
-      "trustScore": 4.1,
-      "reviews": 5,
-      "trustpilotUrl": "https://www.trustpilot.com/review/www.designwarm.com"
-    },
-    {
-      "name": "Design Renovation & Build Team Ltd",
-      "domain": "drb.team",
-      "trustScore": 4.1,
-      "reviews": 5,
-      "trustpilotUrl": "https://www.trustpilot.com/review/drb.team"
-    },
-    {
-      "name": "RAD Digital Marketing",
-      "domain": "rad.im",
-      "trustScore": 4,
-      "reviews": 3,
-      "trustpilotUrl": "https://www.trustpilot.com/review/rad.im"
-    },
-    {
-      "name": "Bartian Creative",
-      "domain": "bartiancreative.com",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/bartiancreative.com"
-    },
-    {
-      "name": "DigitalSpongeLLC",
-      "domain": "digitalsponge.us",
-      "trustScore": 4.6,
-      "reviews": 18,
-      "trustpilotUrl": "https://www.trustpilot.com/review/digitalsponge.us"
-    },
-    {
-      "name": "Zapp Solutions - Web Design for Local Business",
-      "domain": "zappsolutions.co.uk",
-      "trustScore": 3.7,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/zappsolutions.co.uk"
-    },
-    {
-      "name": "Designporte",
-      "domain": "designporte.dk",
-      "trustScore": 2.8,
-      "reviews": 3,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designporte.dk"
-    },
-    {
-      "name": "Eltezza Ltd",
-      "domain": "eltezza.com",
-      "trustScore": 4.3,
-      "reviews": 7,
-      "trustpilotUrl": "https://www.trustpilot.com/review/eltezza.com"
-    },
-    {
-      "name": "Northside Pixel",
-      "domain": "northsidepixel.com",
-      "trustScore": 3.8,
-      "reviews": 2,
-      "trustpilotUrl": "https://www.trustpilot.com/review/northsidepixel.com"
-    },
-    {
-      "name": "Byjohanna",
-      "domain": "byjohanna.de",
-      "trustScore": 3.2,
-      "reviews": 1,
-      "trustpilotUrl": "https://www.trustpilot.com/review/byjohanna.de"
-    },
-    {
-      "name": "Syber Design",
-      "domain": "syberdesign.com",
-      "trustScore": 3.8,
-      "reviews": 2,
-      "trustpilotUrl": "https://www.trustpilot.com/review/syberdesign.com"
-    },
-    {
-      "name": "Magna Design",
-      "domain": "magna-design.dk",
-      "trustScore": 3.8,
-      "reviews": 5,
-      "trustpilotUrl": "https://www.trustpilot.com/review/magna-design.dk"
-    },
-    {
-      "name": "iDeen design",
-      "domain": "ideen.fr",
-      "trustScore": 4.2,
-      "reviews": 6,
-      "trustpilotUrl": "https://www.trustpilot.com/review/ideen.fr"
-    },
-    {
-      "name": "Nordisk Gravering & Design",
-      "domain": "nordiskgravering.se",
-      "trustScore": 3.8,
-      "reviews": 2,
-      "trustpilotUrl": "https://www.trustpilot.com/review/nordiskgravering.se"
-    },
-    {
-      "name": "Mollura Home Design",
-      "domain": "shop.mohd.it",
-      "trustScore": 3.8,
-      "reviews": 2,
-      "trustpilotUrl": "https://www.trustpilot.com/review/shop.mohd.it"
-    },
-    {
-      "name": "Benchmark 81",
-      "domain": "vecteezy.com",
+      "name": "mohd.it",
+      "domain": "mohd.it",
       "trustScore": null,
       "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/vecteezy.com"
-    },
-    {
-      "name": "Benchmark 82",
-      "domain": "creativemarket.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/creativemarket.com"
-    },
-    {
-      "name": "Benchmark 83",
-      "domain": "envato.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/envato.com"
-    },
-    {
-      "name": "Benchmark 84",
-      "domain": "canva.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/canva.com"
-    },
-    {
-      "name": "Benchmark 85",
-      "domain": "figma.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/figma.com"
-    },
-    {
-      "name": "Benchmark 86",
-      "domain": "dribbble.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/dribbble.com"
-    },
-    {
-      "name": "Benchmark 87",
-      "domain": "behance.net",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/behance.net"
-    },
-    {
-      "name": "Benchmark 88",
-      "domain": "99designs.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/99designs.com"
-    },
-    {
-      "name": "Benchmark 89",
-      "domain": "designmodo.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designmodo.com"
-    },
-    {
-      "name": "nordicnest.se",
-      "domain": "nordicnest.se",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/nordicnest.se"
-    },
-    {
-      "name": "designbyamor.com",
-      "domain": "designbyamor.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/designbyamor.com"
-    },
-    {
-      "name": "design-bestseller.de",
-      "domain": "design-bestseller.de",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/design-bestseller.de"
-    },
-    {
-      "name": "madeindesign.com",
-      "domain": "madeindesign.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/madeindesign.com"
-    },
-    {
-      "name": "williamwoodmirrors.co.uk",
-      "domain": "williamwoodmirrors.co.uk",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/williamwoodmirrors.co.uk"
-    },
-    {
-      "name": "ozdesignfurniture.com.au",
-      "domain": "ozdesignfurniture.com.au",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/ozdesignfurniture.com.au"
+      "trustpilotUrl": "https://www.trustpilot.com/review/mohd.it"
     },
     {
       "name": "flinders.nl",
@@ -398,39 +20,1390 @@
       "trustpilotUrl": "https://www.trustpilot.com/review/flinders.nl"
     },
     {
-      "name": "mohd.it",
-      "domain": "mohd.it",
+      "name": "williamwoodmirrors.co.uk",
+      "domain": "williamwoodmirrors.co.uk",
       "trustScore": null,
       "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/mohd.it"
+      "trustpilotUrl": "https://www.trustpilot.com/review/williamwoodmirrors.co.uk"
     },
     {
-      "name": "finnishdesignshop.com",
-      "domain": "finnishdesignshop.com",
+      "name": "madeindesign.com",
+      "domain": "madeindesign.com",
       "trustScore": null,
       "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/finnishdesignshop.com"
+      "trustpilotUrl": "https://www.trustpilot.com/review/madeindesign.com"
     },
     {
-      "name": "lehtodesign.com",
-      "domain": "lehtodesign.com",
+      "name": "nordicnest.se",
+      "domain": "nordicnest.se",
       "trustScore": null,
       "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/lehtodesign.com"
+      "trustpilotUrl": "https://www.trustpilot.com/review/nordicnest.se"
     },
     {
-      "name": "namly.dk",
+      "name": "Flinders Design",
+      "domain": "www.flinders.nl",
+      "trustScore": 3.9,
+      "reviews": 12890,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.flinders.nl"
+    },
+    {
+      "name": "Pagani Design Official Store®",
+      "domain": "paganidesignofficial.com",
+      "trustScore": 4,
+      "reviews": 3216,
+      "trustpilotUrl": "https://www.trustpilot.com/review/paganidesignofficial.com"
+    },
+    {
+      "name": "Made In Design",
+      "domain": "www.madeindesign.com",
+      "trustScore": 4.1,
+      "reviews": 13854,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.madeindesign.com"
+    },
+    {
+      "name": "Namly Design",
       "domain": "namly.dk",
-      "trustScore": null,
-      "reviews": null,
+      "trustScore": 2.8,
+      "reviews": 1204,
       "trustpilotUrl": "https://www.trustpilot.com/review/namly.dk"
     },
     {
-      "name": "nordicnest.com",
-      "domain": "nordicnest.com",
-      "trustScore": null,
-      "reviews": null,
-      "trustpilotUrl": "https://www.trustpilot.com/review/nordicnest.com"
+      "name": "Thorvald & Design",
+      "domain": "thorvalddesign.com",
+      "trustScore": 4,
+      "reviews": 1315,
+      "trustpilotUrl": "https://www.trustpilot.com/review/thorvalddesign.com"
+    },
+    {
+      "name": "Pagani Design",
+      "domain": "pagani.design",
+      "trustScore": 2.2,
+      "reviews": 106,
+      "trustpilotUrl": "https://www.trustpilot.com/review/pagani.design"
+    },
+    {
+      "name": "Vecteezy",
+      "domain": "vecteezy.com",
+      "trustScore": 4.9,
+      "reviews": 41154,
+      "trustpilotUrl": "https://www.trustpilot.com/review/vecteezy.com"
+    },
+    {
+      "name": "lumière",
+      "domain": "lumiere-design.de",
+      "trustScore": 4.6,
+      "reviews": 6257,
+      "trustpilotUrl": "https://www.trustpilot.com/review/lumiere-design.de"
+    },
+    {
+      "name": "Koss Design",
+      "domain": "kossdesign.com",
+      "trustScore": 4.8,
+      "reviews": 3550,
+      "trustpilotUrl": "https://www.trustpilot.com/review/kossdesign.com"
+    },
+    {
+      "name": "Design Cykler",
+      "domain": "www.designcykler.dk",
+      "trustScore": 4,
+      "reviews": 2213,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designcykler.dk"
+    },
+    {
+      "name": "Designerwear.co.uk",
+      "domain": "www.designerwear.co.uk",
+      "trustScore": 4.4,
+      "reviews": 8185,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designerwear.co.uk"
+    },
+    {
+      "name": "Nordic Nest",
+      "domain": "www.nordicnest.se",
+      "trustScore": 4.5,
+      "reviews": 78024,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.nordicnest.se"
+    },
+    {
+      "name": "Designer Exchange UK",
+      "domain": "uk.designerexchange.com",
+      "trustScore": 4.5,
+      "reviews": 6149,
+      "trustpilotUrl": "https://www.trustpilot.com/review/uk.designerexchange.com"
+    },
+    {
+      "name": "William Wood",
+      "domain": "www.williamwoodmirrors.co.uk",
+      "trustScore": 4.7,
+      "reviews": 11729,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.williamwoodmirrors.co.uk"
+    },
+    {
+      "name": "RKS Design",
+      "domain": "www.rksdesign.com",
+      "trustScore": 1.5,
+      "reviews": 37,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.rksdesign.com"
+    },
+    {
+      "name": "Namly Design",
+      "domain": "namly.se",
+      "trustScore": 3.1,
+      "reviews": 288,
+      "trustpilotUrl": "https://www.trustpilot.com/review/namly.se"
+    },
+    {
+      "name": "Ventura Design",
+      "domain": "venturadesign.nl",
+      "trustScore": 4.1,
+      "reviews": 224,
+      "trustpilotUrl": "https://www.trustpilot.com/review/venturadesign.nl"
+    },
+    {
+      "name": "Meubles Alterego Design Liège",
+      "domain": "www.alterego-design.com",
+      "trustScore": 3.9,
+      "reviews": 3421,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.alterego-design.com"
+    },
+    {
+      "name": "Design By Amor",
+      "domain": "designbyamor.com",
+      "trustScore": 2.1,
+      "reviews": 141,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designbyamor.com"
+    },
+    {
+      "name": "Pazzo Design",
+      "domain": "pazzodesign.it",
+      "trustScore": 4.7,
+      "reviews": 777,
+      "trustpilotUrl": "https://www.trustpilot.com/review/pazzodesign.it"
+    },
+    {
+      "name": "des.ign",
+      "domain": "designclothing.dk",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designclothing.dk"
+    },
+    {
+      "name": "Finnish Design Shop",
+      "domain": "finnishdesignshop.com",
+      "trustScore": 3.8,
+      "reviews": 1316,
+      "trustpilotUrl": "https://www.trustpilot.com/review/finnishdesignshop.com"
+    },
+    {
+      "name": "Rofa Design AB",
+      "domain": "rofa.se",
+      "trustScore": 3.5,
+      "reviews": 393,
+      "trustpilotUrl": "https://www.trustpilot.com/review/rofa.se"
+    },
+    {
+      "name": "OZ Design Furniture",
+      "domain": "ozdesignfurniture.com.au",
+      "trustScore": 2.2,
+      "reviews": 67,
+      "trustpilotUrl": "https://www.trustpilot.com/review/ozdesignfurniture.com.au"
+    },
+    {
+      "name": "Design.com",
+      "domain": "design.com",
+      "trustScore": 4.7,
+      "reviews": 4486,
+      "trustpilotUrl": "https://www.trustpilot.com/review/design.com"
+    },
+    {
+      "name": "Dental Design Turkey",
+      "domain": "dentaldesignturkey.com",
+      "trustScore": 5,
+      "reviews": 526,
+      "trustpilotUrl": "https://www.trustpilot.com/review/dentaldesignturkey.com"
+    },
+    {
+      "name": "MOHD - Mollura Home Design",
+      "domain": "www.mohd.it",
+      "trustScore": 4,
+      "reviews": 1097,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.mohd.it"
+    },
+    {
+      "name": "Skagen Clothing",
+      "domain": "skagen-clothing.dk",
+      "trustScore": 4,
+      "reviews": 5707,
+      "trustpilotUrl": "https://www.trustpilot.com/review/skagen-clothing.dk"
+    },
+    {
+      "name": "Moretti Design",
+      "domain": "www.morettidesign.it",
+      "trustScore": 3.7,
+      "reviews": 225,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.morettidesign.it"
+    },
+    {
+      "name": "Pascal Design",
+      "domain": "pascaldesign.com",
+      "trustScore": 4.1,
+      "reviews": 587,
+      "trustpilotUrl": "https://www.trustpilot.com/review/pascaldesign.com"
+    },
+    {
+      "name": "Venture design",
+      "domain": "venturedesign.se",
+      "trustScore": 2.1,
+      "reviews": 38,
+      "trustpilotUrl": "https://www.trustpilot.com/review/venturedesign.se"
+    },
+    {
+      "name": "Brisach Design",
+      "domain": "brisach.com",
+      "trustScore": 2.1,
+      "reviews": 98,
+      "trustpilotUrl": "https://www.trustpilot.com/review/brisach.com"
+    },
+    {
+      "name": "Italian Design Institute",
+      "domain": "www.italiandesigninstitute.com",
+      "trustScore": 3.3,
+      "reviews": 17,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.italiandesigninstitute.com"
+    },
+    {
+      "name": "Design ",
+      "domain": "chicinterior.co.uk",
+      "trustScore": 3.2,
+      "reviews": 196,
+      "trustpilotUrl": "https://www.trustpilot.com/review/chicinterior.co.uk"
+    },
+    {
+      "name": "Pagani Design España Oficial®",
+      "domain": "paganidesignes.com",
+      "trustScore": 3.5,
+      "reviews": 453,
+      "trustpilotUrl": "https://www.trustpilot.com/review/paganidesignes.com"
+    },
+    {
+      "name": "Design-Bestseller",
+      "domain": "design-bestseller.de",
+      "trustScore": 3.8,
+      "reviews": 714,
+      "trustpilotUrl": "https://www.trustpilot.com/review/design-bestseller.de"
+    },
+    {
+      "name": "Designrr",
+      "domain": "designrr.io",
+      "trustScore": 4.5,
+      "reviews": 1679,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designrr.io"
+    },
+    {
+      "name": "Hot Chocolate Design",
+      "domain": "hotchocolatedesign.com",
+      "trustScore": 4.7,
+      "reviews": 7775,
+      "trustpilotUrl": "https://www.trustpilot.com/review/hotchocolatedesign.com"
+    },
+    {
+      "name": "Social Boost",
+      "domain": "socialboost.co",
+      "trustScore": 4.1,
+      "reviews": 383,
+      "trustpilotUrl": "https://www.trustpilot.com/review/socialboost.co"
+    },
+    {
+      "name": "Pridola Design",
+      "domain": "pridola.co",
+      "trustScore": 3.4,
+      "reviews": 2273,
+      "trustpilotUrl": "https://www.trustpilot.com/review/pridola.co"
+    },
+    {
+      "name": "Tots",
+      "domain": "tots.fr",
+      "trustScore": 4.6,
+      "reviews": 3675,
+      "trustpilotUrl": "https://www.trustpilot.com/review/tots.fr"
+    },
+    {
+      "name": "The Interior Design Institute",
+      "domain": "theinteriordesigninstitute.com",
+      "trustScore": 4.8,
+      "reviews": 9197,
+      "trustpilotUrl": "https://www.trustpilot.com/review/theinteriordesigninstitute.com"
+    },
+    {
+      "name": "Closets By Design",
+      "domain": "closetsbydesign.com",
+      "trustScore": 2.9,
+      "reviews": 203,
+      "trustpilotUrl": "https://www.trustpilot.com/review/closetsbydesign.com"
+    },
+    {
+      "name": "Designbysi",
+      "domain": "designbysi.dk",
+      "trustScore": 4.5,
+      "reviews": 2294,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designbysi.dk"
+    },
+    {
+      "name": "DESIGNA A/S",
+      "domain": "www.designa.dk",
+      "trustScore": 4.8,
+      "reviews": 2152,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designa.dk"
+    },
+    {
+      "name": "Designer Sofas 4U",
+      "domain": "www.designersofas4u.co.uk",
+      "trustScore": 4.4,
+      "reviews": 4742,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designersofas4u.co.uk"
+    },
+    {
+      "name": "Ncc Design",
+      "domain": "ncc-design.de",
+      "trustScore": 2.8,
+      "reviews": 37,
+      "trustpilotUrl": "https://www.trustpilot.com/review/ncc-design.de"
+    },
+    {
+      "name": "Voordelig Design Sanitair",
+      "domain": "voordeligdesignsanitair.nl",
+      "trustScore": 4.7,
+      "reviews": 4271,
+      "trustpilotUrl": "https://www.trustpilot.com/review/voordeligdesignsanitair.nl"
+    },
+    {
+      "name": "Forty4 Design",
+      "domain": "forty4.design",
+      "trustScore": 3.9,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/forty4.design"
+    },
+    {
+      "name": "Casa Maria",
+      "domain": "www.casamaria.co.uk",
+      "trustScore": 4.6,
+      "reviews": 2145,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.casamaria.co.uk"
+    },
+    {
+      "name": "Designer Sofas",
+      "domain": "designersofas.com",
+      "trustScore": 4.9,
+      "reviews": 5091,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designersofas.com"
+    },
+    {
+      "name": "Designhandel Norge",
+      "domain": "designhandel.no",
+      "trustScore": 3.4,
+      "reviews": 52,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designhandel.no"
+    },
+    {
+      "name": "designinfo.in",
+      "domain": "www.designinfo.in",
+      "trustScore": 4.4,
+      "reviews": 244,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designinfo.in"
+    },
+    {
+      "name": "WOO.design",
+      "domain": "woodesign.ie",
+      "trustScore": 4.3,
+      "reviews": 46,
+      "trustpilotUrl": "https://www.trustpilot.com/review/woodesign.ie"
+    },
+    {
+      "name": "Namly Design",
+      "domain": "namly.fi",
+      "trustScore": 2.3,
+      "reviews": 24,
+      "trustpilotUrl": "https://www.trustpilot.com/review/namly.fi"
+    },
+    {
+      "name": "De Lijn",
+      "domain": "delijn.be",
+      "trustScore": 1.3,
+      "reviews": 951,
+      "trustpilotUrl": "https://www.trustpilot.com/review/delijn.be"
+    },
+    {
+      "name": "Designlabwoman",
+      "domain": "www.designlabwoman.com",
+      "trustScore": 2,
+      "reviews": 26,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designlabwoman.com"
+    },
+    {
+      "name": "Karndean Designflooring",
+      "domain": "karndean.com",
+      "trustScore": 4.6,
+      "reviews": 1229,
+      "trustpilotUrl": "https://www.trustpilot.com/review/karndean.com"
+    },
+    {
+      "name": "Schmidt France",
+      "domain": "www.home-design.schmidt",
+      "trustScore": 3.2,
+      "reviews": 1357,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.home-design.schmidt"
+    },
+    {
+      "name": "Kassy King Designs",
+      "domain": "kassykingdesigns.com",
+      "trustScore": 2.1,
+      "reviews": 56,
+      "trustpilotUrl": "https://www.trustpilot.com/review/kassykingdesigns.com"
+    },
+    {
+      "name": "Design Bundles",
+      "domain": "designbundles.net",
+      "trustScore": 4.3,
+      "reviews": 5237,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designbundles.net"
+    },
+    {
+      "name": "ikarus...design",
+      "domain": "ikarus.de",
+      "trustScore": 3.9,
+      "reviews": 6704,
+      "trustpilotUrl": "https://www.trustpilot.com/review/ikarus.de"
+    },
+    {
+      "name": "DeinDesign GmbH",
+      "domain": "designskins.com",
+      "trustScore": 2.7,
+      "reviews": 529,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designskins.com"
+    },
+    {
+      "name": "Threadheads",
+      "domain": "threadheads.com",
+      "trustScore": 4.5,
+      "reviews": 1842,
+      "trustpilotUrl": "https://www.trustpilot.com/review/threadheads.com"
+    },
+    {
+      "name": "Kruger Design",
+      "domain": "kruger-design.de",
+      "trustScore": 1.4,
+      "reviews": 137,
+      "trustpilotUrl": "https://www.trustpilot.com/review/kruger-design.de"
+    },
+    {
+      "name": "Luxury Shop",
+      "domain": "luxury-designers.com",
+      "trustScore": 2.3,
+      "reviews": 25,
+      "trustpilotUrl": "https://www.trustpilot.com/review/luxury-designers.com"
+    },
+    {
+      "name": "KEA - Københavns Erhvervsakademi",
+      "domain": "www.kea.dk",
+      "trustScore": 2.3,
+      "reviews": 28,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.kea.dk"
+    },
+    {
+      "name": "Designfabrikhamburg",
+      "domain": "designfabrikhamburg.de",
+      "trustScore": 3.4,
+      "reviews": 39,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designfabrikhamburg.de"
+    },
+    {
+      "name": "Artelia",
+      "domain": "artelia.de",
+      "trustScore": 4.2,
+      "reviews": 802,
+      "trustpilotUrl": "https://www.trustpilot.com/review/artelia.de"
+    },
+    {
+      "name": "Sturdy By Design",
+      "domain": "sturdybydesign.com",
+      "trustScore": 4.9,
+      "reviews": 8489,
+      "trustpilotUrl": "https://www.trustpilot.com/review/sturdybydesign.com"
+    },
+    {
+      "name": "Norma Design",
+      "domain": "norma-design.com",
+      "trustScore": 3,
+      "reviews": 88,
+      "trustpilotUrl": "https://www.trustpilot.com/review/norma-design.com"
+    },
+    {
+      "name": "Design Interiors",
+      "domain": "www.design-interiors.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.design-interiors.com"
+    },
+    {
+      "name": "Sjællandske Medier",
+      "domain": "www.sn.dk",
+      "trustScore": 1.5,
+      "reviews": 93,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.sn.dk"
+    },
+    {
+      "name": "Statista",
+      "domain": "statista.com",
+      "trustScore": 1.8,
+      "reviews": 302,
+      "trustpilotUrl": "https://www.trustpilot.com/review/statista.com"
+    },
+    {
+      "name": "Tobias Jacobsen Tj",
+      "domain": "tobiasjacobsen.dk",
+      "trustScore": 1.5,
+      "reviews": 137,
+      "trustpilotUrl": "https://www.trustpilot.com/review/tobiasjacobsen.dk"
+    },
+    {
+      "name": "Design Prodigy",
+      "domain": "design-prodigy.com",
+      "trustScore": 4.3,
+      "reviews": 21,
+      "trustpilotUrl": "https://www.trustpilot.com/review/design-prodigy.com"
+    },
+    {
+      "name": "DesignerOptics.com",
+      "domain": "designeroptics.com",
+      "trustScore": 4,
+      "reviews": 3563,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designeroptics.com"
+    },
+    {
+      "name": "Design Mode",
+      "domain": "design-mode.com",
+      "trustScore": 4.1,
+      "reviews": 16,
+      "trustpilotUrl": "https://www.trustpilot.com/review/design-mode.com"
+    },
+    {
+      "name": "design-market.eu",
+      "domain": "design-market.eu",
+      "trustScore": 3.2,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/design-market.eu"
+    },
+    {
+      "name": "Amore Design",
+      "domain": "amoredesign.it",
+      "trustScore": 2.7,
+      "reviews": 314,
+      "trustpilotUrl": "https://www.trustpilot.com/review/amoredesign.it"
+    },
+    {
+      "name": "Design Toscano",
+      "domain": "www.designtoscano.com",
+      "trustScore": 2.6,
+      "reviews": 31,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designtoscano.com"
+    },
+    {
+      "name": "Design Creatic",
+      "domain": "designcreatic.com",
+      "trustScore": 2.8,
+      "reviews": 60,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designcreatic.com"
+    },
+    {
+      "name": "Design Fictives",
+      "domain": "designfictives.com",
+      "trustScore": 4,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designfictives.com"
+    },
+    {
+      "name": "Design Vocals",
+      "domain": "designvocals.com",
+      "trustScore": 3.6,
+      "reviews": 147,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designvocals.com"
+    },
+    {
+      "name": "Design Syndra",
+      "domain": "designsyndra.com",
+      "trustScore": 4.4,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designsyndra.com"
+    },
+    {
+      "name": "Design Genie",
+      "domain": "designginie.com",
+      "trustScore": 4.4,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designginie.com"
+    },
+    {
+      "name": "Design Craftic",
+      "domain": "designcraftic.com",
+      "trustScore": 2.9,
+      "reviews": 28,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designcraftic.com"
+    },
+    {
+      "name": "Design Website",
+      "domain": "designwebsite.io",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designwebsite.io"
+    },
+    {
+      "name": "Design Eminent",
+      "domain": "www.designeminent.com",
+      "trustScore": 1.2,
+      "reviews": 156,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designeminent.com"
+    },
+    {
+      "name": "Design Ticks",
+      "domain": "designticks.com",
+      "trustScore": 4.6,
+      "reviews": 67,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designticks.com"
+    },
+    {
+      "name": "Design Manhattan",
+      "domain": "designmanhattan.com",
+      "trustScore": 4.5,
+      "reviews": 57,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designmanhattan.com"
+    },
+    {
+      "name": "Design conversion",
+      "domain": "designconversion.com",
+      "trustScore": 2.4,
+      "reviews": 13,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designconversion.com"
+    },
+    {
+      "name": "Design Kix",
+      "domain": "designkix.com",
+      "trustScore": 4.8,
+      "reviews": 188,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designkix.com"
+    },
+    {
+      "name": "Design Divides",
+      "domain": "designdivides.com",
+      "trustScore": 4.5,
+      "reviews": 38,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designdivides.com"
+    },
+    {
+      "name": "Design Maneuver",
+      "domain": "designmaneuver.com",
+      "trustScore": 4.3,
+      "reviews": 7,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designmaneuver.com"
+    },
+    {
+      "name": "Design Simplify",
+      "domain": "designsimplify.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designsimplify.com"
+    },
+    {
+      "name": "Design Alligators",
+      "domain": "designalligators.com",
+      "trustScore": 4.5,
+      "reviews": 59,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designalligators.com"
+    },
+    {
+      "name": "Design Sprits",
+      "domain": "designsprits.com",
+      "trustScore": 4,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designsprits.com"
+    },
+    {
+      "name": "Design Advisors",
+      "domain": "designadvisors.io",
+      "trustScore": 4,
+      "reviews": 18,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designadvisors.io"
+    },
+    {
+      "name": "Design Mania",
+      "domain": "designmania.co",
+      "trustScore": 4,
+      "reviews": 45,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designmania.co"
+    },
+    {
+      "name": "Design Trixx",
+      "domain": "designtrixx.com",
+      "trustScore": 2.5,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designtrixx.com"
+    },
+    {
+      "name": "Design Nortex",
+      "domain": "designnortex.com",
+      "trustScore": 2,
+      "reviews": 17,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designnortex.com"
+    },
+    {
+      "name": "Design Force",
+      "domain": "designforce.co",
+      "trustScore": 4.3,
+      "reviews": 8,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designforce.co"
+    },
+    {
+      "name": "Design Stratum",
+      "domain": "designstratum.com",
+      "trustScore": 4.4,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designstratum.com"
+    },
+    {
+      "name": "Design Aglow",
+      "domain": "designaglow.com",
+      "trustScore": 2.8,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designaglow.com"
+    },
+    {
+      "name": "Design Qualified",
+      "domain": "designqualified.com",
+      "trustScore": 2.8,
+      "reviews": 9,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designqualified.com"
+    },
+    {
+      "name": "Design Logicians",
+      "domain": "designlogicians.com",
+      "trustScore": 3.9,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designlogicians.com"
+    },
+    {
+      "name": "Design Furnishings",
+      "domain": "www.designfurnishings.com",
+      "trustScore": 3.2,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designfurnishings.com"
+    },
+    {
+      "name": "Design Minted",
+      "domain": "designminted.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designminted.com"
+    },
+    {
+      "name": "Design Varient",
+      "domain": "designvarient.com",
+      "trustScore": 4.1,
+      "reviews": 8,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designvarient.com"
+    },
+    {
+      "name": "Design Pyramids",
+      "domain": "designpyramids.com",
+      "trustScore": 3.1,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designpyramids.com"
+    },
+    {
+      "name": "Design Xcellence",
+      "domain": "designxcellence.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designxcellence.com"
+    },
+    {
+      "name": "Design Cosmics ",
+      "domain": "designcosmics.com",
+      "trustScore": 4.5,
+      "reviews": 103,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designcosmics.com"
+    },
+    {
+      "name": "Design Sparc",
+      "domain": "designsparc.net",
+      "trustScore": 3.7,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designsparc.net"
+    },
+    {
+      "name": "Design Astero",
+      "domain": "designastero.com",
+      "trustScore": 2.2,
+      "reviews": 14,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designastero.com"
+    },
+    {
+      "name": "Design Proficient",
+      "domain": "designproficient.com",
+      "trustScore": 1.4,
+      "reviews": 333,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designproficient.com"
+    },
+    {
+      "name": "Design Henge",
+      "domain": "designhenge.com",
+      "trustScore": 4.5,
+      "reviews": 13,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designhenge.com"
+    },
+    {
+      "name": "Design Cater",
+      "domain": "www.designcater.com",
+      "trustScore": 4.5,
+      "reviews": 932,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designcater.com"
+    },
+    {
+      "name": "Design Innovacia",
+      "domain": "designinnovacia.com",
+      "trustScore": 3.9,
+      "reviews": 31,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designinnovacia.com"
+    },
+    {
+      "name": "Design Carvers",
+      "domain": "designcarvers.com",
+      "trustScore": 2.9,
+      "reviews": 5,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designcarvers.com"
+    },
+    {
+      "name": "Design Stallion",
+      "domain": "designstallion.com",
+      "trustScore": 2.9,
+      "reviews": 112,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designstallion.com"
+    },
+    {
+      "name": "Design Pickle",
+      "domain": "designpickle.com",
+      "trustScore": 3.4,
+      "reviews": 365,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designpickle.com"
+    },
+    {
+      "name": "Design Vertices",
+      "domain": "designvertices.com",
+      "trustScore": 4.5,
+      "reviews": 34,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designvertices.com"
+    },
+    {
+      "name": "Garnero Design",
+      "domain": "www.garnerodesign.com",
+      "trustScore": 1.8,
+      "reviews": 28,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.garnerodesign.com"
+    },
+    {
+      "name": "Designstoel4u",
+      "domain": "www.designstoel4u.nl",
+      "trustScore": 4.1,
+      "reviews": 173,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.designstoel4u.nl"
+    },
+    {
+      "name": "Design Essentials",
+      "domain": "designessentials.com",
+      "trustScore": 0,
+      "reviews": 0,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designessentials.com"
+    },
+    {
+      "name": "Vitaly Design",
+      "domain": "vitalydesign.com",
+      "trustScore": 3.8,
+      "reviews": 338,
+      "trustpilotUrl": "https://www.trustpilot.com/review/vitalydesign.com"
+    },
+    {
+      "name": "Peak Design",
+      "domain": "peakdesign.com",
+      "trustScore": 4.5,
+      "reviews": 1228,
+      "trustpilotUrl": "https://www.trustpilot.com/review/peakdesign.com"
+    },
+    {
+      "name": "Dennehey Design",
+      "domain": "denneheydesign.com",
+      "trustScore": 4.9,
+      "reviews": 1932,
+      "trustpilotUrl": "https://www.trustpilot.com/review/denneheydesign.com"
+    },
+    {
+      "name": "designcraftworkshop.com",
+      "domain": "designcraftworkshop.com",
+      "trustScore": 4.3,
+      "reviews": 11,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designcraftworkshop.com"
+    },
+    {
+      "name": "Tilly Design | Landscape Design",
+      "domain": "tillydesign.com",
+      "trustScore": 3.7,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/tillydesign.com"
+    },
+    {
+      "name": "Designtorget",
+      "domain": "designtorget.se",
+      "trustScore": 2.9,
+      "reviews": 18,
+      "trustpilotUrl": "https://www.trustpilot.com/review/designtorget.se"
+    },
+    {
+      "name": "The Designer Rooms",
+      "domain": "www.thedesignerrooms.com",
+      "trustScore": 4.8,
+      "reviews": 9209,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.thedesignerrooms.com"
+    },
+    {
+      "name": "Azura Home Design",
+      "domain": "www.azurahome.ma",
+      "trustScore": 1.4,
+      "reviews": 121,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.azurahome.ma"
+    },
+    {
+      "name": "Korin Design",
+      "domain": "www.korin-design.com",
+      "trustScore": 3.9,
+      "reviews": 34,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.korin-design.com"
+    },
+    {
+      "name": "Blackmagic Design",
+      "domain": "blackmagicdesign.com",
+      "trustScore": 2.7,
+      "reviews": 97,
+      "trustpilotUrl": "https://www.trustpilot.com/review/blackmagicdesign.com"
+    },
+    {
+      "name": "Bookbinders Design",
+      "domain": "bookbindersdesign.com",
+      "trustScore": 4.1,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/bookbindersdesign.com"
+    },
+    {
+      "name": "AdSketch Design",
+      "domain": "adsketch.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/adsketch.com"
+    },
+    {
+      "name": "Embroidery Design",
+      "domain": "www.embroiderydesigns.com",
+      "trustScore": 3,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.embroiderydesigns.com"
+    },
+    {
+      "name": "Flowyline Design",
+      "domain": "flowyline.com",
+      "trustScore": 4.3,
+      "reviews": 51,
+      "trustpilotUrl": "https://www.trustpilot.com/review/flowyline.com"
+    },
+    {
+      "name": "Novi Design",
+      "domain": "novi-design.com",
+      "trustScore": 3.6,
+      "reviews": 5,
+      "trustpilotUrl": "https://www.trustpilot.com/review/novi-design.com"
+    },
+    {
+      "name": "Lehto Design",
+      "domain": "lehtodesign.com",
+      "trustScore": 4.1,
+      "reviews": 5,
+      "trustpilotUrl": "https://www.trustpilot.com/review/lehtodesign.com"
+    },
+    {
+      "name": "Mu Design",
+      "domain": "www.mu-design.lu",
+      "trustScore": 2.1,
+      "reviews": 9,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.mu-design.lu"
+    },
+    {
+      "name": "Kikkerland Design",
+      "domain": "kikkerlandeu.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/kikkerlandeu.com"
+    },
+    {
+      "name": "Ikee Design",
+      "domain": "www.organizingidea.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.organizingidea.com"
+    },
+    {
+      "name": "Voxa Design",
+      "domain": "voxadesign.com",
+      "trustScore": 3.4,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/voxadesign.com"
+    },
+    {
+      "name": "Studio11Cabinets & Design",
+      "domain": "studio11cabinets.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/studio11cabinets.com"
+    },
+    {
+      "name": "KARE Design",
+      "domain": "www.kare-design.com",
+      "trustScore": 3.1,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.kare-design.com"
+    },
+    {
+      "name": "Gridd Design",
+      "domain": "gridd.com",
+      "trustScore": 4.3,
+      "reviews": 7,
+      "trustpilotUrl": "https://www.trustpilot.com/review/gridd.com"
+    },
+    {
+      "name": "Amcor Design",
+      "domain": "amcordesign.com",
+      "trustScore": 3.2,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/amcordesign.com"
+    },
+    {
+      "name": "INEX Design",
+      "domain": "www.inexdesign.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.inexdesign.com"
+    },
+    {
+      "name": "Design Genius",
+      "domain": "customdesigngenius.com",
+      "trustScore": 1.8,
+      "reviews": 67,
+      "trustpilotUrl": "https://www.trustpilot.com/review/customdesigngenius.com"
+    },
+    {
+      "name": "Orbits Design",
+      "domain": "orbitsdesign.com",
+      "trustScore": 3,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/orbitsdesign.com"
+    },
+    {
+      "name": "Deirdre’s Design",
+      "domain": "deirdresdesign.com",
+      "trustScore": 4.2,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/deirdresdesign.com"
+    },
+    {
+      "name": "Epiconic Design",
+      "domain": "epiconicdesign.com",
+      "trustScore": 4.6,
+      "reviews": 24,
+      "trustpilotUrl": "https://www.trustpilot.com/review/epiconicdesign.com"
+    },
+    {
+      "name": "Halcyon Design",
+      "domain": "www.halcyondesign.co.uk",
+      "trustScore": 4.1,
+      "reviews": 5,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.halcyondesign.co.uk"
+    },
+    {
+      "name": "Flow Design",
+      "domain": "flowdesign.agency",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/flowdesign.agency"
+    },
+    {
+      "name": "Corwin Design",
+      "domain": "corwindesign.com",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/corwindesign.com"
+    },
+    {
+      "name": "Design Turtle",
+      "domain": "edesignturtle.com",
+      "trustScore": 4.6,
+      "reviews": 20,
+      "trustpilotUrl": "https://www.trustpilot.com/review/edesignturtle.com"
+    },
+    {
+      "name": "Ciga Design",
+      "domain": "ciga-design.com",
+      "trustScore": 2.2,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/ciga-design.com"
+    },
+    {
+      "name": "Asharys Design",
+      "domain": "asharysdesign.com",
+      "trustScore": 3.8,
+      "reviews": 27,
+      "trustpilotUrl": "https://www.trustpilot.com/review/asharysdesign.com"
+    },
+    {
+      "name": "Vintage Design",
+      "domain": "vintagedesign.com",
+      "trustScore": 4.2,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/vintagedesign.com"
+    },
+    {
+      "name": "Glazing Design",
+      "domain": "bespokeglazingdesign.co.uk",
+      "trustScore": 3,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/bespokeglazingdesign.co.uk"
+    },
+    {
+      "name": "Quin Design",
+      "domain": "quin.design",
+      "trustScore": 3.1,
+      "reviews": 99,
+      "trustpilotUrl": "https://www.trustpilot.com/review/quin.design"
+    },
+    {
+      "name": "Boxify Design",
+      "domain": "boxifydesign.com",
+      "trustScore": 3.7,
+      "reviews": 5,
+      "trustpilotUrl": "https://www.trustpilot.com/review/boxifydesign.com"
+    },
+    {
+      "name": "Revel Design",
+      "domain": "revel.design",
+      "trustScore": 4,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/revel.design"
+    },
+    {
+      "name": "Hilman Design",
+      "domain": "hilmandesign.com",
+      "trustScore": 4.2,
+      "reviews": 10,
+      "trustpilotUrl": "https://www.trustpilot.com/review/hilmandesign.com"
+    },
+    {
+      "name": "KAMI Design",
+      "domain": "trykami.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/trykami.com"
+    },
+    {
+      "name": "Ingic Design",
+      "domain": "ingicdesign.com",
+      "trustScore": 1.7,
+      "reviews": 20,
+      "trustpilotUrl": "https://www.trustpilot.com/review/ingicdesign.com"
+    },
+    {
+      "name": "Spade Design",
+      "domain": "spadedesignlab.com",
+      "trustScore": 1.9,
+      "reviews": 12,
+      "trustpilotUrl": "https://www.trustpilot.com/review/spadedesignlab.com"
+    },
+    {
+      "name": "Gala Design",
+      "domain": "gala.com",
+      "trustScore": 3.2,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/gala.com"
+    },
+    {
+      "name": "Webvio Design",
+      "domain": "webvio.co",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/webvio.co"
+    },
+    {
+      "name": "Infinix Design",
+      "domain": "infinix-design.com",
+      "trustScore": 3.9,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/infinix-design.com"
+    },
+    {
+      "name": "Design Within Reach",
+      "domain": "www.dwr.com",
+      "trustScore": 1.5,
+      "reviews": 57,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.dwr.com"
+    },
+    {
+      "name": "Canva Design",
+      "domain": "canva-design.com",
+      "trustScore": 2.2,
+      "reviews": 52,
+      "trustpilotUrl": "https://www.trustpilot.com/review/canva-design.com"
+    },
+    {
+      "name": "J2T Design",
+      "domain": "www.j2t-design.net",
+      "trustScore": 2.3,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.j2t-design.net"
+    },
+    {
+      "name": "Lezze Design",
+      "domain": "lezzedesign.com",
+      "trustScore": 3.3,
+      "reviews": 48,
+      "trustpilotUrl": "https://www.trustpilot.com/review/lezzedesign.com"
+    },
+    {
+      "name": "Sightsee Design",
+      "domain": "sightseedesign.com",
+      "trustScore": 4.2,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/sightseedesign.com"
+    },
+    {
+      "name": "Warmly Design",
+      "domain": "warmlydesign.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/warmlydesign.com"
+    },
+    {
+      "name": "Extatic Design",
+      "domain": "extaticdesign.com",
+      "trustScore": 4,
+      "reviews": 18,
+      "trustpilotUrl": "https://www.trustpilot.com/review/extaticdesign.com"
+    },
+    {
+      "name": "Dryden Design",
+      "domain": "dryden.design",
+      "trustScore": 3.4,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/dryden.design"
+    },
+    {
+      "name": "KIKKERLAND DESIGN",
+      "domain": "www.kikkerland.co.uk",
+      "trustScore": 2.7,
+      "reviews": 17,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.kikkerland.co.uk"
+    },
+    {
+      "name": "Strategix Design",
+      "domain": "strategixdesign.com",
+      "trustScore": 2.9,
+      "reviews": 40,
+      "trustpilotUrl": "https://www.trustpilot.com/review/strategixdesign.com"
+    },
+    {
+      "name": "Western Design",
+      "domain": "support-en.wd.com",
+      "trustScore": 3.2,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/support-en.wd.com"
+    },
+    {
+      "name": "Tobo Design",
+      "domain": "tobodesign.com",
+      "trustScore": 4.1,
+      "reviews": 6,
+      "trustpilotUrl": "https://www.trustpilot.com/review/tobodesign.com"
+    },
+    {
+      "name": "Artistics Design",
+      "domain": "artisticsdesign.com",
+      "trustScore": 4.5,
+      "reviews": 15,
+      "trustpilotUrl": "https://www.trustpilot.com/review/artisticsdesign.com"
+    },
+    {
+      "name": "Pexels Design",
+      "domain": "pexelsdesign.com",
+      "trustScore": 3.2,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/pexelsdesign.com"
+    },
+    {
+      "name": "Scandinavia Design",
+      "domain": "scandinavia-design.com",
+      "trustScore": 3.2,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/scandinavia-design.com"
+    },
+    {
+      "name": "Daas Design",
+      "domain": "alyssadurante.com",
+      "trustScore": 4,
+      "reviews": 4,
+      "trustpilotUrl": "https://www.trustpilot.com/review/alyssadurante.com"
+    },
+    {
+      "name": "Mhb Design",
+      "domain": "www.mhb-design.com",
+      "trustScore": 2.8,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/www.mhb-design.com"
+    },
+    {
+      "name": "Trpeski Design",
+      "domain": "trpeskidesign.com",
+      "trustScore": 4,
+      "reviews": 3,
+      "trustpilotUrl": "https://www.trustpilot.com/review/trpeskidesign.com"
+    },
+    {
+      "name": "Early Design",
+      "domain": "early.design",
+      "trustScore": 3.7,
+      "reviews": 1,
+      "trustpilotUrl": "https://www.trustpilot.com/review/early.design"
+    },
+    {
+      "name": "Tickyboom Design",
+      "domain": "tickyboom.com",
+      "trustScore": 3.8,
+      "reviews": 2,
+      "trustpilotUrl": "https://www.trustpilot.com/review/tickyboom.com"
+    },
+    {
+      "name": "Nasso Design",
+      "domain": "nassodesign.com",
+      "trustScore": 4.2,
+      "reviews": 7,
+      "trustpilotUrl": "https://www.trustpilot.com/review/nassodesign.com"
+    },
+    {
+      "name": "Designer Exchange España",
+      "domain": "es.designerexchange.com",
+      "trustScore": 4.6,
+      "reviews": 1004,
+      "trustpilotUrl": "https://www.trustpilot.com/review/es.designerexchange.com"
     }
   ]
 }
