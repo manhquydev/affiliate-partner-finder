@@ -15,6 +15,7 @@ import {
 import { JobSupervisor, readJobFile } from './job-supervisor.ts';
 import { releaseOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, canStartFresh, isPathInside, readProgress, resolveExistingPath } from './progress.ts';
+import { resolveJobCsv } from './job-csv.ts';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(appDir, '..');
@@ -234,6 +235,7 @@ ipcMain.handle(
       limit?: number;
       out: string;
       resume?: boolean;
+      collectOnly?: boolean;
       earlyExit?: boolean;
       lazySettle?: boolean;
       networkEvidence?: boolean;
@@ -252,6 +254,7 @@ ipcMain.handle(
     out,
     profile,
     resume: Boolean(opts.resume),
+    collectOnly: Boolean(opts.collectOnly),
     scanProfile: true,
     acceptFailures: true,
     concurrency: opts.concurrency,
@@ -291,9 +294,9 @@ ipcMain.handle('desktop:open-out', async (_e, outPath?: string) => {
 
 ipcMain.handle('desktop:open-csv', async (_e, outPath?: string) => {
   const out = requestedOutDir(outPath);
-  const csv = out ? join(out, 'results.csv') : '';
-  if (!csv || !existsSync(csv)) {
-    throw new Error('Chưa có results.csv — đợi chạy xong hoặc Dừng để xuất từ jsonl');
+  const csv = out ? resolveJobCsv(out) : undefined;
+  if (!csv) {
+    throw new Error('Chưa có CSV — chạy Lấy danh sách hoặc quét xong.');
   }
   const real = resolveExistingPath(csv);
   if (!isPathInside(runsRoot, real)) throw new Error('csv path escape blocked');

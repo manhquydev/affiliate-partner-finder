@@ -27,6 +27,7 @@ export type JobOptions = {
   limit?: number;
   out: string;
   resume?: boolean;
+  collectOnly?: boolean;
   profile: string;
   concurrency?: number;
   delayMs?: number;

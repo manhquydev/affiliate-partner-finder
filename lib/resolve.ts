@@ -2,7 +2,7 @@
 // Preferred: parse the review page's __NEXT_DATA__ businessUnit.websiteUrl.
 // Cheap fallback (default): use https://{domain} directly — good for most cases.
 
-import { extractNextData } from './next-data';
+import { extractNextData } from './next-data.ts';
 
 const REVIEW_BASE = 'https://www.trustpilot.com/review';
 
@@ -13,7 +13,7 @@ function readWebsiteUrl(data: unknown): string | null {
 }
 
 /** Normalize a bare domain to an https URL. */
-function domainToUrl(domain: string): string {
+export function domainToUrl(domain: string): string {
   return /^https?:\/\//i.test(domain) ? domain : `https://${domain}`;
 }
 

@@ -28,7 +28,7 @@ The mechanism a neighboring scraper or AI summarizer cannot copy: **rule-based, 
 
 - Electron desktop wrapping the existing Playwright CLI. Data and Chrome profile stay on the machine under app-owned roots.
 - Jobs are folders (progress, companies, results, CSV). Resume is the same folder.
-- Typical session: pick or create a job → set keyword + company count → Start or Resume → watch collect then website scan → handle one Cloudflare check in the app’s Chrome if asked → Stop safely or let it finish → Open CSV.
+- Typical session: pick or create a job → set keyword + company count → optional **Lấy danh sách** first pass (Trustpilot list only, no site scan) or **Bắt đầu** / Resume for Full collect-then-scan → watch collect then website scan → handle one Cloudflare check in the app’s Chrome if asked → Stop safely or let it finish → Open CSV.
 - Overnight/large jobs: Chrome may be hidden (Windows: minimize/off-screen but still headed; Linux: Xvfb). If Trustpilot blocks while hidden, the user turns hiding off, resumes, passes the check once, then may hide again.
 - After export, review happens in the CSV / spreadsheet, not inside a results table in this app (this rebuild does not add in-app company browsing).
 - Extension popup exists separately; this work is the desktop window only.
@@ -40,10 +40,11 @@ Confirmed in the desktop window today and **must remain**:
 - Trustpilot keyword + company limit 1–10000 (type `10000`, not `10.000`).
 - Job folder: pick folder, new job, choose existing run, open runs root in the file manager.
 - Scan options (defaults: concurrency 2 unless “Tăng tốc” → 3; early-exit / network evidence / lazy settle off; hide Chrome on).
-- Start, Resume, Stop (SIGINT + CSV from results so far).
+- Start (Full collect then scan), Resume, Stop (SIGINT + CSV from results so far).
+- **Lấy danh sách**: local list-only first pass, no site scan. Full Start/Resume remain.
 - Live dashboard: state (idle / running / stopping / error), job keyword, collect vs scan phase, percent, fraction, hint, rolling ETA (hide when stalled >8 minutes), counts true/false/unknown, current domains, status message.
 - Cloudflare panel: complete the check in the app Chrome; do not bypass CAPTCHA.
-- Open job folder and Open CSV (`results.csv` columns `ten_cong_ty,website,ket_qua,huong_dan`).
+- Open job folder and Open CSV (`results.csv` if present: columns `ten_cong_ty,website,ket_qua,huong_dan`; else `companies.csv`: `stt,ten_website,link`).
 - Vietnamese UI. Copy may be tightened; facts and ethics must not change.
 
 This rebuild’s product job: the window is a **job workspace** — existing jobs are the home surface; the selected job is the work surface (configure, run, watch). Not a stacked form. Not an in-app results browser.

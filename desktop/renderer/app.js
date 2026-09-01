@@ -342,9 +342,13 @@ function renderStatus(s) {
     const cap = requested || total;
     $('progressFraction').textContent =
       cap > 0 ? `Đã lấy ${completed} / ${cap} từ Trustpilot` : 'Đang lấy danh sách Trustpilot…';
-    $('progressHint').textContent = running
-      ? 'Đang lấy danh sách công ty trên Trustpilot, chưa quét website.'
-      : 'Đã dừng lúc lấy danh sách. Bấm Tiếp tục để quét phần đã có.';
+    if (running) {
+      $('progressHint').textContent = 'Đang lấy danh sách công ty trên Trustpilot, chưa quét website.';
+    } else if (pathMatch && s.message === 'Đã lấy danh sách.') {
+      $('progressHint').textContent = 'Đã lấy danh sách. Mở CSV hoặc Tiếp tục để quét website.';
+    } else {
+      $('progressHint').textContent = 'Đã dừng lúc lấy danh sách. Bấm Tiếp tục để quét phần đã có.';
+    }
   } else if (running && total > 0) {
     $('progressHint').textContent =
       (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website, còn ${total - completed} công ty`) +
@@ -403,6 +407,7 @@ function renderStatus(s) {
     $('message').textContent = '';
   }
   $('btnStart').disabled = running;
+  $('btnCollectList').disabled = running;
   $('btnResume').disabled = running;
   $('btnStop').disabled = !running;
   $('btnPickOut').disabled = false;
@@ -415,6 +420,9 @@ function renderStatus(s) {
   $('btnStart').title = running
     ? 'Một việc đang quét. Dừng trước khi bắt đầu job khác.'
     : '';
+  $('btnCollectList').title = running
+    ? 'Một việc đang quét. Dừng trước khi bắt đầu job khác.'
+    : 'chỉ danh sách Trustpilot, không quét website';
   $('btnResume').title = running
     ? 'Một việc đang quét. Dừng trước khi tiếp tục job khác.'
     : '';
@@ -533,16 +541,18 @@ async function boot() {
 
   function lockLaunchControls() {
     $('btnStart').disabled = true;
+    $('btnCollectList').disabled = true;
     $('btnResume').disabled = true;
   }
 
   function unlockLaunchControlsIfIdle() {
     if (lastStatus && (lastStatus.state === 'running' || lastStatus.state === 'stopping')) return;
     $('btnStart').disabled = false;
+    $('btnCollectList').disabled = false;
     $('btnResume').disabled = false;
   }
 
-  $('btnStart').onclick = async () => {
+  async function startFreshJob(extra) {
     lockLaunchControls();
     await syncFromOutDir();
     const query = $('query').value.trim();
@@ -562,6 +572,7 @@ async function boot() {
         limit: parseLimitInput($('limit').value),
         out: outForStart,
         resume: false,
+        ...extra,
         ...scanOptFlags(),
       });
     } catch (e) {
@@ -569,7 +580,10 @@ async function boot() {
       $('message').classList.add('is-error');
       unlockLaunchControlsIfIdle();
     }
-  };
+  }
+
+  $('btnStart').onclick = () => startFreshJob({});
+  $('btnCollectList').onclick = () => startFreshJob({ collectOnly: true });
 
   $('btnResume').onclick = async () => {
     lockLaunchControls();
