@@ -38,14 +38,14 @@ npm run desktop:dev
 
 ## Cách dùng
 
-1. Cửa sổ là **workspace job**: bảng job (trái; cửa sổ hẹp thì phía trên) và **preview** của job đang chọn. **Job mới** / **Chọn thư mục…** / click một dòng để chọn job. **Bắt đầu** và **Tiếp tục** luôn dùng job đang chọn, không phải job lần chạy trước. Khi một việc đang quét, vẫn chọn job khác để xem hoặc tạo **Job mới**; **Bắt đầu / Tiếp tục** khoá đến khi việc hiện tại xong hoặc **Dừng**. Chỉ một quét tại một thời điểm (chung Chrome profile).
-2. Trong preview: nhập **từ khoá Trustpilot** + số công ty (`10000`, không gõ `10.000`). Lúc lấy danh sách thanh hiện **đã lấy / số yêu cầu**; lúc quét website mới hiện **đã quét / số đã lấy**. Nếu Trustpilot hết kết quả hoặc bị chặn, app không bịa thêm công ty.
+1. Cửa sổ là **workspace job**: bảng job (trái; cửa sổ hẹp thì phía trên) và **preview** của job đang chọn. **Job mới** / **Chọn thư mục…** / click một dòng để chọn job. **Bắt đầu**, **Lấy danh sách** và **Tiếp tục** luôn dùng job đang chọn, không phải job lần chạy trước. Khi một việc đang quét, vẫn chọn job khác để xem hoặc tạo **Job mới**; **Bắt đầu / Lấy danh sách / Tiếp tục** khoá đến khi việc hiện tại xong hoặc **Dừng**. Chỉ một quét tại một thời điểm (chung Chrome profile).
+2. Trong preview: nhập **từ khoá Trustpilot** + số công ty (`10000`, không gõ `10.000`). **Lấy danh sách** chỉ ghi CSV Trustpilot (`companies.csv`, cột `stt,ten_website,link`); **Bắt đầu** lấy danh sách rồi quét affiliate. Lúc lấy danh sách thanh hiện **đã lấy / số yêu cầu**; lúc quét website mới hiện **đã quét / số đã lấy**. Nếu Trustpilot hết kết quả hoặc bị chặn, app không bịa thêm công ty.
 3. Theo dõi tiến độ, **ETA** (ẩn khi job tạm dừng >8 phút hoặc tốc độ quá thấp), và đếm Có chương trình / Không có / Chưa rõ khi job đó đang (hoặc vừa) chạy trên máy.
 4. Cài đặt quét (hiện đủ, không thu gọn): **Ẩn cửa sổ Chrome** và **Tăng tốc (3 trang)** mặc định bật. **Dừng sớm / Kiểm tra mạng / Chờ tải linh hoạt / Quét đường dẫn song song** mặc định tắt — chỉ bật khi đo thử; không dùng để “giảm Chưa rõ”. **Quét đường dẫn song song** (khi bật) gọi fetch cùng nguồn theo lô tối đa 3 đường dẫn affiliate trên cùng một trang Playwright — không mở thêm tab Chrome.
 5. Nếu Trustpilot/Cloudflare chặn khi đang ẩn Chrome: **tắt** Ẩn cửa sổ Chrome → **Tiếp tục** → vượt kiểm tra một lần trong cửa sổ Chrome → có thể bật lại.
 6. Nếu Chrome hiện Cloudflare: hoàn thành **một lần** trong cửa sổ Chrome của app → **Tiếp tục** nếu việc đã dừng.
 7. **Dừng** = dừng an toàn (SIGINT) + xuất CSV từ kết quả đã có; lần sau **Tiếp tục** cùng thư mục.
-8. **Mở CSV** / **Mở thư mục job** mở artefact của **job đang chọn** (`results.csv` cột `ten_cong_ty,website,ket_qua,huong_dan`). **Dừng** luôn dừng việc đang quét trên máy, kể cả khi preview đang mở job khác.
+8. **Mở CSV** / **Mở thư mục job** mở artefact của **job đang chọn**: `results.csv` nếu có (cột `ten_cong_ty,website,ket_qua,huong_dan`), không thì `companies.csv` (cột `stt,ten_website,link`). **Dừng** luôn dừng việc đang quét trên máy, kể cả khi preview đang mở job khác.
 
 ## Quy tắc an toàn
 

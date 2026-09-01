@@ -50,6 +50,10 @@ export function buildScanArgv(opts: JobOptions): string[] {
     if (opts.limit != null) args.push('--limit', String(clampCollectLimit(opts.limit)));
   }
 
+  if (opts.collectOnly && !opts.resume) {
+    args.push('--collect-only');
+  }
+
   if (opts.maxPages != null && Number.isFinite(opts.maxPages)) {
     args.push('--max-pages', String(Math.max(1, Math.trunc(opts.maxPages))));
   } else if (!opts.resume && opts.limit != null) {

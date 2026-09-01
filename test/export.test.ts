@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { toCSV, toJSON, toSimpleCSV, simpleHit, strongestEvidence } from '../lib/export';
-import type { ScanResult } from '../lib/types';
+import { toCSV, toJSON, toSimpleCSV, toCompaniesCSV, simpleHit, strongestEvidence } from '../lib/export';
+import type { Company, ScanResult } from '../lib/types';
 
 function result(over: Partial<ScanResult>): ScanResult {
   return {
@@ -14,6 +14,17 @@ function result(over: Partial<ScanResult>): ScanResult {
     scannedAt: '2026-08-10T00:00:00Z',
     detectorVersion: '1.0.0',
     name: 'Example Co',
+    ...over,
+  };
+}
+
+function company(over: Partial<Company> = {}): Company {
+  return {
+    name: 'Example Co',
+    domain: 'example.com',
+    trustScore: null,
+    reviews: null,
+    trustpilotUrl: 'https://www.trustpilot.com/review/example.com',
     ...over,
   };
 }
@@ -154,5 +165,40 @@ describe('export', () => {
     expect(cols[2]).toBe('true');
     expect(line).not.toContain('confidence');
     expect(line).not.toContain('loadStatus');
+  });
+
+  it('toCompaniesCSV header is stt,ten_website,link', () => {
+    expect(toCompaniesCSV([])).toBe('stt,ten_website,link');
+  });
+
+  it('toCompaniesCSV rows are 1-based collect order with https links', () => {
+    const csv = toCompaniesCSV([
+      company({ name: 'A', domain: 'a.test' }),
+      company({ name: 'B', domain: 'b.test' }),
+    ]);
+    expect(csv).toBe('stt,ten_website,link\n1,A,https://a.test\n2,B,https://b.test');
+  });
+
+  it('toCompaniesCSV falls back to domain when name is empty', () => {
+    const line = toCompaniesCSV([company({ name: '', domain: 'fallback.test' })]).split('\n')[1]!;
+    expect(line).toBe('1,fallback.test,https://fallback.test');
+  });
+
+  it('toCompaniesCSV prefixes formula-injection in name and dash domain', () => {
+    const nameLine = toCompaniesCSV([company({ name: '=1+1', domain: 'example.com' })]).split('\n')[1]!;
+    expect(nameLine).toBe("1,'=1+1,https://example.com");
+    const domainLine = toCompaniesCSV([company({ name: '', domain: '-evil.com' })]).split('\n')[1]!;
+    expect(domainLine).toBe("1,'-evil.com,https://-evil.com");
+  });
+
+  it('toCompaniesCSV quotes commas in name and does not emit HYPERLINK', () => {
+    const csv = toCompaniesCSV([company({ name: 'Acme, Inc', domain: 'acme.com' })]);
+    expect(csv.split('\n')[1]).toBe('1,"Acme, Inc",https://acme.com');
+    expect(csv).not.toContain('=HYPERLINK');
+  });
+
+  it('toCompaniesCSV does not double-prefix an existing http(s) scheme', () => {
+    const line = toCompaniesCSV([company({ name: 'X', domain: 'http://x.test' })]).split('\n')[1]!;
+    expect(line).toBe('1,X,http://x.test');
   });
 });

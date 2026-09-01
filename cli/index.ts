@@ -5,9 +5,10 @@ import { join, resolve as pathResolve } from 'node:path';
 import pLimit from 'p-limit';
 import { CONFIG, DEFAULT_RUN_CONFIG, maxPagesForLimit } from '../lib/config';
 import { clampCollectLimit, type CollectStopReason } from '../lib/collect-pagination.ts';
+import { afterCollectAction } from '../lib/after-collect';
 import { clampProbeBatchSize } from '../lib/probe-batch';
 import { resolve as resolveWebsite } from '../lib/resolve';
-import { toCSV, toJSON, toSimpleCSV, simpleHit } from '../lib/export';
+import { toCSV, toJSON, toSimpleCSV, simpleHit, toCompaniesCSV } from '../lib/export';
 import type { Company, ScanResult, RunConfig } from '../lib/types';
 import { assertSafeProfilePath } from '../lib/safe-paths';
 import { closeHandle, DEFAULT_PROFILE_DIR, launchPersistentCollect, launchScanSession } from './browser';
@@ -26,6 +27,7 @@ type Args = {
   maxPages: number;
   out: string;
   resume: boolean;
+  collectOnly: boolean;
   profile: string;
   headedScan: boolean;
   scanProfile: boolean;
@@ -57,6 +59,7 @@ Options:
   --delay-ms <n>      Start-stagger / retry delay (default 1500)
   --out <dir>         Job directory (default ./out/run)
   --resume            Resume from --out (uses companies.json + results.jsonl)
+  --collect-only      Stop after Trustpilot list; write companies.csv; no site scan
   --profile <dir>     Chrome persistent profile (default ~/.cache/affiliate-partner-finder/chrome-profile)
   --headed-scan       Headed browser for site scans
   --scan-profile      Site scans use the same persistent profile (CF cookies); implies headed
@@ -86,6 +89,7 @@ function parseArgs(argv: string[]): Args {
     maxPages: 40,
     out: './out/run',
     resume: false,
+    collectOnly: false,
     profile: DEFAULT_PROFILE_DIR,
     headedScan: false,
     scanProfile: false,
@@ -116,6 +120,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--delay-ms') args.delayMs = Math.max(0, Number(next()) || args.delayMs);
     else if (a === '--out') args.out = next();
     else if (a === '--resume') args.resume = true;
+    else if (a === '--collect-only') args.collectOnly = true;
     else if (a === '--profile') args.profile = next();
     else if (a === '--headed-scan') args.headedScan = true;
     else if (a === '--scan-profile') args.scanProfile = true;
@@ -140,6 +145,13 @@ function sleep(ms: number): Promise<void> {
 function atomicWriteJson(file: string, data: unknown): void {
   const tmp = `${file}.tmp`;
   writeFileSync(tmp, JSON.stringify(data, null, 2));
+  renameSync(tmp, file);
+}
+
+function writeCompaniesCsv(file: string, companies: Company[]): void {
+  if (companies.length === 0) return;
+  const tmp = `${file}.tmp`;
+  writeFileSync(tmp, toCompaniesCSV(companies));
   renameSync(tmp, file);
 }
 
@@ -192,6 +204,10 @@ async function main(): Promise<number> {
     printHelp();
     return 2;
   }
+  if (args.resume && args.collectOnly) {
+    console.error('[cli] --resume cannot be combined with --collect-only');
+    return 2;
+  }
 
   try {
     args.profile = assertSafeProfilePath(args.profile);
@@ -208,6 +224,7 @@ async function main(): Promise<number> {
   const outDir = pathResolve(args.out);
   mkdirSync(outDir, { recursive: true });
   const companiesPath = join(outDir, 'companies.json');
+  const companiesCsvPath = join(outDir, 'companies.csv');
   const jsonlPath = join(outDir, 'results.jsonl');
   const progressPath = join(outDir, 'progress.json');
   const csvPath = join(outDir, 'results.csv');
@@ -271,6 +288,7 @@ async function main(): Promise<number> {
         collectCli(collectHandle.context, args.query, args.limit, skip, args.delayMs, args.maxPages, {
           onProgress: (partial, pageNum, totalPagesHint) => {
             atomicWriteJson(companiesPath, partial);
+            if (args.collectOnly) writeCompaniesCsv(companiesCsvPath, partial);
             writeCollectProgress(partial.length);
             console.log(
               `[cli] checkpoint companies=${partial.length} after page ${pageNum}` +
@@ -317,11 +335,21 @@ async function main(): Promise<number> {
       console.log(`[cli] collected ${companies.length} companies → ${companiesPath}`);
       if (stopRequested && companies.length === 0) {
         console.log('[cli] stopped during collect — checkpoint saved, resume safe');
-        return 130;
       }
-      if (companies.length === 0) return 1;
     } finally {
       await closeHandle(collectHandle);
+    }
+    const action = afterCollectAction({
+      collectOnly: args.collectOnly,
+      stopRequested,
+      count: companies.length,
+    });
+    if (action.kind === 'exit') {
+      if (companies.length > 0) writeCompaniesCsv(companiesCsvPath, companies);
+      if (companies.length === 0 && !stopRequested) {
+        console.error('[cli] no companies to scan');
+      }
+      return action.code;
     }
   }
 

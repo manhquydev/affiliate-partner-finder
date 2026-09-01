@@ -252,6 +252,41 @@ describe('desktop adapter', () => {
     expect(args.indexOf('--probe-parallel')).toBeGreaterThan(args.indexOf('--profile'));
   });
 
+  it('buildScanArgv passes --collect-only when collectOnly and not resume', () => {
+    const args = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      collectOnly: true,
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(args).toContain('--collect-only');
+    expect(args).toContain('--query');
+    expect(args[args.indexOf('--query') + 1]).toBe('design');
+  });
+
+  it('buildScanArgv omits --collect-only by default and on resume', () => {
+    const fresh = buildScanArgv({
+      query: 'design',
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(fresh).not.toContain('--collect-only');
+    const resume = buildScanArgv({
+      out: '/tmp/out1',
+      profile: '/tmp/profile1',
+      resume: true,
+      collectOnly: true,
+      virtualDisplay: false,
+      platform: 'linux',
+    });
+    expect(resume).toContain('--resume');
+    expect(resume).not.toContain('--collect-only');
+  });
+
   it('win32 always has profile and defaults to --virtual-display (hide Chrome)', () => {
     const args = buildScanArgv({
       query: 'design',
@@ -474,7 +509,7 @@ describe('JobSupervisor failure surfacing', () => {
     return () => ({ command: process.execPath, prefixArgs: ['-e', script, '--'], cwd: tmpdir() });
   }
 
-  async function runToFinal(script: string): Promise<JobStatus> {
+  async function runToFinal(script: string, extra: { collectOnly?: boolean } = {}): Promise<JobStatus> {
     const statuses: JobStatus[] = [];
     const supervisor = new JobSupervisor({
       resolveCli: fakeCli(script),
@@ -489,6 +524,7 @@ describe('JobSupervisor failure surfacing', () => {
       out: join(root, 'run1'),
       profile: join(profRoot, 'p'),
       resume: false,
+      ...extra,
       allowedOutRoot: root,
       allowedProfileRoot: profRoot,
     });
@@ -527,6 +563,21 @@ describe('JobSupervisor failure surfacing', () => {
     expect(st.counts.false).toBe(1);
     expect(st.csvPath).toBeTruthy();
     expect(existsSync(st.csvPath!)).toBe(true);
+  }, 20_000);
+
+  it('collect-only clean exit skips results.csv and reports companies.csv', async () => {
+    const st = await runToFinal(
+      `
+      const fs = require('node:fs');
+      const out = process.argv[process.argv.indexOf('--out') + 1];
+      fs.writeFileSync(out + '/companies.csv', 'stt,ten_website,link\\n1,Acme,https://acme.com\\n');
+    `,
+      { collectOnly: true },
+    );
+    expect(st.state).toBe('idle');
+    expect(st.message).toBe('Đã lấy danh sách.');
+    expect(st.csvPath).toBe(join(st.outDir!, 'companies.csv'));
+    expect(existsSync(join(st.outDir!, 'results.csv'))).toBe(false);
   }, 20_000);
 
   it('exit without output still reports error state', async () => {

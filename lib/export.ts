@@ -2,7 +2,8 @@
 // ScanResult[] for audit/re-processing. Every `affiliate` row must carry a
 // reachable evidenceUrl (acceptance criterion).
 
-import type { ScanResult } from './types';
+import type { Company, ScanResult } from './types';
+import { domainToUrl } from './resolve.ts';
 
 export interface StrongestEvidence {
   url: string;
@@ -167,6 +168,21 @@ export function toSimpleCSV(results: ScanResult[]): string {
       huong_dan: simpleHint(r),
     };
     return SIMPLE_CSV_COLUMNS.map((c) => csvCell(record[c])).join(',');
+  });
+  return [header, ...rows].join('\n');
+}
+
+const COMPANIES_CSV_COLUMNS = ['stt', 'ten_website', 'link'] as const;
+
+export function toCompaniesCSV(companies: Company[]): string {
+  const header = COMPANIES_CSV_COLUMNS.join(',');
+  const rows = companies.map((company, i) => {
+    const record: Record<(typeof COMPANIES_CSV_COLUMNS)[number], unknown> = {
+      stt: i + 1,
+      ten_website: company.name || company.domain,
+      link: domainToUrl(company.domain),
+    };
+    return COMPANIES_CSV_COLUMNS.map((c) => csvCell(record[c])).join(',');
   });
   return [header, ...rows].join('\n');
 }

@@ -147,6 +147,20 @@ describe('desktop electron renderer e2e', () => {
     expect(msg).toMatch(/Nhập từ khoá/i);
   });
 
+  it('shows Lấy danh sách beside Start', async () => {
+    const btn = page!.locator('#btnCollectList');
+    expect(await btn.isVisible()).toBe(true);
+    expect((await btn.innerText()).trim()).toBe('Lấy danh sách');
+    expect((await page!.locator('#btnStart').innerText()).trim()).toBe('Bắt đầu');
+  });
+
+  it('blocks Lấy danh sách when query is empty', async () => {
+    await page!.locator('#query').fill('');
+    await page!.locator('#btnCollectList').click();
+    const msg = await page!.locator('#message').textContent();
+    expect(msg).toMatch(/Nhập từ khoá/i);
+  });
+
   it('accepts custom Trustpilot keyword input', async () => {
     await page!.locator('#query').fill('hosting');
     expect(await page!.locator('#query').inputValue()).toBe('hosting');
@@ -231,6 +245,7 @@ describe('desktop electron renderer e2e', () => {
     }, runningStatus);
 
     await expect.poll(async () => page!.locator('#btnStart').isDisabled()).toBe(true);
+    expect(await page!.locator('#btnCollectList').isDisabled()).toBe(true);
     expect(await page!.locator('#btnStop').isDisabled()).toBe(false);
     expect(await page!.locator('#btnNewOut').isDisabled()).toBe(false);
     expect(await page!.locator('#btnPickOut').isDisabled()).toBe(false);
@@ -242,6 +257,7 @@ describe('desktop electron renderer e2e', () => {
     await expect.poll(async () => page!.locator('#liveJobNote').isHidden()).toBe(false);
     expect(await page!.locator('#btnStart').isDisabled()).toBe(true);
     expect(await page!.locator('#btnResume').isDisabled()).toBe(true);
+    expect(await page!.locator('#btnCollectList').isDisabled()).toBe(true);
     expect(await page!.locator('#btnStop').isDisabled()).toBe(false);
     expect(await page!.locator('#btnNewOut').isDisabled()).toBe(false);
     expect(await page!.locator('#liveJobName').textContent()).toContain('e2e-fixture-query-sync');

@@ -22,6 +22,7 @@ import {
 import { countKetQuaFromJsonl, parseCliStatusLine, writeSimpleCsvFromJsonl, emptyCounts } from './ket-qua-counts.ts';
 import { assertOutJobLockFree, releaseOutJobLock, writeOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, canStartFresh, readProgress } from './progress.ts';
+import { resolveJobCsv } from './job-csv.ts';
 import type { JobOptions, JobRecord, JobStatus } from './types.ts';
 
 const JSONL_SEED_TAIL_BYTES = 512_000;
@@ -69,6 +70,7 @@ export class JobSupervisor {
   private profile = '';
   private outputTail = '';
   private stopRequested = false;
+  private collectOnly = false;
   private readonly hooks: SupervisorHooks;
 
   constructor(hooks: SupervisorHooks = {}) {
@@ -112,6 +114,7 @@ export class JobSupervisor {
     this.currentDomains.clear();
     this.outputTail = '';
     this.stopRequested = false;
+    this.collectOnly = Boolean(opts.collectOnly) && !opts.resume;
     this.etaTracker.begin(out);
 
     const progress = readProgress(out);
@@ -284,9 +287,7 @@ export class JobSupervisor {
       counts,
       currentDomains: [...this.currentDomains],
       outDir: this.outDir,
-      csvPath: existsSync(join(this.outDir, 'results.csv'))
-        ? join(this.outDir, 'results.csv')
-        : undefined,
+      csvPath: resolveJobCsv(this.outDir),
       eta,
     });
   }
@@ -306,15 +307,12 @@ export class JobSupervisor {
         /* no results file */
       }
     }
-    const csvPath = this.outDir ? join(this.outDir, 'results.csv') : '';
-    let csvOk = csvPath ? existsSync(csvPath) : false;
     let message = 'Đã dừng / hoàn tất';
     // Never write a header-only CSV for a job that died before scanning anything —
-    // it fakes a "completed, nothing found" scan.
-    if (this.outDir && !csvOk && (!failed || hasResults)) {
+    // it fakes a "completed, nothing found" scan. Skip when jsonl is missing or empty.
+    if (this.outDir && !existsSync(join(this.outDir, 'results.csv')) && hasResults) {
       try {
         await writeSimpleCsvFromJsonl(this.outDir);
-        csvOk = true;
       } catch (e) {
         message = `Dừng xong nhưng không ghi được CSV: ${e instanceof Error ? e.message : e}`;
       }
@@ -348,8 +346,12 @@ export class JobSupervisor {
       counts,
       currentDomains: [],
       outDir: this.outDir || undefined,
-      csvPath: csvOk && csvPath ? csvPath : undefined,
-      message: failed ? this.describeFailure(code, signal) : message,
+      csvPath: this.outDir ? resolveJobCsv(this.outDir) : undefined,
+      message: failed
+        ? this.describeFailure(code, signal)
+        : this.collectOnly && !this.stopRequested
+          ? 'Đã lấy danh sách.'
+          : message,
       eta,
     });
     this.stopRequested = false;

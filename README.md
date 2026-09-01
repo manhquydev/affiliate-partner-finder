@@ -45,6 +45,7 @@ npm test             # Vitest unit tests (detector/classify/export/golden)
 ## Desktop GUI (Windows-first)
 
 Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI. Cửa sổ là **workspace job**: bảng job + preview chạy/theo dõi, **ETA**, CSV HITL.
+**Lấy danh sách** chỉ lấy công ty từ Trustpilot rồi ghi `companies.csv`; **Bắt đầu** vẫn lấy danh sách rồi quét affiliate.
 
 ```bash
 npm install
@@ -82,10 +83,13 @@ Batch scanner cho quét theo ngành trên máy local (Playwright), dùng chung d
 ```bash
 npx playwright install chromium   # lần đầu
 npm run scan -- --query design --limit 10 --out ./out/run1
-# resume sau khi dừng giữa chừng:
+# chỉ danh sách Trustpilot, không quét website:
+npm run scan -- --query design --limit 10 --out ./out/run1 --collect-only
+# resume sau khi dừng giữa chừng (Full scan):
 npm run scan -- --resume --out ./out/run1
 ```
 
+- **`--collect-only`:** dừng sau danh sách Trustpilot; ghi `companies.csv` (`stt,ten_website,link`); không quét website. `--resume` vẫn Full scan — không dùng cùng `--collect-only`.
 - Collect Trustpilot: Chrome persistent profile mặc định `~/.cache/affiliate-partner-finder/chrome-profile` (headed). Nếu Cloudflare: vượt challenge một lần trong cửa sổ đó, rồi chạy lại — **không bypass CAPTCHA**.
 - Scan: concurrency mặc định 2 (max 3), `--delay-ms` start-stagger. Path-probe luôn chạy trừ khi bật `--early-exit`.
 - Chống treo batch: `page`/`context` close bị giới hạn ~3s (`closeQuietly`) — site kẹt không chặn cả job.
