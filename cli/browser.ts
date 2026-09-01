@@ -5,7 +5,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { hideChromeWindowArgs, hidePlaywrightWindows } from './hide-chrome-window';
-import { waitUntilProfileUnlocked } from './profile-lock';
+import { isProfileBusyError, PROFILE_BUSY_MESSAGE, waitUntilProfileUnlocked } from './profile-lock';
 
 export const DEFAULT_PROFILE_DIR = join(homedir(), '.cache', 'affiliate-partner-finder', 'chrome-profile');
 
@@ -59,7 +59,7 @@ export async function launchPersistentCollect(
   mkdirSync(profileDir, { recursive: true });
   const unlocked = await waitUntilProfileUnlocked(profileDir);
   if (!unlocked) {
-    console.warn(`[cli] profile still locked after wait: ${profileDir}`);
+    throw new Error(PROFILE_BUSY_MESSAGE);
   }
   const hideWindows = Boolean(opts?.hideWindows);
   const common = headedContextOptions(hideWindows);
@@ -71,6 +71,9 @@ export async function launchPersistentCollect(
     if (hideWindows) await hidePlaywrightWindows(context);
     return { browser: null, context, persistent: true };
   } catch (e) {
+    if (isProfileBusyError(e)) {
+      throw new Error(PROFILE_BUSY_MESSAGE);
+    }
     console.warn(
       `[cli] system Chrome launch failed (${e instanceof Error ? e.message.split('\n')[0] : e}) — using bundled Chromium (CF pass-rate may be lower)`,
     );

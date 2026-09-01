@@ -2,9 +2,9 @@
 
 Ứng dụng GUI bọc CLI quét affiliate/partner. Dữ liệu ở máy bạn.
 
-**Phiên bản mã nguồn (`main`):** `1.0.13`.
+**Phiên bản mã nguồn (`main`):** `1.0.14`.
 
-**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** **`v1.0.13`** (Latest) — NSIS + AppImage + `.deb`.
+**Bản tải trên [GitHub Releases](https://github.com/manhquydev/affiliate-partner-finder/releases):** **`v1.0.14`** (Latest) — NSIS + AppImage + `.deb`.
 
 ## Yêu cầu
 
@@ -15,7 +15,7 @@
 ## Tải bản phát hành
 
 1. Mở https://github.com/manhquydev/affiliate-partner-finder/releases
-2. Chọn tag **Latest** (`v1.0.13`)
+2. Chọn tag **Latest** (`v1.0.14`)
 3. Tải:
    - **Windows:** `Affiliate Partner Finder Setup *.exe` (NSIS)
    - **Linux:** `*.AppImage` hoặc `*_amd64.deb`
@@ -70,7 +70,7 @@ CI: ba workflow GitHub Actions:
 | **Desktop Pack Preview** | Sau CI xanh trên `main`, hoặc dispatch | NSIS/AppImage **artifact** (14 ngày) — dùng Win smoke **trước** tag |
 | **Release Desktop** | Push tag `v*` (sau smoke PASS) | Test Win+Linux → publish [Releases](https://github.com/manhquydev/affiliate-partner-finder/releases) |
 
-Release `v1.0.13` dùng workflow **Release Desktop** (tag `v*`). Quy trình: A + **A2 Windows-parity** + B + C — [`docs/desktop-release-workflow.md`](./desktop-release-workflow.md), [`docs/windows-parity.md`](./windows-parity.md). Checklist HITL Windows vẫn `plans/reports/test-260831-win-smoke-112.md` (chưa sign-off cho 1.0.13).
+Release `v1.0.14` dùng workflow **Release Desktop** (tag `v*`). Quy trình: A + **A2 Windows-parity** + B + C — [`docs/desktop-release-workflow.md`](./desktop-release-workflow.md), [`docs/windows-parity.md`](./windows-parity.md). Checklist HITL Windows vẫn `plans/reports/test-260831-win-smoke-112.md` (chưa sign-off cho 1.0.14).
 
 Xem `desktop/electron-builder.yml` + `npm run desktop:bundle-cli`. Bản unsigned có thể bị SmartScreen cảnh báo — signing là bước sau. Gate khách hàng: một lần smoke trên Win VM (Start → Stop → Resume → mở CSV).
 

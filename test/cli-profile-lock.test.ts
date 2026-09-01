@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { isProfileLocked, waitUntilProfileUnlocked } from '../cli/profile-lock';
+import { isProfileBusyError, isProfileLocked, waitUntilProfileUnlocked } from '../cli/profile-lock';
 
 describe('profile lock wait (handoff)', () => {
   it('is unlocked when SingletonLock is absent', () => {
@@ -34,5 +34,14 @@ describe('profile lock wait (handoff)', () => {
       () => locked,
     );
     expect(ok).toBe(true);
+  });
+
+  it('detects Playwright profile-in-use messages', () => {
+    expect(
+      isProfileBusyError(
+        new Error('browserType.launchPersistentContext: Opening in existing browser session.'),
+      ),
+    ).toBe(true);
+    expect(isProfileBusyError(new Error('net::ERR_CONNECTION_RESET'))).toBe(false);
   });
 });

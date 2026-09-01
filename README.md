@@ -52,6 +52,8 @@ npm install
 npm run desktop:dev
 ```
 
+**v1.0.14:** Lấy danh sách: nếu Chrome profile đang bị chiếm, báo rõ và dừng — không fallback bundled rồi lấy 0 hãng.
+
 **v1.0.13:** **Lấy danh sách** / `--collect-only` — dừng sau Trustpilot, ghi `companies.csv` (`stt,ten_website,link`); **Bắt đầu** / `--resume` vẫn quét affiliate. Xem `docs/desktop-windows.md`.
 
 **v1.0.12:** Windows-parity gate (`npm run test:windows-parity` + CI `windows-latest`); stagger/nav-failure/profile-lock; `trade` word-boundary. **Quét đường dẫn song song** vẫn mặc định tắt. Xem `docs/windows-parity.md`.

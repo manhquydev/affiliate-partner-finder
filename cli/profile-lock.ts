@@ -26,3 +26,11 @@ export async function waitUntilProfileUnlocked(
   }
   return true;
 }
+
+export const PROFILE_BUSY_MESSAGE =
+  'Chrome profile đang bị dùng. Bấm Dừng hoặc đóng Chrome của app, rồi chạy Lấy danh sách lại.';
+
+export function isProfileBusyError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /existing browser session|profile is already in use|SingletonLock/i.test(msg);
+}
