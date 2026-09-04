@@ -261,6 +261,7 @@ async function main(): Promise<number> {
       return 2;
     }
     companies = JSON.parse(readFileSync(companiesPath, 'utf8')) as Company[];
+    if (companies.length > 0) writeCompaniesCsv(companiesCsvPath, companies);
     console.log(`[cli] resume: ${companies.length} companies from snapshot; ${resultsMap.size} results on disk`);
   } else {
     if (!args.query) {
@@ -287,8 +288,10 @@ async function main(): Promise<number> {
       const runCollect = () =>
         collectCli(collectHandle.context, args.query, args.limit, skip, args.delayMs, args.maxPages, {
           onProgress: (partial, pageNum, totalPagesHint) => {
-            atomicWriteJson(companiesPath, partial);
-            if (args.collectOnly) writeCompaniesCsv(companiesCsvPath, partial);
+            if (partial.length > 0) {
+              atomicWriteJson(companiesPath, partial);
+              writeCompaniesCsv(companiesCsvPath, partial);
+            }
             writeCollectProgress(partial.length);
             console.log(
               `[cli] checkpoint companies=${partial.length} after page ${pageNum}` +
@@ -311,11 +314,11 @@ async function main(): Promise<number> {
       if (companies.length === 0 && !stopRequested) {
         if (isUnderVirtualDisplay() || hideWindows) {
           console.error(
-            '[cli] chưa lấy được công ty và đang chạy ẩn. Tắt tùy chọn "Ẩn cửa sổ Chrome" trong app, bấm Tiếp tục, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu lại), rồi bật lại để quét ẩn.',
+            '[cli] chưa lấy được website và đang chạy ẩn. Tắt tùy chọn "Ẩn cửa sổ Chrome" trong app, bấm Lấy danh sách lại, vượt kiểm tra một lần trong cửa sổ Chrome (cookie lưu lại), rồi bật lại nếu cần ẩn.',
           );
         } else {
           console.error(
-            '[cli] chưa lấy được công ty — cửa sổ Chrome đang mở: nếu thấy kiểm tra Trustpilot/Cloudflare, hãy hoàn thành ngay trong cửa sổ đó (90s).',
+            '[cli] chưa lấy được website — cửa sổ Chrome đang mở: nếu thấy kiểm tra Trustpilot/Cloudflare, hãy hoàn thành ngay trong cửa sổ đó (90s).',
           );
           const deadline = Date.now() + 90_000;
           while (Date.now() < deadline && !stopRequested) {
@@ -331,10 +334,17 @@ async function main(): Promise<number> {
           }
         }
       }
-      atomicWriteJson(companiesPath, companies);
-      console.log(`[cli] collected ${companies.length} companies → ${companiesPath}`);
+      if (companies.length > 0) {
+        atomicWriteJson(companiesPath, companies);
+        writeCompaniesCsv(companiesCsvPath, companies);
+      }
+      console.log(
+        companies.length > 0
+          ? `[cli] collected ${companies.length} companies → ${companiesPath}`
+          : '[cli] collected 0 companies',
+      );
       if (stopRequested && companies.length === 0) {
-        console.log('[cli] stopped during collect — checkpoint saved, resume safe');
+        console.log('[cli] stopped during collect — chưa có website, có thể Lấy danh sách lại');
       }
     } finally {
       await closeHandle(collectHandle);
@@ -347,14 +357,17 @@ async function main(): Promise<number> {
     if (action.kind === 'exit') {
       if (companies.length > 0) writeCompaniesCsv(companiesCsvPath, companies);
       if (companies.length === 0 && !stopRequested) {
-        console.error('[cli] no companies to scan');
+        console.error(
+          args.collectOnly
+            ? '[cli] chưa lấy được website — không ghi companies.csv.'
+            : '[cli] chưa lấy được website để quét.',
+        );
       }
       return action.code;
     }
   }
-
   if (companies.length === 0) {
-    console.error('[cli] no companies to scan');
+    console.error('[cli] chưa lấy được website để quét.');
     return 1;
   }
 

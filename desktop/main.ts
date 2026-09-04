@@ -6,7 +6,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { clampCollectLimit } from '../lib/config.ts';
+import { clampCollectLimit, DETECTOR_VERSION } from '../lib/config.ts';
 import {
   defaultDesktopProfileDir,
   defaultDesktopRunsDir,
@@ -14,8 +14,16 @@ import {
 } from './build-scan-argv.ts';
 import { JobSupervisor, readJobFile } from './job-supervisor.ts';
 import { releaseOutJobLock } from './job-lock.ts';
-import { assertSafeJobPaths, canStartFresh, isPathInside, readProgress, resolveExistingPath } from './progress.ts';
-import { resolveJobCsv } from './job-csv.ts';
+import {
+  assertSafeJobPaths,
+  canStartFresh,
+  companySnapshotCount,
+  isPathInside,
+  readProgress,
+  resolveExistingPath,
+} from './progress.ts';
+import { ensureCompaniesCsv, listJobArtefacts, resolveJobArtefact, resolveJobCsv } from './job-csv.ts';
+import { VERSION_NOTES } from './app-info.ts';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(appDir, '..');
@@ -152,6 +160,14 @@ ipcMain.handle('desktop:defaults', () => {
     profile: profileRoot,
     runsRoot,
     platform: process.platform,
+    versions: {
+      app: app.getVersion(),
+      detector: DETECTOR_VERSION,
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      node: process.versions.node,
+    },
+    versionNotes: VERSION_NOTES,
   };
 });
 
@@ -190,12 +206,14 @@ ipcMain.handle('desktop:list-runs', () => {
       } catch {
         /* ignore */
       }
+      ensureCompaniesCsv(path);
       return {
         path,
         name: d.name,
         mtime,
         progress,
-        canResume: existsSync(join(path, 'companies.json')),
+        canResume: companySnapshotCount(path) > 0,
+        artefacts: listJobArtefacts(path),
         query: progress?.query ?? '',
         completed: progress?.completed ?? 0,
         total: progress?.total ?? 0,
@@ -215,10 +233,12 @@ ipcMain.handle('desktop:inspect-out', (_e, outPath: string) => {
   const real = resolveSafeOutDir(outPath);
   const progress = readProgress(real);
   const query = typeof progress?.query === 'string' ? progress.query : '';
+  ensureCompaniesCsv(real);
   return {
     progress,
     canStartFresh: canStartFresh(real),
-    canResume: existsSync(join(real, 'companies.json')),
+    canResume: companySnapshotCount(real) > 0,
+    artefacts: listJobArtefacts(real),
     query,
     total: progress?.total ?? null,
   };
@@ -299,6 +319,18 @@ ipcMain.handle('desktop:open-csv', async (_e, outPath?: string) => {
     throw new Error('Chưa có CSV — chạy Lấy danh sách hoặc quét xong.');
   }
   const real = resolveExistingPath(csv);
+  if (!isPathInside(runsRoot, real)) throw new Error('csv path escape blocked');
+  await shell.openPath(real);
+  return { ok: true };
+});
+
+ipcMain.handle('desktop:open-job-file', async (_e, outPath: string, name: string) => {
+  const out = requestedOutDir(outPath);
+  const file = out ? resolveJobArtefact(out, name) : undefined;
+  if (!file) {
+    throw new Error('Chưa có file đó — chạy Lấy danh sách hoặc quét xong.');
+  }
+  const real = resolveExistingPath(file);
   if (!isPathInside(runsRoot, real)) throw new Error('csv path escape blocked');
   await shell.openPath(real);
   return { ok: true };

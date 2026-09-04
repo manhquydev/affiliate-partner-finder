@@ -51,6 +51,9 @@ else                           → verdict=none, confidence=high
 
 - `evidenceUrl`/`evidenceText`/`method`: lấy hit mạnh nhất; nếu nhiều, cột phụ hoặc JSON đính kèm.
 - Mỗi dòng `confirmed` PHẢI có `evidenceUrl` mở được.
+- End-user `results.csv`: `ten_cong_ty,website,ket_qua,huong_dan`.
+- Technical `results.full.csv`: cột mục 4.
+- List `companies.csv` (sau Collect / Lấy danh sách): `stt,ten_website,link` — `link` = `https://{domain}`.
 
 ## 5. Export JSON
 Mảng `ScanResult` đầy đủ để tái xử lý / audit.

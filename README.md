@@ -45,12 +45,14 @@ npm test             # Vitest unit tests (detector/classify/export/golden)
 ## Desktop GUI (Windows-first)
 
 Ứng dụng cửa sổ cho khách hàng (không cần terminal). Bọc CLI. Cửa sổ là **workspace job**: bảng job + preview chạy/theo dõi, **ETA**, CSV HITL.
-**Lấy danh sách** chỉ lấy công ty từ Trustpilot rồi ghi `companies.csv`; **Bắt đầu** vẫn lấy danh sách rồi quét affiliate.
+**Lấy danh sách** chỉ lấy website từ Trustpilot rồi ghi `companies.csv`; **Bắt đầu** vẫn lấy danh sách rồi quét affiliate.
 
 ```bash
 npm install
 npm run desktop:dev
 ```
+
+**v1.0.15:** **Lấy danh sách** luôn ghi `companies.csv` (kể cả sau **Bắt đầu**); UI hiện `companies.csv` / `results.csv` / `results.full.csv`; **Cài đặt** hiện phiên bản; job 0 website báo tiếng Việt và cho lấy lại. Copy UI: “website” thay “công ty”.
 
 **v1.0.14:** Lấy danh sách: nếu Chrome profile đang bị chiếm, báo rõ và dừng — không fallback bundled rồi lấy 0 hãng.
 
@@ -113,7 +115,7 @@ npm run scan -- --resume --out ./out/run1
   npm run scan:xvfb -- --resume --out ./out/run1 --scan-profile --accept-failures
   ```
   Khi gặp Cloudflare: tạm tắt ẩn Chrome (bỏ `--virtual-display` / bỏ tick trên GUI), vượt challenge một lần, rồi `--resume`.
-- Artefacts: `companies.json`, `results.jsonl`, **`results.csv`** (end-user: `ten_cong_ty,website,ket_qua,huong_dan` với `true`/`false`/`unknown`), `results.full.csv` + `results.json` (kỹ thuật/audit).
+- Artefacts: `companies.json`, **`companies.csv`** (danh sách: `stt,ten_website,link`), `results.jsonl`, **`results.csv`** (end-user: `ten_cong_ty,website,ket_qua,huong_dan` với `true`/`false`/`unknown`), `results.full.csv` + `results.json` (kỹ thuật/audit).
 - `ket_qua=true` = có dấu hiệu affiliate **hoặc** partner → người vào xác nhận; `false` = đã mở trang, không thấy dấu hiệu; `unknown` = không mở được (không ghi false để tránh miss).
 - Kiểm tra live export kỹ thuật: `node test/verify-golden.mjs ./out/run1/results.json`
 

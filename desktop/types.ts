@@ -71,6 +71,8 @@ export type JobStatus = {
   message?: string;
   outDir?: string;
   csvPath?: string;
+  /** Present job-folder CSVs: companies.csv, results.csv, results.full.csv. */
+  artefacts?: string[];
   /** Rolling completion estimate while running (and last snapshot when idle). */
   eta?: EtaSnapshot | null;
 };

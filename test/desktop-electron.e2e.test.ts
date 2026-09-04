@@ -86,6 +86,7 @@ describe('desktop electron renderer e2e', () => {
       }),
     );
     writeFileSync(join(fixtureOut, 'companies.json'), JSON.stringify([{ name: 'Acme', domain: 'acme.com' }]));
+    writeFileSync(join(fixtureOut, 'companies.csv'), 'stt,ten_website,link\n1,Acme,https://acme.com\n');
 
     otherFixtureOut = join(runs, 'e2e-fixture-other-job');
     mkdirSync(otherFixtureOut, { recursive: true });
@@ -151,6 +152,7 @@ describe('desktop electron renderer e2e', () => {
     const btn = page!.locator('#btnCollectList');
     expect(await btn.isVisible()).toBe(true);
     expect((await btn.innerText()).trim()).toBe('Lấy danh sách');
+    expect(await btn.getAttribute('class')).toMatch(/btn-primary/);
     expect((await page!.locator('#btnStart').innerText()).trim()).toBe('Bắt đầu');
   });
 
@@ -177,6 +179,10 @@ describe('desktop electron renderer e2e', () => {
   });
 
   it('keeps probe-parallel toggle visible and unchecked by default', async () => {
+    const summary = page!.locator('#scanOpts summary');
+    if (!(await page!.locator('#probeParallel').isVisible())) {
+      await summary.click();
+    }
     expect(await page!.locator('#probeParallel').isVisible()).toBe(true);
     expect(await page!.locator('#probeParallel').isChecked()).toBe(false);
   });
@@ -187,6 +193,25 @@ describe('desktop electron renderer e2e', () => {
     expect(await page!.locator('#hideChrome').isChecked()).toBe(true);
     await page!.locator('#probeParallel').uncheck();
     expect(await page!.locator('#probeParallel').isChecked()).toBe(false);
+  });
+
+  it('opens settings with version history', async () => {
+    await page!.locator('#btnSettings').click();
+    const dlg = page!.locator('#settingsDialog');
+    await expect.poll(async () => dlg.isVisible()).toBe(true);
+    const text = await dlg.innerText();
+    expect(text).toMatch(/Phiên bản/);
+    expect(text).toMatch(/1\.0\.15/);
+    await page!.locator('#btnSettingsClose').click();
+    await expect.poll(async () => dlg.isVisible()).toBe(false);
+  });
+
+  it('shows companies.csv in file rows for a list snapshot', async () => {
+    const row = await jobRow(page!, 'e2e-fixture-query-sync');
+    await row.click();
+    await expect.poll(async () => page!.locator('#fileRows .file-row-name').allTextContents()).toContain(
+      'companies.csv',
+    );
   });
 
   it('syncs query from existing out dir progress.json', async () => {

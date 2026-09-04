@@ -128,7 +128,7 @@ export function estimateCompletion(input: {
   const { total, completed } = input;
   const remaining = Math.max(0, total - completed);
 
-  if (total <= 0) return emptyEta('ETA: chờ tổng số công ty');
+  if (total <= 0) return emptyEta('ETA: chờ tổng số website');
   if (remaining === 0) {
     return {
       remainingMs: 0,
@@ -196,7 +196,7 @@ export function estimateCompletion(input: {
     confidence,
     stalled: false,
     relativeLabel: `Còn ${formatDurationVi(remainingMs)} · xong khoảng ${formatFinishClock(finishAtMs, nowMs)}${confNote}`,
-    rateLabel: `~${Math.round(rate)} công ty/giờ`,
+    rateLabel: `~${Math.round(rate)} website/giờ`,
   };
 }
 

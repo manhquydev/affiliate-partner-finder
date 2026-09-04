@@ -22,7 +22,7 @@ import {
 import { countKetQuaFromJsonl, parseCliStatusLine, writeSimpleCsvFromJsonl, emptyCounts } from './ket-qua-counts.ts';
 import { assertOutJobLockFree, releaseOutJobLock, writeOutJobLock } from './job-lock.ts';
 import { assertSafeJobPaths, canStartFresh, readProgress } from './progress.ts';
-import { resolveJobCsv } from './job-csv.ts';
+import { ensureCompaniesCsv, listJobArtefacts, resolveJobCsv } from './job-csv.ts';
 import type { JobOptions, JobRecord, JobStatus } from './types.ts';
 
 const JSONL_SEED_TAIL_BYTES = 512_000;
@@ -53,6 +53,45 @@ export type SupervisorHooks = {
   jobFilePath?: string;
   pollMs?: number;
 };
+const CLI_NOISE_RE = /^(at\s|\.\.\.\s|Node\.js v\d|npm (notice|warn))/;
+const CLI_SYMPTOM_RE = /no companies to scan|collected 0 companies/i;
+const CLI_CAUSE_RE =
+  /(failed|error|✗|returned no companies|challenge|chưa lấy được|đang bị dùng|profile đang)/i;
+
+export const EMPTY_COLLECT_MESSAGE =
+  'Chưa lấy được website từ Trustpilot. Nếu đang ẩn Chrome: tắt “Ẩn cửa sổ Chrome”, chạy Lấy danh sách lại, vượt kiểm tra một lần trong cửa sổ Chrome.';
+
+export function pickCliFailureCause(outputTail: string): string {
+  const lines = outputTail
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !CLI_NOISE_RE.test(l));
+  const hidden = lines.filter((l) => /đang chạy ẩn/i.test(l)).pop();
+  if (hidden) return hidden;
+  const crash = lines.filter((l) => /^Error\b|^\S*Error\b.*:/.test(l) && !/^\[cli\]/.test(l)).pop();
+  if (crash) return crash;
+  const cause = lines
+    .filter((l) => l.startsWith('[cli]') && !CLI_SYMPTOM_RE.test(l) && CLI_CAUSE_RE.test(l))
+    .pop();
+  if (cause) return cause;
+  const cli = lines.filter((l) => l.startsWith('[cli]') && !CLI_SYMPTOM_RE.test(l)).pop();
+  if (cli) return cli;
+  if (lines.some((l) => CLI_SYMPTOM_RE.test(l) || /chưa lấy được (công ty|website)/i.test(l))) {
+    return EMPTY_COLLECT_MESSAGE;
+  }
+  return lines[lines.length - 1] ?? '';
+}
+
+export function formatJobFailureMessage(
+  code: number | null,
+  signal: NodeJS.Signals | null,
+  cause: string,
+): string {
+  const exitPart = code != null ? `exit ${code}` : `signal ${signal ?? '?'}`;
+  if (!cause) return `Job lỗi (${exitPart}) — xem cửa sổ log để biết chi tiết.`;
+  const text = CLI_SYMPTOM_RE.test(cause) ? EMPTY_COLLECT_MESSAGE : cause.slice(0, 400);
+  return `Job lỗi (${exitPart}): ${text}`;
+}
 
 export class JobSupervisor {
   private child: ChildProcess | null = null;
@@ -218,31 +257,10 @@ export class JobSupervisor {
     }
   }
 
+
   /** Human cause for an unexpected CLI exit, from the output tail we kept. */
   private describeFailure(code: number | null, signal: NodeJS.Signals | null): string {
-    const lines = this.outputTail
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0 && !/^(at\s|\.\.\.\s|Node\.js v\d|npm (notice|warn))/.test(l));
-    const cause =
-      // Real crash header, e.g. "Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'p-limit'…"
-      lines.filter((l) => /^Error\b|^\S*Error\b.*:/.test(l) && !/^\[cli\]/.test(l)).pop() ??
-      lines
-        .filter(
-          (l) =>
-            l.startsWith('[cli]') &&
-            // "no companies to scan" is a terminal symptom, never the cause.
-            !/no companies/i.test(l) &&
-            /(failed|error|✗|returned no companies|challenge)/i.test(l),
-        )
-        .pop() ??
-      lines.filter((l) => l.startsWith('[cli]')).pop() ??
-      lines[lines.length - 1] ??
-      '';
-    const exitPart = code != null ? `exit ${code}` : `signal ${signal ?? '?'}`;
-    return cause
-      ? `Job lỗi (${exitPart}): ${cause.slice(0, 400)}`
-      : `Job lỗi (${exitPart}) — xem cửa sổ log để biết chi tiết.`;
+    return formatJobFailureMessage(code, signal, pickCliFailureCause(this.outputTail));
   }
 
   private startPoll(): void {
@@ -288,6 +306,7 @@ export class JobSupervisor {
       currentDomains: [...this.currentDomains],
       outDir: this.outDir,
       csvPath: resolveJobCsv(this.outDir),
+      artefacts: listJobArtefacts(this.outDir),
       eta,
     });
   }
@@ -318,6 +337,7 @@ export class JobSupervisor {
       }
     }
     if (this.outDir) {
+      ensureCompaniesCsv(this.outDir);
       try {
         unlinkSync(join(this.outDir, '.stop'));
       } catch {
@@ -347,6 +367,7 @@ export class JobSupervisor {
       currentDomains: [],
       outDir: this.outDir || undefined,
       csvPath: this.outDir ? resolveJobCsv(this.outDir) : undefined,
+      artefacts: this.outDir ? listJobArtefacts(this.outDir) : [],
       message: failed
         ? this.describeFailure(code, signal)
         : this.collectOnly && !this.stopRequested

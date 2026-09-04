@@ -64,10 +64,22 @@ export function readProgress(outDir: string): ProgressSnapshot | null {
   }
 }
 
+/** Count companies.json rows. 0 = missing/empty; -1 = present but unreadable. */
+export function companySnapshotCount(outDir: string): number {
+  const path = join(outDir, 'companies.json');
+  if (!existsSync(path)) return 0;
+  try {
+    const data = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+    if (!Array.isArray(data)) return -1;
+    return data.length;
+  } catch {
+    return -1;
+  }
+}
+
 export function canStartFresh(outDir: string): boolean {
-  const companies = join(outDir, 'companies.json');
+  if (companySnapshotCount(outDir) !== 0) return false;
   const jsonl = join(outDir, 'results.jsonl');
-  if (existsSync(companies)) return false;
   if (existsSync(jsonl)) {
     try {
       if (statSync(jsonl).size > 0) return false;

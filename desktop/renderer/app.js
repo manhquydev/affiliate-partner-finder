@@ -94,6 +94,10 @@ function runState(run, status) {
     }
   }
   if (run.total > 0 && run.completed >= run.total) return 'done';
+  const files = Array.isArray(run.artefacts) ? run.artefacts : [];
+  if (files.includes('companies.csv') && !files.includes('results.csv') && run.completed > 0) {
+    return 'done';
+  }
   if (run.canResume) return 'resume';
   return 'idle';
 }
@@ -102,6 +106,49 @@ function folderName(path) {
   if (!path) return 'Job mới';
   const parts = String(path).split(/[/\\]/).filter(Boolean);
   return parts[parts.length - 1] || path;
+}
+
+const FILE_ROWS = [
+  { file: 'companies.csv', action: 'Mở danh sách' },
+  { file: 'results.csv', action: 'Mở kết quả' },
+  { file: 'results.full.csv', action: 'Mở đầy đủ' },
+];
+
+function renderFileRows(artefacts, outPath) {
+  const host = $('fileRows');
+  if (!host) return;
+  const names = Array.isArray(artefacts) ? artefacts : [];
+  const visible = FILE_ROWS.filter((row) => names.includes(row.file));
+  host.replaceChildren();
+  host.hidden = visible.length === 0;
+  for (const row of visible) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'file-row';
+    btn.disabled = !outPath;
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'icon');
+    icon.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#i-csv');
+    icon.appendChild(use);
+    const name = document.createElement('span');
+    name.className = 'file-row-name';
+    name.textContent = row.file;
+    const action = document.createElement('span');
+    action.className = 'file-row-action';
+    action.textContent = row.action;
+    btn.append(icon, name, action);
+    btn.addEventListener('click', async () => {
+      try {
+        await api.openJobFile(outPath, row.file);
+      } catch (e) {
+        $('message').textContent = friendlyError(e);
+        $('message').classList.add('is-error');
+      }
+    });
+    host.appendChild(btn);
+  }
 }
 
 function renderEta(eta, { running, completed, total }) {
@@ -316,11 +363,11 @@ function renderStatus(s) {
   $('dashboard').dataset.running = running && pathMatch ? 'true' : 'false';
 
   $('progressFraction').textContent =
-    total > 0 ? `${completed} / ${total} công ty` : '0 / 0 công ty';
+    total > 0 ? `${completed} / ${total} website` : '0 / 0 website';
   $('progressFill').style.transform = `scaleX(${percent / 100})`;
   const track = $('progressTrack');
   track.setAttribute('aria-valuenow', String(percent));
-  track.setAttribute('aria-valuetext', `${completed} trên ${total} công ty`);
+  track.setAttribute('aria-valuetext', `${completed} trên ${total} website`);
 
   const requested = typeof p?.requestedLimit === 'number' ? p.requestedLimit : 0;
   const collecting = p?.phase === 'collect';
@@ -330,34 +377,36 @@ function renderStatus(s) {
   if (shortCollect) {
     if (stopReason === 'challenge-stop') {
       shortNote =
-        ` Chỉ lấy được ${total}/${requested} vì Trustpilot chặn giữa chừng. Tắt “Ẩn cửa sổ Chrome”, bấm Tiếp tục.`;
+        ` Chỉ lấy được ${total}/${requested} vì Trustpilot chặn giữa chừng. Tắt “Ẩn cửa sổ Chrome”, bấm Lấy danh sách lại.`;
     } else if (stopReason === 'max-pages') {
       shortNote = ` Chỉ lấy được ${total}/${requested} (hết số trang tìm).`;
     } else {
-      shortNote = ` Trustpilot chỉ trả về ${total} công ty cho từ khoá này (bạn yêu cầu ${requested}).`;
+      shortNote = ` Trustpilot chỉ trả về ${total} website cho từ khoá này (bạn yêu cầu ${requested}).`;
     }
   }
 
+  const artefacts = pathMatch && Array.isArray(s.artefacts) ? s.artefacts : run?.artefacts;
+  const hasListCsv = Array.isArray(artefacts) && artefacts.includes('companies.csv');
   if (collecting) {
     const cap = requested || total;
     $('progressFraction').textContent =
       cap > 0 ? `Đã lấy ${completed} / ${cap} từ Trustpilot` : 'Đang lấy danh sách Trustpilot…';
     if (running) {
-      $('progressHint').textContent = 'Đang lấy danh sách công ty trên Trustpilot, chưa quét website.';
-    } else if (pathMatch && s.message === 'Đã lấy danh sách.') {
-      $('progressHint').textContent = 'Đã lấy danh sách. Mở CSV hoặc Tiếp tục để quét website.';
+      $('progressHint').textContent = 'Đang lấy danh sách website trên Trustpilot, chưa quét từng site.';
+    } else if (hasListCsv || (pathMatch && s.message === 'Đã lấy danh sách.')) {
+      $('progressHint').textContent = 'Đã lấy danh sách. Mở companies.csv hoặc Tiếp tục để quét website.';
     } else {
-      $('progressHint').textContent = 'Đã dừng lúc lấy danh sách. Bấm Tiếp tục để quét phần đã có.';
+      $('progressHint').textContent = 'Đã dừng lúc lấy danh sách. Bấm Lấy danh sách lại hoặc Tiếp tục nếu đã có danh sách.';
     }
   } else if (running && total > 0) {
     $('progressHint').textContent =
-      (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website, còn ${total - completed} công ty`) +
+      (percent >= 100 ? 'Đang hoàn tất và ghi CSV…' : `Đang quét website, còn ${total - completed} website`) +
       shortNote;
   } else if (p && completed > 0) {
     $('progressHint').textContent =
-      `Đã xử lý ${completed} công ty. Có thể Tiếp tục hoặc mở CSV.` + shortNote;
+      `Đã xử lý ${completed} website. Có thể Tiếp tục hoặc mở CSV.` + shortNote;
   } else {
-    $('progressHint').textContent = 'Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.';
+    $('progressHint').textContent = 'Sẵn sàng lấy danh sách website hoặc tiếp tục job cũ.';
   }
 
   renderEta(pathMatch ? s.eta : null, {
@@ -373,8 +422,8 @@ function renderStatus(s) {
   $('jobQuery').textContent = jobQuery
     ? `Từ khoá job: ${jobQuery}`
     : outPath
-      ? 'Chưa có từ khoá trên job này. Nhập rồi Bắt đầu.'
-      : 'Chưa chọn job. Điền từ khoá rồi Bắt đầu.';
+      ? 'Chưa có từ khoá trên job này. Nhập rồi Lấy danh sách.'
+      : 'Chưa chọn job. Điền từ khoá rồi Lấy danh sách.';
 
   if (running && pathMatch) setQueryInput($('query').value || jobQuery || '', { readonly: true });
   else {
@@ -415,14 +464,14 @@ function renderStatus(s) {
   $('runPicker').disabled = false;
   $('jobFilter').disabled = false;
   const selectedOut = $('out').value.trim();
-  $('btnCsv').disabled = !selectedOut;
   $('btnFolder').disabled = !selectedOut;
+  renderFileRows(artefacts, selectedOut);
   $('btnStart').title = running
-    ? 'Một việc đang quét. Dừng trước khi bắt đầu job khác.'
-    : '';
+    ? 'Một việc đang chạy. Dừng trước khi bắt đầu job khác.'
+    : 'lấy danh sách rồi quét affiliate trên từng website';
   $('btnCollectList').title = running
-    ? 'Một việc đang quét. Dừng trước khi bắt đầu job khác.'
-    : 'chỉ danh sách Trustpilot, không quét website';
+    ? 'Một việc đang chạy. Dừng trước khi bắt đầu job khác.'
+    : 'chỉ danh sách Trustpilot, ghi companies.csv';
   $('btnResume').title = running
     ? 'Một việc đang quét. Dừng trước khi tiếp tục job khác.'
     : '';
@@ -479,6 +528,10 @@ async function boot() {
 
   setQueryInput(loadLastQuery());
   const defaults = await api.getDefaults();
+  if (defaults?.versions?.app) {
+    const chip = $('btnVersion');
+    if (chip) chip.textContent = `v${defaults.versions.app}`;
+  }
   if (defaults?.out) {
     setOutPath(defaults.out);
     await syncFromOutDir({ force: true });
@@ -557,7 +610,7 @@ async function boot() {
     await syncFromOutDir();
     const query = $('query').value.trim();
     if (!query) {
-      $('message').textContent = 'Nhập từ khoá Trustpilot trước khi bắt đầu.';
+      $('message').textContent = 'Nhập từ khoá Trustpilot trước khi lấy danh sách.';
       $('message').classList.add('is-error');
       $('query').classList.add('is-error');
       $('query').focus({ preventScroll: true });
@@ -618,14 +671,74 @@ async function boot() {
       $('message').classList.add('is-error');
     }
   };
-  $('btnCsv').onclick = async () => {
-    try {
-      await api.openCsv($('out').value.trim());
-    } catch (e) {
-      $('message').textContent = friendlyError(e);
-      $('message').classList.add('is-error');
+  function fillSettings() {
+    const v = defaults?.versions || {};
+    const dl = $('versionList');
+    if (dl) {
+      dl.replaceChildren();
+      const rows = [
+        ['Ứng dụng', v.app ? `v${v.app}` : '—'],
+        ['Bộ dò', v.detector || '—'],
+        ['Electron', v.electron || '—'],
+        ['Chrome (app)', v.chrome || '—'],
+        ['Node', v.node || '—'],
+      ];
+      for (const [k, val] of rows) {
+        const dt = document.createElement('dt');
+        dt.textContent = k;
+        const dd = document.createElement('dd');
+        dd.textContent = val;
+        dl.append(dt, dd);
+      }
     }
-  };
+    const notes = $('versionNotes');
+    if (notes) {
+      notes.replaceChildren();
+      for (const item of defaults?.versionNotes || []) {
+        const li = document.createElement('li');
+        const ver = document.createElement('strong');
+        ver.textContent = `v${item.version}`;
+        li.append(ver, document.createTextNode(` — ${item.note}`));
+        notes.appendChild(li);
+      }
+    }
+    const run = selectedRun();
+    const out = $('out').value.trim();
+    const statusEl = $('settingsJobStatus');
+    const filesEl = $('settingsJobFiles');
+    if (statusEl) {
+      if (!out) statusEl.textContent = 'Chưa chọn job.';
+      else {
+        const bits = [folderName(out)];
+        if (run?.query) bits.push(`từ khoá ${run.query}`);
+        if (run?.total) bits.push(`${run.completed}/${run.total} website`);
+        statusEl.textContent = bits.join(' · ');
+      }
+    }
+    if (filesEl) {
+      filesEl.replaceChildren();
+      const files = run?.artefacts || lastStatus?.artefacts || [];
+      if (!files.length) {
+        const li = document.createElement('li');
+        li.textContent = 'Chưa có CSV. Chạy Lấy danh sách để có companies.csv.';
+        filesEl.appendChild(li);
+      } else {
+        for (const file of files) {
+          const li = document.createElement('li');
+          li.textContent = file;
+          filesEl.appendChild(li);
+        }
+      }
+    }
+  }
+
+  function openSettings() {
+    fillSettings();
+    $('settingsDialog')?.showModal();
+  }
+
+  $('btnSettings')?.addEventListener('click', openSettings);
+  $('btnVersion')?.addEventListener('click', openSettings);
 }
 
 boot();

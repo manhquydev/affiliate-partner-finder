@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('affiliateDesktop', {
   stopJob: () => ipcRenderer.invoke('desktop:stop'),
   openOutDir: (out) => ipcRenderer.invoke('desktop:open-out', out),
   openCsv: (out) => ipcRenderer.invoke('desktop:open-csv', out),
+  openJobFile: (out, name) => ipcRenderer.invoke('desktop:open-job-file', out, name),
   inspectOutDir: (out) => ipcRenderer.invoke('desktop:inspect-out', out),
   pickOutDir: () => ipcRenderer.invoke('desktop:pick-out-dir'),
   newOutDir: () => ipcRenderer.invoke('desktop:new-out-dir'),

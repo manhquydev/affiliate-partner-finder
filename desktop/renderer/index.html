@@ -43,11 +43,18 @@
         <circle cx="7" cy="7" r="3.75" fill="none" stroke="currentColor" stroke-width="1.5" />
         <path d="M10 10.5 13.5 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </symbol>
+      <symbol id="i-gear" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <path d="M8 1.75v1.6M8 12.65v1.6M1.75 8h1.6M12.65 8h1.6M3.4 3.4l1.15 1.15M11.45 11.45l1.15 1.15M12.6 3.4l-1.15 1.15M4.55 11.45l-1.15 1.15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </symbol>
     </svg>
 
     <div class="app">
       <header class="chrome">
-        <h1>Trình dò Affiliate/Partner</h1>
+        <div class="chrome-title">
+          <h1>Trình dò Affiliate/Partner</h1>
+          <button type="button" id="btnVersion" class="version-chip" title="Cài đặt — phiên bản">v—</button>
+        </div>
         <div class="command-bar" role="toolbar" aria-label="Lệnh job">
           <button id="btnNewOut" type="button" class="btn btn-primary">
             <svg class="icon"><use href="#i-plus" /></svg>
@@ -60,6 +67,10 @@
           <button id="btnOpenRunsRoot" type="button" class="btn">
             <svg class="icon"><use href="#i-folder-open" /></svg>
             Mở thư mục runs
+          </button>
+          <button id="btnSettings" type="button" class="btn">
+            <svg class="icon"><use href="#i-gear" /></svg>
+            Cài đặt
           </button>
           <label class="job-filter">
             <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
@@ -100,7 +111,7 @@
                 <span class="live-dot" id="liveDot" data-state="idle" aria-hidden="true"></span>
                 <span id="previewTitle">Job mới</span>
               </h2>
-              <p class="preview-sub" id="jobQuery">Chưa chọn job. Điền từ khoá rồi Bắt đầu.</p>
+              <p class="preview-sub" id="jobQuery">Chưa chọn job. Điền từ khoá rồi Lấy danh sách.</p>
             </div>
             <span class="state-badge" id="stateBadge" data-state="idle">Chờ</span>
           </header>
@@ -123,9 +134,9 @@
                 <span class="hint" id="query-hint">Từ khoá ngành trên Trustpilot, ví dụ hosting, vpn.</span>
               </label>
               <label>
-                Số công ty
+                Số website
                 <input id="limit" type="number" min="1" max="10000" value="20" />
-                <span class="hint">Số công ty cần lấy. Gõ 10000, không gõ 10.000.</span>
+                <span class="hint">Số website cần lấy. Gõ 10000, không gõ 10.000.</span>
               </label>
             </div>
 
@@ -134,9 +145,11 @@
                 <input id="hideChrome" type="checkbox" checked />
                 <span class="setting-text">
                   <span class="setting-title">Ẩn cửa sổ Chrome khi quét</span>
-                  <span class="hint" id="hideChromeHint">Chrome vẫn chạy, không chiếm màn hình. Nếu bị chặn: tắt mục này, bấm Tiếp tục, vượt kiểm tra một lần, rồi bật lại.</span>
+                  <span class="hint" id="hideChromeHint">Chrome vẫn chạy, không chiếm màn hình. Nếu bị chặn: tắt mục này, bấm Lấy danh sách lại, vượt kiểm tra một lần, rồi bật lại.</span>
                 </span>
               </label>
+              <details id="scanOpts" class="scan-opts">
+                <summary>Cài đặt quét website</summary>
               <label class="check setting">
                 <input id="concurrencyRow" type="checkbox" checked />
                 <span class="setting-text">
@@ -172,17 +185,18 @@
                   <span class="hint">Fetch cùng nguồn tối đa 3 đường dẫn affiliate (28 path + junk). Mặc định tắt — chỉ bật khi đo thử.</span>
                 </span>
               </label>
+              </details>
             </div>
           </section>
 
           <div class="preview-actions" role="group" aria-label="Chạy job">
-            <button id="btnStart" type="button" class="btn btn-primary">
-              <svg class="icon"><use href="#i-play" /></svg>
-              Bắt đầu
-            </button>
-            <button id="btnCollectList" type="button" class="btn" title="chỉ danh sách Trustpilot, không quét website">
+            <button id="btnCollectList" type="button" class="btn btn-primary" title="chỉ danh sách Trustpilot, ghi companies.csv">
               <svg class="icon"><use href="#i-search" /></svg>
               Lấy danh sách
+            </button>
+            <button id="btnStart" type="button" class="btn" title="lấy danh sách rồi quét affiliate trên từng website">
+              <svg class="icon"><use href="#i-play" /></svg>
+              Bắt đầu
             </button>
             <button id="btnResume" type="button" class="btn">
               <svg class="icon"><use href="#i-resume" /></svg>
@@ -198,7 +212,7 @@
           <section class="dashboard" id="dashboard" aria-live="polite">
             <div class="progress-block" id="progressBlock">
               <div class="progress-meta">
-                <span class="progress-fraction" id="progressFraction">0 / 0 công ty</span>
+                <span class="progress-fraction" id="progressFraction">0 / 0 website</span>
               </div>
               <div
                 class="progress-track"
@@ -210,7 +224,7 @@
               >
                 <div class="progress-fill" id="progressFill"></div>
               </div>
-              <p class="progress-hint" id="progressHint">Sẵn sàng bắt đầu quét mới hoặc tiếp tục job cũ.</p>
+              <p class="progress-hint" id="progressHint">Sẵn sàng lấy danh sách website hoặc tiếp tục job cũ.</p>
               <p class="progress-eta" id="progressEta" hidden>ETA</p>
             </div>
 
@@ -226,11 +240,7 @@
             </div>
           </section>
 
-          <button id="btnCsv" type="button" class="file-row">
-            <svg class="icon"><use href="#i-csv" /></svg>
-            <span class="file-row-name">results.csv</span>
-            <span class="file-row-action">Mở CSV</span>
-          </button>
+          <div id="fileRows" class="file-rows" hidden></div>
 
           <div class="out-block">
             <span class="field-label">Thư mục lưu job</span>
@@ -252,6 +262,25 @@
         </section>
       </div>
     </div>
+
+    <dialog id="settingsDialog" class="settings-dialog">
+      <form method="dialog" class="settings-form">
+        <header class="settings-head">
+          <h2>Cài đặt</h2>
+          <button type="submit" class="btn" id="btnSettingsClose">Đóng</button>
+        </header>
+        <section class="settings-section">
+          <h3>Phiên bản</h3>
+          <dl id="versionList" class="version-dl"></dl>
+          <ol id="versionNotes" class="version-notes"></ol>
+        </section>
+        <section class="settings-section">
+          <h3>Job đang chọn</h3>
+          <p id="settingsJobStatus" class="settings-job-status">Chưa chọn job.</p>
+          <ul id="settingsJobFiles" class="settings-job-files"></ul>
+        </section>
+      </form>
+    </dialog>
 
     <script type="module" src="./app.js"></script>
   </body>

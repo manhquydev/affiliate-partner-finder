@@ -21,6 +21,7 @@ import {
 import {
   assertSafeJobPaths,
   canStartFresh,
+  companySnapshotCount,
   readProgress,
 } from '../desktop/progress';
 import {
@@ -29,7 +30,7 @@ import {
   writeSimpleCsvFromJsonl,
 } from '../desktop/ket-qua-counts';
 import { formatCounts, formatProgress } from '../desktop/format';
-import { JobSupervisor } from '../desktop/job-supervisor';
+import { EMPTY_COLLECT_MESSAGE, formatJobFailureMessage, JobSupervisor, pickCliFailureCause } from '../desktop/job-supervisor';
 import type { JobStatus } from '../desktop/types';
 import type { ScanResult } from '../lib/types';
 
@@ -422,6 +423,10 @@ describe('desktop adapter', () => {
     );
     expect(readProgress(dir)?.completed).toBe(3);
     writeFileSync(join(dir, 'companies.json'), '[]');
+    expect(companySnapshotCount(dir)).toBe(0);
+    expect(canStartFresh(dir)).toBe(true);
+    writeFileSync(join(dir, 'companies.json'), JSON.stringify([{ name: 'Acme', domain: 'acme.com' }]));
+    expect(companySnapshotCount(dir)).toBe(1);
     expect(canStartFresh(dir)).toBe(false);
   });
 
@@ -611,4 +616,19 @@ describe('JobSupervisor failure surfacing', () => {
     expect(st.message).toMatch(/Cloudflare challenge/);
     expect(st.message).not.toMatch(/no companies to scan/);
   }, 20_000);
+
+  it('maps the no-companies symptom to Vietnamese website copy', () => {
+    expect(pickCliFailureCause('[cli] no companies to scan\n')).toBe(EMPTY_COLLECT_MESSAGE);
+    expect(formatJobFailureMessage(1, null, '[cli] no companies to scan')).toMatch(/website/);
+    expect(formatJobFailureMessage(1, null, '[cli] no companies to scan')).not.toMatch(
+      /no companies to scan/,
+    );
+  });
+
+  it('prefers hidden-chrome collect cause over the no-companies symptom', () => {
+    const cause = pickCliFailureCause(
+      '[cli] chưa lấy được website và đang chạy ẩn. Tắt Ẩn cửa sổ Chrome.\n[cli] no companies to scan\n',
+    );
+    expect(cause).toMatch(/đang chạy ẩn/);
+  });
 });

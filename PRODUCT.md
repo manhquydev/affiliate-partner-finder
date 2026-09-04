@@ -37,19 +37,19 @@ The mechanism a neighboring scraper or AI summarizer cannot copy: **rule-based, 
 
 Confirmed in the desktop window today and **must remain**:
 
-- Trustpilot keyword + company limit 1–10000 (type `10000`, not `10.000`).
+- Trustpilot keyword + website limit 1–10000 (type `10000`, not `10.000`).
 - Job folder: pick folder, new job, choose existing run, open runs root in the file manager.
-- Scan options (defaults: concurrency 2 unless “Tăng tốc” → 3; early-exit / network evidence / lazy settle off; hide Chrome on).
-- Start (Full collect then scan), Resume, Stop (SIGINT + CSV from results so far).
-- **Lấy danh sách**: local list-only first pass, no site scan. Full Start/Resume remain.
+- Scan options (defaults: concurrency 2 unless “Tăng tốc” → 3; early-exit / network evidence / lazy settle off; hide Chrome on). Website-scan options sit in a collapsed “Cài đặt quét website” block.
+- **Lấy danh sách** (primary): local list-only first pass, writes `companies.csv`, no site scan. **Bắt đầu** Full collect then scan. Resume, Stop remain.
 - Live dashboard: state (idle / running / stopping / error), job keyword, collect vs scan phase, percent, fraction, hint, rolling ETA (hide when stalled >8 minutes), counts true/false/unknown, current domains, status message.
 - Cloudflare panel: complete the check in the app Chrome; do not bypass CAPTCHA.
-- Open job folder and Open CSV (`results.csv` if present: columns `ten_cong_ty,website,ket_qua,huong_dan`; else `companies.csv`: `stt,ten_website,link`).
-- Vietnamese UI. Copy may be tightened; facts and ethics must not change.
+- File rows on the selected job: `companies.csv` (`stt,ten_website,link`), `results.csv` (`ten_cong_ty,website,ket_qua,huong_dan`), `results.full.csv` (technical). Open job folder.
+- **Cài đặt** shows app / detector / Electron versions for support.
+- Vietnamese UI. User-facing count nouns use **website** (not “công ty”). Facts and ethics must not change.
 
 This rebuild’s product job: the window is a **job workspace** — existing jobs are the home surface; the selected job is the work surface (configure, run, watch). Not a stacked form. Not an in-app results browser.
 
-Must not: rewrite the scan engine; send data to a server; log into target sites; submit forms; bypass CAPTCHA/Cloudflare; point the profile at personal Chrome User Data; start fresh into a folder that already has `companies.json`.
+Must not: rewrite the scan engine; send data to a server; log into target sites; submit forms; bypass CAPTCHA/Cloudflare; point the profile at personal Chrome User Data; start fresh into a folder that already has a non-empty `companies.json`.
 
 Undecided: English localization; code-signing; in-app results table (explicitly out of this rebuild).
 
